@@ -1,8 +1,9 @@
 // Navbar — Figma node 1420:19785 (Environment=ProFinda)
-// Container: 60×1091px, #0C1457 bg, border-radius 0 16px 16px 0
-// padding 24px 0 40px, column, justify-content space-between
-// Nav item: 30×30px, white icon, hover rgba(255,255,255,0.08)
-// Selected: left pill indicator (4px wide, 20px tall, white, radius 0 2px 2px 0)
+// Nav item states — node 1409:18601 (.Nav item):
+//   Default:  30×30px, no bg, white icon
+//   Hover:    35×35px filled circle #0C1457, white icon, tooltip right
+//   Selected: 35×35px filled circle #0C1457, selector pill on navbar left edge
+//   Focus:    box-shadow 0 0 0 4px white, 0 0 0 2px #0C1457
 
 .navbar {
   display: flex;
@@ -11,13 +12,14 @@
   align-items: center;
   width: 60px;
   height: 1091px;
-  background-color: var(--palette-blue-1); // #0C1457 — fill_DBS7IK
+  background-color: var(--palette-blue-1); // #0C1457
   border-radius: 0 16px 16px 0;
   padding: 24px 0 40px;
   flex-shrink: 0;
+  overflow: visible; // allow tooltip to escape
 }
 
-// ── Top / Bottom sections ─────────────────────────────────────────────────────
+// ── Sections ──────────────────────────────────────────────────────────────────
 
 .top,
 .bottom {
@@ -39,7 +41,7 @@
   flex-shrink: 0;
 }
 
-// ── Item group (column of nav buttons) ───────────────────────────────────────
+// ── Item group ────────────────────────────────────────────────────────────────
 
 .group {
   display: flex;
@@ -49,60 +51,84 @@
   width: 60px;
 }
 
-// ── Divider — horizontal, #CFDAF7 at 30% opacity ──────────────────────────────
+// ── Divider — horizontal, #CFDAF7 at 30% ─────────────────────────────────────
 
 .divider {
   width: 100%;
   height: 1px;
-  background-color: var(--palette-neutral-0); // #CFDAF7
+  background-color: var(--palette-neutral-0);
   opacity: 0.3;
   flex-shrink: 0;
 }
 
-// ── Nav button (30×30px) ──────────────────────────────────────────────────────
+// ── Nav item wrapper — positions button + tooltip ─────────────────────────────
+
+.navItemWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+// ── Nav button ────────────────────────────────────────────────────────────────
+// Default: 30×30px, transparent bg
+// Hover/Active: 35×35px filled circle #0C1457 (via padding trick or explicit size)
+// We size at 36px always, clip visually to circle, bg on hover
 
 .navBtn {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm); // 4px
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full); // circle
   border: none;
   background: transparent;
   cursor: pointer;
   padding: 0;
-  transition: background-color 0.15s ease;
   flex-shrink: 0;
+  transition: background-color 0.15s ease;
 
+  // Hover: filled dark circle (fill_QIK1UX = #0C1457)
   &:hover:not(.active) {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--palette-blue-1); // #0C1457
   }
 
+  // Hover — show tooltip
+  &:hover + .tooltip,
+  &:focus-visible + .tooltip {
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  // Focus: white outer ring, navy inner ring (effect_Y8IHNT)
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--palette-neutral-0);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 1), 0 0 0 2px rgba(12, 20, 87, 1);
+  }
+
+  // Active/selected: filled circle
+  &.active {
+    background-color: var(--palette-blue-1); // #0C1457
   }
 }
 
-// Avatar button — same size
 .avatarBtn {
-  border-radius: var(--radius-full);
+  // Avatar btn inherits circle shape — no extra changes needed
 }
 
 // ── Nav icon — white ──────────────────────────────────────────────────────────
 
 .navIcon {
-  color: var(--palette-white-0); // white icons on dark bg
+  color: var(--palette-white-0);
 }
 
-// ── Selected state — left pill indicator ──────────────────────────────────────
-// 4px wide, 20px tall, white, radius 0 2px 2px 0, positioned on left edge
+// ── Selector pill — visible on active item ────────────────────────────────────
+// White, 4px wide, 20px tall, radius 0 2px 2px 0, left edge of navbar
 
 .selector {
   position: absolute;
-  left: -15px; // positioned outside the 30px button, on the left edge of the navbar
+  left: -12px; // outside the button, on the navbar left edge
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
@@ -110,4 +136,33 @@
   background-color: var(--palette-white-0);
   border-radius: 0 2px 2px 0;
   pointer-events: none;
+}
+
+// ── Tooltip — shown on hover, right of the button ────────────────────────────
+// Dark bg #0C1457, white text body-selected, radius 8px, padding 8px
+// Positioned to the right of the nav column
+
+.tooltip {
+  position: absolute;
+  left: calc(100% + 12px); // right of the navbar button
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--palette-blue-1); // #0C1457 — fill_QIK1UX
+  color: var(--palette-white-0);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body); // 14px
+  font-weight: var(--font-weight-bold); // 700
+  line-height: 115%;
+  white-space: nowrap;
+  padding: 8px;
+  border-radius: var(--radius-md); // 8px
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+
+  // Show tooltip when parent wrapper is hovered
+  .navItemWrapper:hover & {
+    opacity: 1;
+  }
 }
