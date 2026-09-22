@@ -1,43 +1,109 @@
-// Auto-generated from src/tokens/* — re-run `npm run figmagic:sync` to update
+// Design tokens — CSS custom properties
+// Source: Figma IPS-Components file (adFvaOeh8E3AKLFKRjYD3r)
+// Re-run `npm run figmagic:sync` to update from Figma
+// Token names match premiumui's dynamic token loading convention
 
 :root {
-  // Colors
-  --paletteBlue0: #2b3991;
-  --paletteBlue1: #4a5fb5;
-  --paletteBlue2: #eef0fa;
-  --paletteNeutral0: #1a1a2e;
-  --paletteNeutral1: #4a4a6a;
-  --paletteNeutral2: #8a8aaa;
-  --paletteNeutral3: #c8c8e0;
-  --paletteNeutral4: #f0f0f8;
+  // ── Colors (light theme) ──────────────────────────────────────────
+  // Primary blues
+  --paletteBlue0: #0d2976;
+  --paletteBlue1: #0c1457;
+  --paletteBlue2: #5c6e9e;
+  --paletteBlue3: #31a2ce;
+
+  // Primary action
+  --palettePrimary0: #1cd5e3;
+  --palettePrimary1: #1531b8;
+  --palettePrimary2: #4b75ff;
+  --palettePrimary3: #e7f9fe;
+  --palettePrimary5: #436fb6;
+  --palettePrimaryAction: #6ef29c;
+
+  // Neutrals
+  --paletteNeutral0: #cfdaf7;
+  --paletteNeutral1: #e7eaf8;
+  --paletteNeutral2: #f8f9fd;
+  --paletteNeutral3: #8f9ed1;
+  --paletteNeutral4: #f0f4ff;
   --paletteNeutral5: #fafafd;
-  --paletteRed0: #c0392b;
-  --paletteGreen0: #1e8449;
-  --paletteGreen1: #27ae60;
-  --paletteGreen2: #eafaf1;
-  --paletteOrange0: #d35400;
-  --paletteOrange1: #e67e22;
+
+  // Reds
+  --paletteRed0: #d42a36;
+  --paletteRed1: #a30013;
+  --paletteRed2: #ffe2e2;
+  --paletteRed3: #ff0000;
+
+  // Greens
+  --paletteGreen0: #248e61;
+  --paletteGreen1: #1f6648;
+  --paletteGreen2: #c8eede;
+
+  // Oranges / warnings
+  --paletteOrange0: #ffcd38;
+  --paletteOrange1: #9b5a01;
+  --paletteOrange2: #ffe8ad;
+  --paletteOrange3: #ff6b00;
+  --paletteOrange4: #ffe606;
+
+  // White / black
+  --paletteWhite0: #ffffff;
+  --paletteWhite1: #abb8c9;
+  --paletteBlack0: #ffffff;
+  --paletteBlack1: #abb8c9;
   --white: #ffffff;
 
-  // Spacing
-  --spacingXs: 4px;
-  --spacingSm: 8px;
-  --spacingMd: 12px;
-  --spacingLg: 16px;
-  --spacingXl: 24px;
-  --spacing2xl: 32px;
+  // Transparency
+  --paletteTrans0: rgba(0, 0, 0, 0.04);
+  --paletteTransLight0: rgba(255, 255, 255, 0.1);
 
-  // Radii
+  // ── Spacing ───────────────────────────────────────────────────────
+  --spacingXs: 0.125rem;   /* 2px */
+  --spacingSm: 0.25rem;    /* 4px */
+  --spacingMd: 0.5rem;     /* 8px */
+  --spacingMd2: 0.75rem;   /* 12px */
+  --spacingLg: 1rem;       /* 16px */
+  --spacingXl: 1.5rem;     /* 24px */
+  --spacing2xl: 2rem;      /* 32px */
+  --spacing3xl: 2.5rem;    /* 40px */
+
+  // ── Radii ─────────────────────────────────────────────────────────
+  --radiusXs: 2px;
   --radiusSm: 4px;
-  --radiusMd: 6px;
-  --radiusLg: 10px;
+  --radiusMd: 8px;
+  --radiusLg: 12px;
+  --radiusXl: 16px;
+  --radius2xl: 32px;
   --radiusFull: 9999px;
 
-  // Typography
-  --fontSizeXs: 11px;
-  --fontSizeSm: 12px;
-  --fontSizeBody: 14px;
-  --fontSizeMd: 15px;
-  --fontSizeLg: 18px;
-  --fontSizeXl: 22px;
+  // ── Font sizes ────────────────────────────────────────────────────
+  --fontSizeH1: 2rem;           /* 32px */
+  --fontSizeH2: 1.75rem;        /* 28px */
+  --fontSizeH3: 1.5rem;         /* 24px */
+  --fontSizeH4: 1.25rem;        /* 20px */
+  --fontSizeH5: 1rem;           /* 16px */
+  --fontSizeH6: 0.9375rem;      /* 15px */
+  --fontSizeRegular: 0.875rem;  /* 14px */
+  --fontSizeLabel: 0.75rem;     /* 12px */
+  --fontSizeLabelSmall: 0.625rem; /* 10px */
+
+  // Aliases used across IPS components
+  --fontSizeXs: 0.625rem;   /* 10px */
+  --fontSizeSm: 0.75rem;    /* 12px */
+  --fontSizeBody: 0.875rem; /* 14px */
+  --fontSizeMd: 0.9375rem;  /* 15px */
+  --fontSizeLg: 1.125rem;   /* 18px */
+  --fontSizeXl: 1.375rem;   /* 22px */
+
+  // ── Font families ─────────────────────────────────────────────────
+  --fontFamilyRegular: "Nunito Sans", "Mulish", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  // ── Font weights ──────────────────────────────────────────────────
+  --fontWeightRegular: 400;
+  --fontWeightMedium: 600;
+  --fontWeightBold: 700;
+
+  // ── Line heights ──────────────────────────────────────────────────
+  --lineHeightTight: 1.2;
+  --lineHeightNormal: 1.5;
+  --lineHeightRelaxed: 1.7;
 }
