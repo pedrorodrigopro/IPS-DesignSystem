@@ -1,0 +1,51 @@
+{
+  "name": "@ips/design-system",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles": "./dist/styles/tokens.css"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "dev": "storybook dev -p 6006",
+    "build": "tsc && vite build",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o storybook-static",
+    "figmagic:sync": "figmagic"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^8.5.3",
+    "@storybook/addon-actions": "^8.5.3",
+    "@storybook/addon-controls": "^8.5.3",
+    "@storybook/addon-designs": "8.1.0",
+    "@storybook/addon-docs": "^8.5.3",
+    "@storybook/addon-viewport": "^8.5.3",
+    "@storybook/builder-vite": "^8.6.12",
+    "@storybook/react": "^8.5.3",
+    "@storybook/react-vite": "^8.5.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "classnames": "^2.3.2",
+    "figmagic": "^4.5.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sass": "^1.63.6",
+    "storybook": "^8.5.3",
+    "typescript": "^5.6.2",
+    "vite": "^6.4.2",
+    "vite-plugin-dts": "^4.0.0"
+  }
+}
