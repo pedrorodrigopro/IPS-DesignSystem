@@ -10,3 +10,8 @@ export * from "./modal";
 export * from "./input";
 export * from "./checkbox";
 export * from "./switch";
+export * from "./tooltip";
+export * from "./accordion";
+export * from "./alert";
+export * from "./pill_small";
+export * from "./pill_regular";
