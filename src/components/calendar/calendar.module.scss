@@ -124,16 +124,16 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-full); // 32px pill
-  border: 1px solid var(--palette-white-3); // #D5D5D5
-  background: var(--palette-white-0);
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
   @include ts.body-unselected; // 14px / Regular / 115%
-  color: var(--palette-blue-2); // #5C6E9E — matches fill_QQGL1Y
+  color: var(--palette-blue-2); // #5C6E9E
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
   flex: 1;
 
-  &:hover:not(.daySelected):not(.dayInRange) {
+  &:hover:not(.daySelected):not(.dayRangeStart):not(.dayRangeMid):not(.dayRangeEnd) {
     background-color: var(--palette-trans-0);
   }
 

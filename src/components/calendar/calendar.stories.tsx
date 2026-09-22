@@ -68,20 +68,20 @@ export const DayStates: StoryFn<typeof Calendar> = () => (
   <div style={{ display: "flex", gap: 8, alignItems: "center", padding: 16 }}>
     {/* Default */}
     <button style={{
-      width: 36, height: 36, borderRadius: 9999, border: "1px solid #D5D5D5",
-      background: "white", fontFamily: "Mulish, sans-serif", fontSize: 14, fontWeight: 400,
+      width: 36, height: 36, borderRadius: 9999, border: "none",
+      background: "transparent", fontFamily: "Mulish, sans-serif", fontSize: 14, fontWeight: 400,
       color: "#5C6E9E", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
     }}>M</button>
     {/* Hover */}
     <button style={{
-      width: 36, height: 36, borderRadius: 9999, border: "1px solid #D5D5D5",
+      width: 36, height: 36, borderRadius: 9999, border: "none",
       background: "rgba(0,0,0,0.04)", fontFamily: "Mulish, sans-serif", fontSize: 14, fontWeight: 400,
       color: "#5C6E9E", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
     }}>M</button>
     {/* Focus */}
     <button style={{
-      width: 36, height: 36, borderRadius: 9999, border: "1px solid #D5D5D5",
-      background: "white", fontFamily: "Mulish, sans-serif", fontSize: 14, fontWeight: 400,
+      width: 36, height: 36, borderRadius: 9999, border: "none",
+      background: "transparent", fontFamily: "Mulish, sans-serif", fontSize: 14, fontWeight: 400,
       color: "#5C6E9E", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
       boxShadow: "0 0 0 4px rgba(12,20,87,1), 0 0 0 2px white",
     }}>M</button>

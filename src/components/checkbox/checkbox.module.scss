@@ -1,0 +1,96 @@
+// Checkbox — Figma node 1635:27838
+// Box: 24×24px, radius 6px (fill_Q8T1Z3=#CFDAF7 border, fill_P43Q5Q=#FFFFFF fill)
+// Selected: fill_FKSDBW=#0C1457 (--palette-blue-1), white icon
+// Disabled: opacity 0.5 on whole component
+// Label: body-regular (14px/400/150%), --palette-blue-0
+// SubLabel: label-regular (12px/400/150%), --palette-blue-2 (#5C6E9E)
+@use "../../styles/text-styles" as ts;
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  // Horizontal — box left, label right (default)
+  &.horizontal {
+    flex-direction: row;
+    padding: 4px 0;
+  }
+
+  // Vertical — label above, box below
+  &.vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// Hidden native input — still accessible
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+// Visual box — 24×24px, radius 6px
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 6px; // fill_Q8T1Z3 from Figma
+  background-color: var(--palette-white-0);   // #FFFFFF
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  // Selected / indeterminate
+  &.selected {
+    background-color: var(--palette-blue-1); // #0C1457 — fill_FKSDBW
+    border-color: transparent;
+  }
+}
+
+// Hover — on the box via parent label hover
+.checkbox:hover:not(.disabled) .box:not(.selected) {
+  background-color: var(--palette-trans-0); // rgba(0,0,0,0.04) — hover bg
+  border-color: var(--palette-neutral-3);   // #8F9ED1 — slightly darker
+}
+
+// Hover selected
+.checkbox:hover:not(.disabled) .box.selected {
+  background-color: var(--palette-blue-0); // #0D2976 — slightly lighter than blue-1
+}
+
+// Focus ring on the box
+.input:focus-visible + .box {
+  box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+}
+
+// Label text
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  @include ts.body-regular; // 14px / 400 / 150%
+  color: var(--palette-blue-0);
+}
+
+.subLabel {
+  @include ts.label-regular; // 12px / 400 / 150%
+  color: var(--palette-blue-2); // #5C6E9E — fill_HZX7CJ
+}
