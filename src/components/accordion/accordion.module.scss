@@ -1,0 +1,54 @@
+// Accordion — Figma node 1581:35436
+// Header: row, gap 8px, padding 4px 0 | Bottom border: #CFDAF7 | Expanded border: #4B75FF
+
+.accordion {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #cfdaf7;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+  border-radius: 0;
+
+  &:hover {
+    background-color: rgb(0 0 0 / 4%);
+    border-radius: 8px;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px #ffffff;
+    border-radius: 4px;
+  }
+}
+
+.expanded .header {
+  border-bottom-color: #4b75ff;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.title {
+  font-family: var(--fontFamilyRegular);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 115%;
+  color: #0d2976;
+}
+
+.content {
+  padding: 12px 0;
+}
