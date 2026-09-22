@@ -1,0 +1,61 @@
+// Breadcrumbs — Figma node 4379:234729
+// Row, align-items center, gap 2px
+// Link: Button small new / Type=Link — label-bold, --palette-primary-0, padding 4px 0
+// Separator "/": label-regular, --palette-blue-0
+// Current: label-bold, --palette-blue-0, padding 0 4px
+@use "../../styles/text-styles" as ts;
+
+.breadcrumbs {
+  display: inline-flex;
+}
+
+.list {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+// Button small new / Type=Link
+// Text style: New/Label bold — label-bold (12px / 700 / 150%)
+// Colour: --palette-primary-0 (#2358F8)
+// Padding: 4px 0
+.link {
+  @include ts.label-bold; // 12px / 700 / 150%
+  color: var(--palette-primary-0);
+  text-decoration: none;
+  padding: 4px 0;
+  border-radius: var(--radius-sm);
+  transition: text-decoration 0.1s ease;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+// Separator "/" — label-regular (12px / 400 / 150%), --palette-blue-0
+.separator {
+  @include ts.label-regular; // 12px / 400 / 150%
+  color: var(--palette-blue-0);
+}
+
+// Current page — label-bold (12px / 700 / 150%), --palette-blue-0, padding 0 4px
+.current {
+  @include ts.label-bold; // 12px / 700 / 150%
+  color: var(--palette-blue-0);
+  padding: 0 4px;
+}
