@@ -79,8 +79,6 @@ const NavButton = ({ item, isActive, onClick }: NavButtonProps) => (
       aria-label={item.label}
       aria-current={isActive ? "page" : undefined}
     >
-      {/* Selector pill — left edge of navbar, white, visible when active */}
-      {isActive && <span className={css.selector} aria-hidden="true" />}
       <Icon name={item.icon} size={20} className={css.navIcon} />
     </button>
     {/* Tooltip — shown on hover via CSS, positioned to the right */}
@@ -133,7 +131,6 @@ export const Navbar = ({
           onClick={() => onSelect?.("profile")}
           aria-label="Profile"
         >
-          {activeId === "profile" && <span className={css.selector} aria-hidden="true" />}
           <Avatar size="small" initials={avatarInitials} src={avatarSrc} />
         </button>
         <span className={css.tooltip} aria-hidden="true">Profile</span>
