@@ -2,18 +2,23 @@ import classNames from "classnames";
 import { forwardRef } from "react";
 import css from "./button.module.scss";
 
+// Variant names match Figma "Button regular new" component set (node 3134:190313)
 export type ButtonKind =
   | "primary"
   | "secondary"
+  | "tertiary"
+  | "destructive"
   | "ghost"
-  | "danger"
-  | "tertiary";
+  | "inverted"
+  | "link"
+  | "icon"
+  | "iconTertiary"
+  | "iconGhost";
 
 export type ButtonProps = {
   children?: React.ReactNode;
   text?: string;
   kind?: ButtonKind;
-  small?: boolean;
   disabled?: boolean;
   className?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -29,7 +34,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       text,
       kind = "primary",
-      small = false,
       disabled = false,
       className,
       onClick,
@@ -48,12 +52,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled={disabled}
       style={style}
       onClick={onClick}
-      className={classNames(
-        css.button,
-        css[kind],
-        { [css.small]: small },
-        className
-      )}
+      className={classNames(css.button, css[kind], className)}
     >
       {children ?? text}
     </button>

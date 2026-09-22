@@ -75,7 +75,7 @@ export const FullBookingFlow: StoryFn = () => {
           <div style={{ display: "flex", gap: 8 }}>
             <Button kind="ghost" text="Filters" />
             <Button kind="secondary" text="Export" />
-            <Button kind="danger" text="Delete booking" onClick={() => setDeleteModalOpen(true)} />
+            <Button kind="destructive" text="Delete booking" onClick={() => setDeleteModalOpen(true)} />
           </div>
         </div>
 
@@ -145,7 +145,7 @@ export const FullBookingFlow: StoryFn = () => {
           setTimeout(() => setToast(null), 3000);
         }}
         confirmLabel="Delete"
-        confirmKind="danger"
+        confirmKind="destructive"
       >
         Are you sure you want to delete this booking? This action cannot be undone.
       </Modal>

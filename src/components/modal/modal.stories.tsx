@@ -20,14 +20,14 @@ export const DeleteBooking: StoryFn<typeof Modal> = () => {
 
   return (
     <div style={{ padding: "24px" }}>
-      <Button kind="danger" text="Delete booking" onClick={() => setIsOpen(true)} />
+      <Button kind="destructive" text="Delete booking" onClick={() => setIsOpen(true)} />
       <Modal
         isOpen={isOpen}
         title="Delete booking"
         onClose={() => setIsOpen(false)}
         onConfirm={() => setIsOpen(false)}
         confirmLabel="Delete"
-        confirmKind="danger"
+        confirmKind="destructive"
       >
         Are you sure you want to delete this booking? This action cannot be undone.
       </Modal>
@@ -47,7 +47,7 @@ export const Cancel: StoryFn<typeof Modal> = () => {
         onClose={() => setIsOpen(false)}
         onConfirm={() => setIsOpen(false)}
         confirmLabel="Yes, cancel"
-        confirmKind="danger"
+        confirmKind="destructive"
       >
         Cancelling this booking will notify the resource and remove them from the role.
         Do you want to continue?

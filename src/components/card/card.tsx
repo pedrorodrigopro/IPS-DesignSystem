@@ -44,8 +44,8 @@ export const Card = ({
       </div>
     )}
     <div className={css.actions}>
-      {onView && <Button kind="ghost" text="View" small onClick={onView} />}
-      {onBook && <Button kind="primary" text="Book" small onClick={onBook} />}
+      {onView && <Button kind="tertiary" text="View" onClick={onView} />}
+      {onBook && <Button kind="primary" text="Book" onClick={onBook} />}
     </div>
   </div>
 );

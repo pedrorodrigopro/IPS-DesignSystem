@@ -1,78 +1,150 @@
+// Button regular new — from Figma IPS-Components (node 3134:190313)
+// Font: Mulish Bold 14px | Height: 32px | Radius: 8px | Padding: 8px 16px | Gap: 8px
+
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacingSm);
+  gap: 8px;
   height: 32px;
   border: 1px solid transparent;
-  padding: var(--spacingSm) var(--spacingLg);
-  border-radius: var(--radiusMd);
-  font-size: var(--fontSizeBody);
-  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: var(--fontFamilyRegular);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 115%;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  text-decoration: none;
 
-  &:disabled {
+  &:disabled,
+  &.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    pointer-events: none;
   }
 
-  &.small {
-    height: 24px;
-    padding: var(--spacingXs) var(--spacingSm);
-    font-size: var(--fontSizeSm);
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px #0c1457, 0 0 0 2px #ffffff;
   }
 
+  // Primary — #2358F8 fill, white text
   &.primary {
-    background-color: var(--paletteBlue0);
-    color: var(--white);
-    border-color: var(--paletteBlue0);
-
-    &:hover:not(:disabled) {
-      background-color: var(--paletteBlue1);
-      border-color: var(--paletteBlue1);
-    }
-  }
-
-  &.secondary {
-    background-color: transparent;
-    color: var(--paletteBlue0);
-    border-color: var(--paletteBlue0);
-
-    &:hover:not(:disabled) {
-      background-color: var(--paletteNeutral4);
-    }
-  }
-
-  &.ghost {
-    background-color: transparent;
-    color: var(--paletteNeutral0);
+    background-color: #2358f8;
+    color: #ffffff;
     border-color: transparent;
 
     &:hover:not(:disabled) {
-      background-color: var(--paletteNeutral4);
+      background-color: #1531b8;
     }
   }
 
-  &.danger {
-    background-color: var(--paletteRed0);
-    color: var(--white);
-    border-color: var(--paletteRed0);
+  // Secondary — transparent, #CFDAF7 border, #0D2976 text
+  &.secondary {
+    background-color: transparent;
+    color: #0d2976;
+    border-color: #cfdaf7;
 
     &:hover:not(:disabled) {
-      background-color: #a93226;
-      border-color: #a93226;
+      background-color: rgb(0 0 0 / 4%);
     }
   }
 
+  // Tertiary — transparent, no border, #0D2976 text, compact padding
   &.tertiary {
-    background-color: var(--paletteNeutral4);
-    color: var(--paletteBlue0);
-    border-color: var(--paletteNeutral4);
+    background-color: transparent;
+    color: #0d2976;
+    border-color: transparent;
+    padding: 4px;
+    height: auto;
 
     &:hover:not(:disabled) {
-      background-color: var(--paletteNeutral3);
+      background-color: rgb(0 0 0 / 4%);
+    }
+  }
+
+  // Destructive — transparent, #D42A36 border + text (not filled)
+  &.destructive {
+    background-color: transparent;
+    color: #d42a36;
+    border-color: #d42a36;
+
+    &:hover:not(:disabled) {
+      background-color: rgb(0 0 0 / 4%);
+      border-color: #a30013;
+      color: #a30013;
+    }
+  }
+
+  // Ghost — transparent, #0D2976 border + text
+  &.ghost {
+    background-color: transparent;
+    color: #0d2976;
+    border-color: #0d2976;
+
+    &:hover:not(:disabled) {
+      background-color: rgb(0 0 0 / 4%);
+    }
+  }
+
+  // Inverted — #0D2976 fill, white text (for dark backgrounds)
+  &.inverted {
+    background-color: #0d2976;
+    color: #ffffff;
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      background-color: #1531b8;
+    }
+  }
+
+  // Link — no background, no border, #2358F8 text, underline on hover
+  &.link {
+    background-color: transparent;
+    color: #2358f8;
+    border-color: transparent;
+    padding: 4px 0;
+    height: 24px;
+
+    &:hover:not(:disabled) {
+      text-decoration: underline;
+    }
+  }
+
+  // Icon-only variants (square, icon centered, 8px all-round padding)
+  &.icon {
+    padding: 8px;
+    background-color: transparent;
+    color: #0d2976;
+    border-color: #cfdaf7;
+
+    &:hover:not(:disabled) {
+      background-color: rgb(0 0 0 / 4%);
+    }
+  }
+
+  &.iconTertiary {
+    padding: 8px;
+    background-color: transparent;
+    color: #0d2976;
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      background-color: rgb(0 0 0 / 4%);
+    }
+  }
+
+  &.iconGhost {
+    padding: 8px;
+    background-color: transparent;
+    color: #0d2976;
+    border-color: #0d2976;
+
+    &:hover:not(:disabled) {
+      background-color: rgb(0 0 0 / 4%);
     }
   }
 }

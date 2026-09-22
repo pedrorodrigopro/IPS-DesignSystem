@@ -10,7 +10,7 @@ export type ModalProps = {
   onClose: () => void;
   onConfirm?: () => void;
   confirmLabel?: string;
-  confirmKind?: "primary" | "danger";
+  confirmKind?: "primary" | "destructive";
   className?: string;
 };
 
