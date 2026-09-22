@@ -1,0 +1,113 @@
+// Navbar — Figma node 1420:19785 (Environment=ProFinda)
+// Container: 60×1091px, #0C1457 bg, border-radius 0 16px 16px 0
+// padding 24px 0 40px, column, justify-content space-between
+// Nav item: 30×30px, white icon, hover rgba(255,255,255,0.08)
+// Selected: left pill indicator (4px wide, 20px tall, white, radius 0 2px 2px 0)
+
+.navbar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 60px;
+  height: 1091px;
+  background-color: var(--palette-blue-1); // #0C1457 — fill_DBS7IK
+  border-radius: 0 16px 16px 0;
+  padding: 24px 0 40px;
+  flex-shrink: 0;
+}
+
+// ── Top / Bottom sections ─────────────────────────────────────────────────────
+
+.top,
+.bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+// ── Logo ──────────────────────────────────────────────────────────────────────
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+// ── Item group (column of nav buttons) ───────────────────────────────────────
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 60px;
+}
+
+// ── Divider — horizontal, #CFDAF7 at 30% opacity ──────────────────────────────
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--palette-neutral-0); // #CFDAF7
+  opacity: 0.3;
+  flex-shrink: 0;
+}
+
+// ── Nav button (30×30px) ──────────────────────────────────────────────────────
+
+.navBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm); // 4px
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--palette-neutral-0);
+  }
+}
+
+// Avatar button — same size
+.avatarBtn {
+  border-radius: var(--radius-full);
+}
+
+// ── Nav icon — white ──────────────────────────────────────────────────────────
+
+.navIcon {
+  color: var(--palette-white-0); // white icons on dark bg
+}
+
+// ── Selected state — left pill indicator ──────────────────────────────────────
+// 4px wide, 20px tall, white, radius 0 2px 2px 0, positioned on left edge
+
+.selector {
+  position: absolute;
+  left: -15px; // positioned outside the 30px button, on the left edge of the navbar
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background-color: var(--palette-white-0);
+  border-radius: 0 2px 2px 0;
+  pointer-events: none;
+}

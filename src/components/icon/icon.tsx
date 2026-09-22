@@ -19,6 +19,7 @@ import CaretLeft from "./svg/caret-left.svg";
 import CaretRight from "./svg/caret-right.svg";
 import CaretUp from "./svg/caret-up.svg";
 import Check from "./svg/check.svg";
+import Chat from "./svg/chat.svg";
 import ChevronDown from "./svg/chevron-down.svg";
 import ChevronLeft from "./svg/chevron-left.svg";
 import ChevronRight from "./svg/chevron-right.svg";
@@ -85,7 +86,7 @@ export type IconName =
   | "arrow-down" | "arrow-left" | "arrow-right" | "arrow-up"
   | "audit-planner" | "booking" | "calendar"
   | "caret-down" | "caret-left" | "caret-right" | "caret-up"
-  | "check" | "chevron-down" | "chevron-left" | "chevron-right" | "chevron-up"
+  | "chat" | "check" | "chevron-down" | "chevron-left" | "chevron-right" | "chevron-up"
   | "cross" | "down" | "edit" | "engagement" | "error"
   | "help" | "hidden" | "history" | "info" | "insights"
   | "link" | "links" | "list" | "location" | "locked" | "logout"
@@ -124,6 +125,7 @@ const iconMap: Record<IconName, SvgComponent> = {
   "caret-left": CaretLeft,
   "caret-right": CaretRight,
   "caret-up": CaretUp,
+  "chat": Chat,
   "check": Check,
   "chevron-down": ChevronDown,
   "chevron-left": ChevronLeft,
