@@ -5,3 +5,5 @@ export * from "./divider";
 export * from "./card";
 export * from "./toast";
 export * from "./kpi_card";
+export * from "./sidepanel";
+export * from "./modal";
