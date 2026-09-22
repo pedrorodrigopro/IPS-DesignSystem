@@ -1,0 +1,25 @@
+.kpiCard {
+  background: var(--white);
+  border: 1px solid var(--paletteNeutral3);
+  border-radius: var(--radiusLg);
+  padding: var(--spacingLg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacingSm);
+  min-width: 140px;
+
+  .label {
+    font-size: var(--fontSizeSm);
+    color: var(--paletteNeutral3);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .value {
+    font-size: var(--fontSizeXl);
+    font-weight: 700;
+    color: var(--paletteBlue0);
+    line-height: 1;
+  }
+}
