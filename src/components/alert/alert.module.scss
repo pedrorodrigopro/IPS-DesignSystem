@@ -19,37 +19,24 @@
 }
 
 // ── Icon colour wrapper ───────────────────────────────────────────────────────
-// Icon SVGs have a hardcoded fill. We recolour via CSS filter matched to each
-// type's semantic colour from the Figma screenshots.
-// error   → --palette-red-0    (#D42A36)  red badge
-// warning → --palette-orange-1 (#9B5A01)  amber triangle
-// success → --palette-green-0  (#248E61)  green check
-// general, ai, bulk-banner → --palette-blue-0 (#0D2976)
+// The 6 alert icons (error, warning, check, info, ai, cross) use fill="currentColor"
+// so we only need to set the CSS `color` property on the wrapper.
+// Colours from Figma screenshots of each alert type:
+//   error       → --palette-red-0    (#D42A36)
+//   warning     → --palette-orange-1 (#9B5A01)
+//   success     → --palette-green-0  (#248E61)
+//   general/ai/bulk-banner → --palette-blue-0 (#0D2976)
 .iconWrap {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
 
-  // Recolour the SVG paths that have fill="#0D2976" (blue-0)
-  // to the type's semantic colour using CSS filter.
-  // Filters generated for exact hex targets:
-
-  .error & {
-    // Target: #D42A36 (--palette-red-0)
-    filter: invert(20%) sepia(90%) saturate(2000%) hue-rotate(338deg) brightness(90%) contrast(95%);
-  }
-
-  .warning & {
-    // Target: #9B5A01 (--palette-orange-1)
-    filter: invert(32%) sepia(70%) saturate(800%) hue-rotate(20deg) brightness(70%) contrast(110%);
-  }
-
-  .success & {
-    // Target: #248E61 (--palette-green-0)
-    filter: invert(42%) sepia(50%) saturate(500%) hue-rotate(120deg) brightness(80%) contrast(95%);
-  }
-
-  // general, ai, bulk-banner → keep original --palette-blue-0 fill, no filter needed
+  .error &       { color: var(--palette-red-0); }
+  .warning &     { color: var(--palette-orange-1); }
+  .success &     { color: var(--palette-green-0); }
+  .general &,
+  .ai &,
+  .bulk_banner & { color: var(--palette-blue-0); }
 }
 
 // ── Header=False — inline (row) ───────────────────────────────────────────────
