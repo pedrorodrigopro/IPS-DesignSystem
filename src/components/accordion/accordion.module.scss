@@ -1,5 +1,11 @@
 // Accordion — Figma node 1581:35436
-// Header: row, gap 8px, padding 4px 0 | Bottom border: #CFDAF7 | Expanded border: #4B75FF
+// Header: row, gap 8px, padding 4px 0
+// Collapsed border: 1px solid #CFDAF7 (bottom only)
+// Expanded border: 1px solid #4B75FF (bottom only)
+// Hover: rgba(0,0,0,0.04) bg, radius 8px
+// Focus: double ring 0 0 0 4px rgba(12,20,87,1), 0 0 0 2px white, radius 4px
+// Title: Mulish Bold 14px, line-height 115%, color #0D2976
+// Icon: chevron 16x16px, color #0D2976
 
 .accordion {
   width: 100%;
@@ -16,8 +22,8 @@
   border-bottom: 1px solid #cfdaf7;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.15s ease;
   border-radius: 0;
+  transition: background-color 0.15s ease;
 
   &:hover {
     background-color: rgb(0 0 0 / 4%);
@@ -29,16 +35,14 @@
     box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px #ffffff;
     border-radius: 4px;
   }
+
+  &.expanded {
+    border-bottom-color: #4b75ff;
+  }
 }
 
-.expanded .header {
-  border-bottom-color: #4b75ff;
-}
-
-.icon {
+.chevron {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
 }
 
 .title {

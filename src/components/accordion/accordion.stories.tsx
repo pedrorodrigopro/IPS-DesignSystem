@@ -2,7 +2,7 @@ import type { Meta, StoryFn } from "@storybook/react";
 import { Accordion } from "./accordion";
 
 export default {
-  title: "Atoms/Accordion",
+  title: "Components/Accordion",
   component: Accordion,
   parameters: {
     design: {
@@ -12,16 +12,32 @@ export default {
   },
 } satisfies Meta<typeof Accordion>;
 
-export const Default: StoryFn<typeof Accordion> = () => (
-  <div style={{ maxWidth: 400 }}>
+export const Collapsed: StoryFn<typeof Accordion> = () => (
+  <div style={{ width: 382 }}>
+    <Accordion title="Title" />
+  </div>
+);
+
+export const Expanded: StoryFn<typeof Accordion> = () => (
+  <div style={{ width: 382 }}>
+    <Accordion title="Title" defaultExpanded>
+      <p style={{ fontFamily: "Mulish, sans-serif", fontSize: 14, color: "#0D2976" }}>
+        Content goes here.
+      </p>
+    </Accordion>
+  </div>
+);
+
+export const Multiple: StoryFn<typeof Accordion> = () => (
+  <div style={{ width: 382 }}>
     <Accordion title="Skills">
-      <p style={{ color: "#0d2976", fontSize: "14px" }}>Content goes here — any React node.</p>
+      <p style={{ fontFamily: "Mulish, sans-serif", fontSize: 14, color: "#0D2976" }}>Skills content.</p>
     </Accordion>
     <Accordion title="Experience" defaultExpanded>
-      <p style={{ color: "#0d2976", fontSize: "14px" }}>This one starts expanded.</p>
+      <p style={{ fontFamily: "Mulish, sans-serif", fontSize: 14, color: "#0D2976" }}>Experience content.</p>
     </Accordion>
     <Accordion title="Certificates">
-      <p style={{ color: "#0d2976", fontSize: "14px" }}>Another section.</p>
+      <p style={{ fontFamily: "Mulish, sans-serif", fontSize: 14, color: "#0D2976" }}>Certificates content.</p>
     </Accordion>
   </div>
 );
