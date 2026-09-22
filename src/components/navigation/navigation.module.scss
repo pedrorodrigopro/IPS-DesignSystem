@@ -1,0 +1,131 @@
+// Navigation — Figma nodes 5797:282907 (horizontal) + 5797:282954 (vertical)
+// Tab states from Tab regular new (5726:39488) + .Tab master regular (5726:39441)
+@use "../../styles/text-styles" as ts;
+
+// ── Navigation containers ─────────────────────────────────────────────────────
+
+.nav {
+  display: flex;
+}
+
+// Horizontal — row, gap 8px (layout_4E9ZZ7)
+.horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+// Vertical — column, width 175px, tabs fill width (layout_NUEWWL)
+.vertical {
+  flex-direction: column;
+  width: 175px;
+}
+
+// ── Tab item (Tab regular new — 5726:39488) ───────────────────────────────────
+// Shared: row, gap 4px, padding 8px, radius 8px
+// layout_H3KHK6 / layout_YT9GKE
+
+.tab {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--radius-md); // 8px
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  // Vertical tabs fill full width
+  .vertical & {
+    width: 100%;
+  }
+
+  // Default (State=False): transparent bg
+  &:hover:not(:disabled):not(.active) {
+    background-color: var(--palette-trans-0); // rgba(0,0,0,0.04) — fill_LF79KV
+  }
+
+  // Focus (fill_KM5QWX = white + double ring)
+  &:focus-visible {
+    outline: none;
+    background-color: var(--palette-white-0);
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+
+  // Selected (State=True): fill_D5H0VK / fill_3NCJO2 = #E7EAF8 = --palette-neutral-1
+  &.active {
+    background-color: var(--palette-neutral-1); // #E7EAF8
+    cursor: default;
+  }
+
+  // Disabled
+  &.disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// ── Texts column ──────────────────────────────────────────────────────────────
+
+.texts {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+}
+
+// Title — unselected: body-unselected (14px/400/115%), fill_HJXEYZ = #5C6E9E
+.title {
+  @include ts.body-unselected; // 14px / Regular / 115%
+  color: var(--palette-blue-2); // #5C6E9E — fill_HJXEYZ
+
+  .disabled & {
+    color: var(--palette-neutral-3); // #8F9ED1 — fill_A43CW8
+  }
+}
+
+// Title selected — body-selected (14px/700/115%), fill_FK2X55 = #0D2976
+.titleActive {
+  @include ts.body-selected; // 14px / Bold / 115%
+  color: var(--palette-blue-0); // #0D2976 — fill_FK2X55
+}
+
+// Subtitle — label-regular (12px/400/150%), same dark navy
+.subtitle {
+  @include ts.label-regular; // 12px / Regular / 150%
+  color: var(--palette-blue-0); // #0D2976 — fill_N99CB6
+}
+
+// ── Icon — check mark, 16×16px ───────────────────────────────────────────────
+
+.icon {
+  flex-shrink: 0;
+  color: var(--palette-blue-0);
+}
+
+// ── Badge — count pill ────────────────────────────────────────────────────────
+// layout_YA21AT: row, gap 10px, padding 2px 4px, height 16px, radius 4px
+// Active:   fill_BH3QVI / fill_8MQ3C2 = #436FB6 (--palette-primary-5), white text
+// Inactive: fill_3NCJO2 = #E7EAF8 (--palette-neutral-1), dark text
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  height: 16px;
+  border-radius: 4px;
+  @include ts.label-unselected; // 12px / Regular / 115%
+  background-color: var(--palette-neutral-1); // #E7EAF8 — inactive badge
+  color: var(--palette-blue-0);
+  flex-shrink: 0;
+}
+
+// Active badge — fill_BH3QVI = #436FB6 (--palette-primary-5), white text
+.badgeActive {
+  background-color: var(--palette-primary-5); // #436FB6 — fill_BH3QVI
+  color: var(--palette-white-0);
+}
