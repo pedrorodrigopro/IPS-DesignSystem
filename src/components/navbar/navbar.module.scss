@@ -117,10 +117,16 @@
   // Avatar btn inherits circle shape — no extra changes needed
 }
 
-// ── Nav icon — white ──────────────────────────────────────────────────────────
+// ── Nav icon — always white on dark navbar ────────────────────────────────────
+// SVGs have hardcoded fill="#0D2976" from Figma — override all paths to white
 
 .navIcon {
   color: var(--palette-white-0);
+
+  // Force all SVG paths/shapes to render white regardless of hardcoded fill
+  path, circle, rect, polygon, ellipse {
+    fill: var(--palette-white-0) !important;
+  }
 }
 
 // ── Selector pill — visible on active item ────────────────────────────────────
