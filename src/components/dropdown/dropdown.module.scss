@@ -60,10 +60,11 @@
   }
 }
 
-// Selection items: padding 4px 12px 4px 4px, top-align for two-line items
+// Selection items: padding 4px 12px 4px 4px
+// align-items: center — works for single-line; checkSlot margin-top handles two-line
 .itemSelection {
   padding: 4px 12px 4px 4px;
-  align-items: flex-start; // checkmark aligns to first line when subLabel present
+  align-items: center;
 }
 
 // Category items: space-between for label + pill
@@ -142,7 +143,10 @@
   background-color: var(--palette-white-0);
   border: 1px solid var(--palette-neutral-0); // #CFDAF7
   flex-shrink: 0;
-  margin-top: 1px; // align to first text line
+  // Centre the 24px box with the 16px body text line:
+  // (24 - 16) / 2 = 4px, but body line-height 115% × 14 ≈ 16px, so box is already taller
+  // align-self: center keeps single-line items centred; for multi-line parent uses flex-start
+  align-self: center;
 
   // When parent button has data-checked (we use CSS :has or just rely on SVG content)
   // Selected state applied via parent — we show white icon when checked

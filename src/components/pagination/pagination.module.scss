@@ -1,0 +1,68 @@
+// Pagination — Figma nodes 14220:3895 + 1690:49203
+// Container: row, gap 4px
+// Item: label-regular/bold (12px), padding 8px 12px (regular) / 0px 12px (small)
+// Default bg: #E7EAF8 | Active bg: #0C1457 | Hover: rgba(0,0,0,0.04)
+// Border-radius: first=16px 2px 2px 16px | middle=2px | last=2px 16px 16px 2px
+@use "../../styles/text-styles" as ts;
+
+// ── Container ─────────────────────────────────────────────────────────────────
+
+.pagination {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+// ── Item ──────────────────────────────────────────────────────────────────────
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  @include ts.label-regular; // 12px / Regular / 150%
+  background-color: var(--palette-neutral-1); // #E7EAF8 — fill_8BMDZL
+  color: var(--palette-blue-0); // #0D2976 — fill_UO8NLZ
+  transition: background-color 0.15s ease;
+
+  &:hover:not(.active):not(.ellipsis) {
+    background-color: var(--palette-trans-0); // rgba(0,0,0,0.04) — fill_N0EKHE
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+
+  // Active — #0C1457 bg, white text, label-bold
+  &.active {
+    background-color: var(--palette-blue-1); // #0C1457 — fill_CPMO39
+    color: var(--palette-white-0); // white — fill_ZXN3CC
+    @include ts.label-bold; // 12px / Bold / 150%
+    cursor: default;
+  }
+
+  // Ellipsis — not interactive
+  &.ellipsis {
+    cursor: default;
+    pointer-events: none;
+  }
+}
+
+// ── Step border-radius ────────────────────────────────────────────────────────
+// First:  16px 2px 2px 16px  (left pill cap)
+// Middle: 2px                (square with slight radius)
+// Last:   2px 16px 16px 2px  (right pill cap)
+
+.first  { border-radius: 16px 2px 2px 16px; }
+.middle { border-radius: 2px; }
+.last   { border-radius: 2px 16px 16px 2px; }
+
+// ── Size variants ─────────────────────────────────────────────────────────────
+// Regular=True  (big):   padding 8px 12px  — layout_R0E3EE
+// Regular=False (small): padding 0px 12px  — layout_A65GPH
+
+.regular { padding: 8px 12px; }
+.small   { padding: 0 12px; }
