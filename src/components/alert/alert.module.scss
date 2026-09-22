@@ -1,0 +1,120 @@
+// Notification/Alert — Figma nodes 2802:170745 (states) + 5047:257830 (variants)
+// Radius: 8px | Text: Mulish Regular 14px / 150% | Color: #0D2976
+// Icon: 20×20px | Action buttons: Ghost style (border #0D2976, bold 14px)
+
+// ── Type backgrounds ──────────────────────────────────────────────────────────
+.error       { background-color: #ffe2e2; }
+.warning     { background-color: #ffe8ad; }
+.success     { background-color: #c8eede; }
+.general     { background-color: #e7eaf8; }
+.ai          { background-color: #cfdaf7; }
+.bulk_banner { background-color: #e7f9fe; }
+
+// ── Shared base ───────────────────────────────────────────────────────────────
+.alert {
+  border-radius: 8px;
+  font-family: var(--fontFamilyRegular);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #0d2976;
+  width: 100%;
+}
+
+// ── Header=False — inline (row) ───────────────────────────────────────────────
+// layout: row, space-between, align center, padding 8px 16px
+.inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  gap: 8px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.message {
+  flex: 1;
+}
+
+.actionsRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+// ── Header=True — with header + body + actions below ─────────────────────────
+// layout: column, gap 8px, padding 8px 16px
+.withHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+// Header text: Mulish Bold 14px / 150% (New/Body bold)
+.headerText {
+  font-weight: 700;
+  line-height: 150%;
+  flex: 1;
+}
+
+// Body paragraph: Mulish Regular 14px / 150%
+.body {
+  margin: 0;
+  line-height: 150%;
+}
+
+// Actions row below: padding-top 8px
+.actionsBottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+// ── Action buttons — Ghost style ──────────────────────────────────────────────
+// From Figma: Type=Ghost, border 1px #0D2976, Mulish Bold 14px
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #0d2976;
+  background: transparent;
+  font-family: var(--fontFamilyRegular);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 115%;
+  color: #0d2976;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgb(0 0 0 / 4%);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px #ffffff;
+  }
+}
