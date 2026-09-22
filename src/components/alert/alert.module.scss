@@ -1,28 +1,26 @@
-// Notification/Alert — Figma nodes 2802:170745 (states) + 5047:257830 (variants)
-// Radius: 8px | Text: Mulish Regular 14px / 150% | Color: #0D2976
-// Icon: 20×20px | Action buttons: Ghost style (border #0D2976, bold 14px)
+// Notification/Alert — Figma nodes 2802:170745 + 5047:257830
+// Radius: --radius-md | Text: Mulish Regular 14px / 150% | Colour: --palette-blue-0
 
-// ── Type backgrounds ──────────────────────────────────────────────────────────
-.error       { background-color: #ffe2e2; }
-.warning     { background-color: #ffe8ad; }
-.success     { background-color: #c8eede; }
-.general     { background-color: #e7eaf8; }
-.ai          { background-color: #cfdaf7; }
-.bulk_banner { background-color: #e7f9fe; }
+// ── Type backgrounds (from Figma) ─────────────────────────────────────────────
+.error       { background-color: var(--palette-red-2); }      /* #FFE2E2 */
+.warning     { background-color: var(--palette-orange-2); }   /* #FFE8AD */
+.success     { background-color: var(--palette-green-2); }    /* #C8EEDE */
+.general     { background-color: var(--palette-neutral-1); }  /* #E7EAF8 */
+.ai          { background-color: var(--palette-neutral-0); }  /* #CFDAF7 */
+.bulk_banner { background-color: var(--palette-primary-3); }  /* #E7F9FE */
 
 // ── Shared base ───────────────────────────────────────────────────────────────
 .alert {
-  border-radius: 8px;
-  font-family: var(--fontFamilyRegular);
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
   font-weight: 400;
   line-height: 150%;
-  color: #0d2976;
+  color: var(--palette-blue-0);
   width: 100%;
 }
 
 // ── Header=False — inline (row) ───────────────────────────────────────────────
-// layout: row, space-between, align center, padding 8px 16px
 .inline {
   display: flex;
   flex-direction: row;
@@ -51,8 +49,7 @@
   flex-shrink: 0;
 }
 
-// ── Header=True — with header + body + actions below ─────────────────────────
-// layout: column, gap 8px, padding 8px 16px
+// ── Header=True — column ──────────────────────────────────────────────────────
 .withHeader {
   display: flex;
   flex-direction: column;
@@ -67,20 +64,18 @@
   width: 100%;
 }
 
-// Header text: Mulish Bold 14px / 150% (New/Body bold)
+// New/Body bold — Mulish Bold 14px / 150%
 .headerText {
   font-weight: 700;
   line-height: 150%;
   flex: 1;
 }
 
-// Body paragraph: Mulish Regular 14px / 150%
 .body {
   margin: 0;
   line-height: 150%;
 }
 
-// Actions row below: padding-top 8px
 .actionsBottom {
   display: flex;
   align-items: center;
@@ -88,8 +83,8 @@
   padding-top: 8px;
 }
 
-// ── Action buttons — Ghost style ──────────────────────────────────────────────
-// From Figma: Type=Ghost, border 1px #0D2976, Mulish Bold 14px
+// ── Action buttons — Ghost style (Type=Ghost from Button regular new) ──────────
+// border: --palette-neutral-0, text: --palette-blue-0
 .actionBtn {
   display: inline-flex;
   align-items: center;
@@ -97,24 +92,24 @@
   gap: 8px;
   height: 32px;
   padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid #0d2976;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--palette-blue-0);
   background: transparent;
-  font-family: var(--fontFamilyRegular);
-  font-size: 14px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
   font-weight: 700;
   line-height: 115%;
-  color: #0d2976;
+  color: var(--palette-blue-0);
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.15s ease;
 
   &:hover {
-    background-color: rgb(0 0 0 / 4%);
+    background-color: var(--palette-trans-0);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px #ffffff;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
   }
 }

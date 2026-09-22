@@ -1,109 +1,108 @@
-// Design tokens — CSS custom properties
-// Source: Figma IPS-Components file (adFvaOeh8E3AKLFKRjYD3r)
-// Re-run `npm run figmagic:sync` to update from Figma
-// Token names match premiumui's dynamic token loading convention
+// Design tokens — IPS Components colour palette
+// Source: Figma node 4928:136651 (Colors component)
+// These are the canonical colours for all IPS components.
+// Re-sync from Figma when the palette changes.
 
 :root {
-  // ── Colors (light theme) ──────────────────────────────────────────
-  // Primary blues
-  --paletteBlue0: #0d2976;
-  --paletteBlue1: #0c1457;
-  --paletteBlue2: #5c6e9e;
-  --paletteBlue3: #31a2ce;
+  // ── Primary ───────────────────────────────────────────────────────
+  --palette-primary-0:      #2358F8;
+  --palette-primary-1:      #1531B8;
+  --palette-primary-2:      #4B75FF;
+  --palette-primary-3:      #E7F9FE;
+  --palette-primary-5:      #436FB6;
+  --palette-primary-action: #6EF29C;
 
-  // Primary action
-  --palettePrimary0: #1cd5e3;
-  --palettePrimary1: #1531b8;
-  --palettePrimary2: #4b75ff;
-  --palettePrimary3: #e7f9fe;
-  --palettePrimary5: #436fb6;
-  --palettePrimaryAction: #6ef29c;
+  // ── Blue ──────────────────────────────────────────────────────────
+  --palette-blue-0: #0D2976;
+  --palette-blue-1: #0C1457;
+  --palette-blue-2: #5C6E9E;
+  --palette-blue-3: #31A2CE;
 
-  // Neutrals
-  --paletteNeutral0: #cfdaf7;
-  --paletteNeutral1: #e7eaf8;
-  --paletteNeutral2: #f8f9fd;
-  --paletteNeutral3: #8f9ed1;
-  --paletteNeutral4: #f0f4ff;
-  --paletteNeutral5: #fafafd;
+  // ── Black ─────────────────────────────────────────────────────────
+  --palette-black-0: #000000;
+  --palette-black-1: #333333;
 
-  // Reds
-  --paletteRed0: #d42a36;
-  --paletteRed1: #a30013;
-  --paletteRed2: #ffe2e2;
-  --paletteRed3: #ff0000;
+  // ── White / light greys ───────────────────────────────────────────
+  --palette-white-0: #FFFFFF;
+  --palette-white-1: #F7F7F8;
+  --palette-white-2: #ECECEC;
+  --palette-white-3: #D5D5D5;
 
-  // Greens
-  --paletteGreen0: #248e61;
-  --paletteGreen1: #1f6648;
-  --paletteGreen2: #c8eede;
+  // ── Red ───────────────────────────────────────────────────────────
+  --palette-red-0: #D42A36;
+  --palette-red-1: #A30013;
+  --palette-red-2: #FFE2E2;
+  --palette-red-3: #FF0000;
 
-  // Oranges / warnings
-  --paletteOrange0: #ffcd38;
-  --paletteOrange1: #9b5a01;
-  --paletteOrange2: #ffe8ad;
-  --paletteOrange3: #ff6b00;
-  --paletteOrange4: #ffe606;
+  // ── Orange ────────────────────────────────────────────────────────
+  --palette-orange-0: #FFCD38;
+  --palette-orange-1: #9B5A01;
+  --palette-orange-2: #FFE8AD;
+  --palette-orange-3: #FF6B00;
+  --palette-orange-4: #FFE606;
 
-  // White / black
-  --paletteWhite0: #ffffff;
-  --paletteWhite1: #abb8c9;
-  --paletteBlack0: #ffffff;
-  --paletteBlack1: #abb8c9;
-  --white: #ffffff;
+  // ── Green ─────────────────────────────────────────────────────────
+  --palette-green-0: #248E61;
+  --palette-green-1: #1F6648;
+  --palette-green-2: #C8EEDE;
 
-  // Transparency
-  --paletteTrans0: rgba(0, 0, 0, 0.04);
-  --paletteTransLight0: rgba(255, 255, 255, 0.1);
+  // ── Neutral ───────────────────────────────────────────────────────
+  --palette-neutral-0: #CFDAF7;
+  --palette-neutral-1: #E7EAF8;
+  --palette-neutral-2: #F8F9FD;
+  --palette-neutral-3: #8F9ED1;
+
+  // ── Reserved (teal/slate) ─────────────────────────────────────────
+  --palette-reserved-0: #1F363D;
+  --palette-reserved-1: #5E7A83;
+  --palette-reserved-2: #40798C;
+  --palette-reserved-3: #70A9A1;
+
+  // ── Echarts ───────────────────────────────────────────────────────
+  --palette-echarts-0: #5470C6;
+  --palette-echarts-1: #91CC75;
+  --palette-echarts-2: #FAC858;
+  --palette-echarts-3: #EE6666;
+  --palette-echarts-4: #73C0DE;
+  --palette-echarts-5: #3BA272;
+  --palette-echarts-6: #FC8452;
+  --palette-echarts-7: #9A60B4;
+
+  // ── Transparency ──────────────────────────────────────────────────
+  --palette-trans-0:       rgba(0, 0, 0, 0.04);
+  --palette-trans-1:       rgba(0, 0, 0, 0.08);
+  --palette-trans-2:       rgba(0, 0, 0, 0.12);
+  --palette-trans-light-0: rgba(255, 255, 255, 0.04);
 
   // ── Spacing ───────────────────────────────────────────────────────
-  --spacingXs: 0.125rem;   /* 2px */
-  --spacingSm: 0.25rem;    /* 4px */
-  --spacingMd: 0.5rem;     /* 8px */
-  --spacingMd2: 0.75rem;   /* 12px */
-  --spacingLg: 1rem;       /* 16px */
-  --spacingXl: 1.5rem;     /* 24px */
-  --spacing2xl: 2rem;      /* 32px */
-  --spacing3xl: 2.5rem;    /* 40px */
+  --spacing-xs:  0.125rem;  /*  2px */
+  --spacing-sm:  0.25rem;   /*  4px */
+  --spacing-md:  0.5rem;    /*  8px */
+  --spacing-md2: 0.75rem;   /* 12px */
+  --spacing-lg:  1rem;      /* 16px */
+  --spacing-xl:  1.5rem;    /* 24px */
+  --spacing-2xl: 2rem;      /* 32px */
+  --spacing-3xl: 2.5rem;    /* 40px */
 
   // ── Radii ─────────────────────────────────────────────────────────
-  --radiusXs: 2px;
-  --radiusSm: 4px;
-  --radiusMd: 8px;
-  --radiusLg: 12px;
-  --radiusXl: 16px;
-  --radius2xl: 32px;
-  --radiusFull: 9999px;
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  32px;
+  --radius-full: 9999px;
 
-  // ── Font sizes ────────────────────────────────────────────────────
-  --fontSizeH1: 2rem;           /* 32px */
-  --fontSizeH2: 1.75rem;        /* 28px */
-  --fontSizeH3: 1.5rem;         /* 24px */
-  --fontSizeH4: 1.25rem;        /* 20px */
-  --fontSizeH5: 1rem;           /* 16px */
-  --fontSizeH6: 0.9375rem;      /* 15px */
-  --fontSizeRegular: 0.875rem;  /* 14px */
-  --fontSizeLabel: 0.75rem;     /* 12px */
-  --fontSizeLabelSmall: 0.625rem; /* 10px */
+  // ── Typography ────────────────────────────────────────────────────
+  --font-family: "Mulish", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  // Aliases used across IPS components
-  --fontSizeXs: 0.625rem;   /* 10px */
-  --fontSizeSm: 0.75rem;    /* 12px */
-  --fontSizeBody: 0.875rem; /* 14px */
-  --fontSizeMd: 0.9375rem;  /* 15px */
-  --fontSizeLg: 1.125rem;   /* 18px */
-  --fontSizeXl: 1.375rem;   /* 22px */
-
-  // ── Font families ─────────────────────────────────────────────────
-  --fontFamilyRegular: "Nunito Sans", "Mulish", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
-  // ── Font weights ──────────────────────────────────────────────────
-  --fontWeightRegular: 400;
-  --fontWeightMedium: 600;
-  --fontWeightBold: 700;
-
-  // ── Line heights ──────────────────────────────────────────────────
-  --lineHeightTight: 1.2;
-  --lineHeightNormal: 1.5;
-  --lineHeightRelaxed: 1.7;
+  --font-size-h1:           2rem;       /* 32px */
+  --font-size-h2:           1.75rem;    /* 28px */
+  --font-size-h3:           1.5rem;     /* 24px */
+  --font-size-h4:           1.25rem;    /* 20px */
+  --font-size-h5:           1rem;       /* 16px */
+  --font-size-h6:           0.9375rem;  /* 15px */
+  --font-size-body:         0.875rem;   /* 14px */
+  --font-size-label:        0.75rem;    /* 12px */
+  --font-size-label-small:  0.625rem;   /* 10px */
 }
