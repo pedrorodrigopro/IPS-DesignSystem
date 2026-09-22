@@ -1,0 +1,134 @@
+// Tooltip — Figma node 1457:22694
+// Background: #0C1457 | Text: white | Padding: 16px | Radius: 8px
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 9999;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: #0c1457;
+  color: #ffffff;
+  font-family: var(--fontFamilyRegular);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: nowrap;
+  pointer-events: none;
+
+  // Placement
+  &.top,
+  &.top_left,
+  &.top_right {
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #0c1457;
+    }
+  }
+
+  &.top_left {
+    left: 0;
+    transform: none;
+    &::after { left: 12px; transform: none; }
+  }
+
+  &.top_right {
+    left: auto;
+    right: 0;
+    transform: none;
+    &::after { left: auto; right: 12px; transform: none; }
+  }
+
+  &.bottom,
+  &.bottom_left,
+  &.bottom_right {
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+
+    &::before {
+      content: "";
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-bottom-color: #0c1457;
+    }
+  }
+
+  &.bottom_left {
+    left: 0;
+    transform: none;
+    &::before { left: 12px; transform: none; }
+  }
+
+  &.bottom_right {
+    left: auto;
+    right: 0;
+    transform: none;
+    &::before { left: auto; right: 12px; transform: none; }
+  }
+
+  &.left {
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-left-color: #0c1457;
+    }
+  }
+
+  &.right {
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+
+    &::before {
+      content: "";
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-right-color: #0c1457;
+    }
+  }
+
+  // Variants
+  &.activity_feed {
+    background-color: #2358f8;
+
+    &::after { border-top-color: #2358f8; }
+    &::before { border-bottom-color: #2358f8; }
+  }
+
+  &.calendar {
+    background-color: #cfdaf7;
+    color: #0d2976;
+
+    &::after { border-top-color: #cfdaf7; }
+    &::before { border-bottom-color: #cfdaf7; }
+  }
+}

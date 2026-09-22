@@ -1,0 +1,91 @@
+// Checkbox — Figma node 1635:27838
+// Box: 24x24px, radius 6px | Font: Mulish Regular 14px
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  &.vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  &.horizontal {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 0;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 6px;
+  background-color: #ffffff;
+  border: 1px solid #cfdaf7;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &.checked,
+  &.indeterminate {
+    background-color: #0c1457;
+    border: none;
+  }
+}
+
+.checkbox:hover:not(.disabled) .box:not(.checked):not(.indeterminate) {
+  background-color: rgb(0 0 0 / 4%);
+  border-color: #5c6e9e;
+}
+
+.checkbox:hover:not(.disabled) .box.checked,
+.checkbox:hover:not(.disabled) .box.indeterminate {
+  background-color: #1531b8;
+}
+
+.input:focus-visible + .box {
+  box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px #ffffff;
+}
+
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-family: var(--fontFamilyRegular);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #0d2976;
+}
+
+.subLabel {
+  font-family: var(--fontFamilyRegular);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #5c6e9e;
+}

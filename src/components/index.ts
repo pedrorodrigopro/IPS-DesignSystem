@@ -7,3 +7,6 @@ export * from "./toast";
 export * from "./kpi_card";
 export * from "./sidepanel";
 export * from "./modal";
+export * from "./input";
+export * from "./checkbox";
+export * from "./switch";

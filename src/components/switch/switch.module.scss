@@ -1,0 +1,80 @@
+// Switch — Figma node 1635:27830
+// Track: 36x20px pill | Knob: 16px circle
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.track {
+  display: inline-flex;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  border: 1px solid #cfdaf7;
+  padding: 2px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  position: relative;
+
+  &.on {
+    background-color: #0c1457;
+    border-color: #0c1457;
+  }
+}
+
+.switch:hover:not(.disabled) .track:not(.on) {
+  background-color: rgb(0 0 0 / 4%);
+  border-color: #5c6e9e;
+}
+
+.switch:hover:not(.disabled) .track.on {
+  background-color: #1531b8;
+  border-color: #1531b8;
+}
+
+.input:focus-visible + .track {
+  box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px #ffffff;
+}
+
+.knob {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #cfdaf7;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  position: absolute;
+  left: 2px;
+
+  .on & {
+    transform: translateX(16px);
+    background-color: #ffffff;
+  }
+}
+
+.label {
+  font-family: var(--fontFamilyRegular);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #0d2976;
+}
