@@ -15,11 +15,13 @@
   },
   "files": ["dist"],
   "scripts": {
-    "dev": "storybook dev -p 6006",
-    "build": "tsc && vite build",
+    "build": "tsc --noEmit && vite build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
     "figmagic:sync": "figmagic"
+  },
+  "dependencies": {
+    "classnames": "^2.3.2"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -38,7 +40,6 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "classnames": "^2.3.2",
     "figmagic": "^4.5.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
