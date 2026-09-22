@@ -89,9 +89,9 @@
   flex-shrink: 0;
   transition: background-color 0.15s ease;
 
-  // Hover: filled dark circle (fill_QIK1UX = #0C1457)
+  // Hover: filled electric blue circle (#2358F8 = --palette-primary-0)
   &:hover:not(.active) {
-    background-color: var(--palette-blue-1); // #0C1457
+    background-color: var(--palette-primary-0); // #2358F8
   }
 
   // Hover — show tooltip
@@ -107,9 +107,9 @@
     box-shadow: 0 0 0 4px rgba(255, 255, 255, 1), 0 0 0 2px rgba(12, 20, 87, 1);
   }
 
-  // Active/selected: filled circle
+  // Active/selected: electric blue circle
   &.active {
-    background-color: var(--palette-blue-1); // #0C1457
+    background-color: var(--palette-primary-0); // #2358F8
   }
 }
 
@@ -147,7 +147,7 @@
   left: calc(100% + 12px); // right of the navbar button
   top: 50%;
   transform: translateY(-50%);
-  background-color: var(--palette-blue-1); // #0C1457 — fill_QIK1UX
+  background-color: var(--palette-blue-1); // #0C1457 — dark tooltip bg
   color: var(--palette-white-0);
   font-family: var(--font-family);
   font-size: var(--font-size-body); // 14px
