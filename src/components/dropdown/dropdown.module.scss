@@ -60,10 +60,10 @@
   }
 }
 
-// Selection items: padding 4px 12px 4px 4px
+// Selection items: padding 4px 12px 4px 4px, top-align for two-line items
 .itemSelection {
   padding: 4px 12px 4px 4px;
-  align-items: center; // vertically centred — visual box aligns with label text
+  align-items: flex-start; // checkmark aligns to first line when subLabel present
 }
 
 // Category items: space-between for label + pill
@@ -111,6 +111,8 @@
 }
 
 // ── Checkmark slot ────────────────────────────────────────────────────────────
+// 16×16px — same as body-unselected line-height (115% × 14px ≈ 16px)
+// margin-top aligns it to the first text line
 
 .checkSlot {
   display: inline-flex;
@@ -119,6 +121,7 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  margin-top: 1px; // align to first line
 }
 
 .checkIcon {
@@ -139,7 +142,7 @@
   background-color: var(--palette-white-0);
   border: 1px solid var(--palette-neutral-0); // #CFDAF7
   flex-shrink: 0;
-  align-self: center;
+  margin-top: 1px; // align to first text line
 
   // When parent button has data-checked (we use CSS :has or just rely on SVG content)
   // Selected state applied via parent — we show white icon when checked
