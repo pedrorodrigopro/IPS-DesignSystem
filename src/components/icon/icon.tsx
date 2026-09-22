@@ -102,7 +102,7 @@ export type IconName =
   | "table" | "tag" | "undo" | "unseen" | "up" | "user-filled"
   | "verified" | "warning" | "workflow" | "zoom-in" | "zoom-out";
 
-export type IconSize = 16 | 20 | 24;
+export type IconSize = 14 | 16 | 20 | 24;
 
 export type IconProps = SVGProps<SVGSVGElement> & {
   name: IconName;

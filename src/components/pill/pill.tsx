@@ -44,7 +44,7 @@ export const PillSimple = ({
     style={{ ...(bg ? { backgroundColor: bg } : {}), ...(color ? { color } : {}) }}
   >
     {leftIcon && (
-      <Icon name={leftIcon} size={size === "small" ? 16 : 20} className={css.icon} />
+      <Icon name={leftIcon} size={size === "small" ? 14 : 16} className={css.icon} />
     )}
     <span className={css.label}>{label}</span>
   </span>
@@ -83,7 +83,7 @@ export const PillRemovable = ({
       aria-label={`Remove ${label}`}
       tabIndex={0}
     >
-      <Icon name="cross" size={size === "small" ? 16 : 20} className={css.icon} />
+      <Icon name="cross" size={size === "small" ? 14 : 16} className={css.icon} />
     </button>
     <span className={css.label}>{label}</span>
   </span>
@@ -122,7 +122,7 @@ export const PillModifier = ({
     >
       {onRemoveLeft && (
         <button type="button" className={css.removeBtn} onClick={onRemoveLeft} aria-label={`Remove ${leftLabel}`}>
-          <Icon name="cross" size={size === "small" ? 16 : 20} className={css.icon} />
+          <Icon name="cross" size={size === "small" ? 14 : 16} className={css.icon} />
         </button>
       )}
       <span className={css.label}>{leftLabel}</span>
@@ -134,7 +134,7 @@ export const PillModifier = ({
       onClick={onClickRight}
     >
       <span className={css.label}>{rightLabel}</span>
-      <Icon name={rightIcon} size={size === "small" ? 16 : 20} className={css.icon} />
+      <Icon name={rightIcon} size={size === "small" ? 14 : 16} className={css.icon} />
     </button>
   </span>
 );

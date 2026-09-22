@@ -16,19 +16,19 @@
 }
 
 // ── Simple (Type=Simple) ──────────────────────────────────────────────────────
-// gap 8px, padding 8px 16px (regular) | gap 4px, padding 5px 8px (small)
+// Regular: 32px height, padding 8px 16px | Small: 26px height, padding 5px 8px
 
 .simple {
-  &.regular { gap: 8px; padding: 8px 16px; }
-  &.small   { gap: 4px; padding: 5px 8px; }
+  &.regular { gap: 8px; padding: 0 16px; height: 32px; }
+  &.small   { gap: 4px; padding: 0 8px;  height: 26px; }
 }
 
 // ── Removable (Type=Removable) ────────────────────────────────────────────────
-// gap 8px, padding 8px 16px 8px 8px (regular) | gap 4px, padding 5px 12px 5px 8px (small)
+// Regular: 32px | Small: 26px
 
 .removable {
-  &.regular { gap: 8px; padding: 8px 16px 8px 8px; }
-  &.small   { gap: 4px; padding: 5px 12px 5px 8px; }
+  &.regular { gap: 8px; padding: 0 16px 0 8px; height: 32px; }
+  &.small   { gap: 4px; padding: 0 12px 0 8px; height: 26px; }
 
   &.bordered { border: 1px solid var(--palette-neutral-0); } // #CFDAF7
 }
