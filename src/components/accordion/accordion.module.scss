@@ -39,10 +39,28 @@
 
 .title {
   font-family: var(--fontFamilyRegular);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 115%;
   color: #0d2976;
+
+  // Size=Body — Mulish Bold 14px / 115%
+  &.body {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 115%;
+  }
+
+  // Size=Heading5 — Mulish SemiBold 16px / 125%
+  &.heading5 {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 125%;
+  }
+
+  // Size=Heading4 — Mulish SemiBold 20px / 125%
+  &.heading4 {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 125%;
+  }
 }
 
 .content {

@@ -2,8 +2,12 @@ import classNames from "classnames";
 import { ReactNode, useState } from "react";
 import css from "./accordion.module.scss";
 
+// Size variants from .Accordion label (node 11262:130821)
+export type AccordionSize = "body" | "heading5" | "heading4";
+
 export type AccordionProps = {
   title: string;
+  size?: AccordionSize;
   children?: ReactNode;
   defaultExpanded?: boolean;
   className?: string;
@@ -11,6 +15,7 @@ export type AccordionProps = {
 
 export const Accordion = ({
   title,
+  size = "body",
   children,
   defaultExpanded = false,
   className,
@@ -42,7 +47,7 @@ export const Accordion = ({
             <path d="M6 4L10 8L6 12" stroke="#0D2976" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           )}
         </svg>
-        <span className={css.title}>{title}</span>
+        <span className={classNames(css.title, css[size])}>{title}</span>
       </button>
       {expanded && children && (
         <div className={css.content}>{children}</div>
