@@ -28,7 +28,7 @@
 .tab {
   display: inline-flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start; // icon + badge align to top line when subtitle present
   gap: 4px;
   padding: 8px;
   border-radius: var(--radius-md); // 8px
@@ -104,6 +104,8 @@
 .icon {
   flex-shrink: 0;
   color: var(--palette-blue-0);
+  // Align to first text line — margin matches (body line-height - icon size) / 2
+  margin-top: 1px;
 }
 
 // ── Badge — count pill ────────────────────────────────────────────────────────
@@ -122,6 +124,8 @@
   background-color: var(--palette-neutral-1); // #E7EAF8 — inactive badge
   color: var(--palette-blue-0);
   flex-shrink: 0;
+  // Align to first text line
+  margin-top: 1px;
 }
 
 // Active badge — fill_BH3QVI = #436FB6 (--palette-primary-5), white text
