@@ -1,0 +1,83 @@
+// Loading — Figma nodes 1890:123451 (overlay) + 1981:166760 (icon)
+// Dots colour: #0C1457 (--palette-blue-1, fill_IV68GL / fill_4HVTRZ)
+// Overlay bg: rgba(248,249,253,0.75) (--palette-neutral-2 at 75%)
+// Overlay dots: 24×24px, gap 16px
+// Icon dots: 8×8px, gap 4px, container 32×32px
+
+// ── Bounce animation ──────────────────────────────────────────────────────────
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// ── Dots ──────────────────────────────────────────────────────────────────────
+
+.dots {
+  display: flex;
+  align-items: center;
+}
+
+// Overlay size: 24×24px dots, gap 16px
+.dots_overlay {
+  gap: 16px;
+}
+
+// Icon size: 8×8px dots, gap 4px
+.dots_icon {
+  gap: 4px;
+}
+
+.dot {
+  display: inline-block;
+  border-radius: var(--radius-full);
+  background-color: var(--palette-blue-1); // #0C1457
+  animation: bounce 1.4s ease-in-out infinite both;
+
+  .dots_overlay & {
+    width: 24px;
+    height: 24px;
+  }
+
+  .dots_icon & {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+// Stagger the dots
+.dot1 { animation-delay: -0.32s; }
+.dot2 { animation-delay: -0.16s; }
+.dot3 { animation-delay: 0s; }
+
+// ── Overlay ───────────────────────────────────────────────────────────────────
+// Full-screen, rgba(248,249,253,0.75) bg, centred horizontally, padding-top 160px
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(248, 249, 253, 0.75); // fill_F0PPFL — --palette-neutral-2 at 75%
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 160px; // from Figma layout_VB8066
+}
+
+// ── Icon wrapper ──────────────────────────────────────────────────────────────
+// 32×32px, centred
+
+.iconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 4px 0;
+}

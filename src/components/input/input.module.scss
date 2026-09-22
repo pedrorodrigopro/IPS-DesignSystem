@@ -238,12 +238,13 @@
   gap: 8px;
   flex: 1;
   padding: 8px 0;
-  min-height: 24px;
+  min-height: 32px; // same height as standard input (padding 8px + body line-height)
 }
 
 .bookingLabel {
   @include ts.body-selected; // 14px / Bold / 115%
   color: var(--palette-blue-0);
+  flex: 1; // push colour pill to the right
 }
 
 .colorSwatch {
@@ -252,6 +253,7 @@
   height: 24px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
+  margin-left: auto; // ensure it stays right-aligned
 }
 
 // ── Inline label ──────────────────────────────────────────────────────────────

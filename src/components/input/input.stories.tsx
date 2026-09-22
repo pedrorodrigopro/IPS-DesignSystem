@@ -42,10 +42,12 @@ export const TextFieldInteractive: StoryFn = () => {
 // ── Search (13240:87513) ──────────────────────────────────────────────────────
 
 export const Search: StoryFn = () => {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState("test search");
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, width: 283 }}>
+      {/* Searching=False — magnifying glass */}
       <InputSearch placeholder="Search" value="" />
+      {/* Searching=True — cross + searched term */}
       <InputSearch
         value={value}
         placeholder="Search"

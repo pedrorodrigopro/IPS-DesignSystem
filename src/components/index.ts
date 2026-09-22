@@ -10,3 +10,4 @@ export * from "./divider";
 export * from "./dropdown";
 export * from "./empty_state";
 export * from "./input";
+export * from "./loading";
