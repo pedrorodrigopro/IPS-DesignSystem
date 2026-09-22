@@ -1,0 +1,216 @@
+// Calendar — Figma node 3506:209189
+// Day selector states from node 2143:140771
+// Width: 495px | Padding: 16px | Day cell: 32×32px (Date/Range) | Radius: 32px (full pill)
+@use "../../styles/text-styles" as ts;
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  width: 495px;
+  padding: 16px;
+  background-color: var(--palette-white-0);
+  border: 1px solid var(--palette-white-2); // subtle border
+  border-radius: var(--radius-md);
+  gap: 0;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+// row, align center, gap 8px, fills width
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.headerInputs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+// Month/Year selects — match Input new style (transparent bg, border #CFDAF7)
+.headerSelect {
+  @include ts.body-unselected; // 14px / Regular / 115%
+  color: var(--palette-blue-0);
+  background: transparent;
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  border-radius: var(--radius-md);
+  padding: 8px 8px 8px 8px;
+  cursor: pointer;
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+.headerNav {
+  display: flex;
+  gap: 4px;
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--palette-blue-0);
+  transition: background-color 0.15s ease;
+
+  &:hover { background-color: var(--palette-trans-0); }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+// ── Weekday headers ───────────────────────────────────────────────────────────
+// row, space-between, padding 10px 0
+
+.weekdays {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+// weekday header cell: 36px wide, centred, body-bold, --palette-blue-0
+.weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  padding: 10px 0;
+  @include ts.body-bold; // 14px / Bold / 150%
+  color: var(--palette-blue-0);
+  flex: 1;
+}
+
+// ── Day grid ──────────────────────────────────────────────────────────────────
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.week {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+// Day cell — Day selector (node 2143:140771)
+// Default:  36×36px circle, white bg, #D5D5D5 border, #5C6E9E text, body-unselected
+// Hover:    rgba(0,0,0,0.04) bg
+// Selected: #0C1457 fill, white text, body-selected, no border
+.day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full); // 32px pill
+  border: 1px solid var(--palette-white-3); // #D5D5D5
+  background: var(--palette-white-0);
+  @include ts.body-unselected; // 14px / Regular / 115%
+  color: var(--palette-blue-2); // #5C6E9E — matches fill_QQGL1Y
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  flex: 1;
+
+  &:hover:not(.daySelected):not(.dayInRange) {
+    background-color: var(--palette-trans-0);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+// Current month days — darker text
+.day:not(.dayOtherMonth) {
+  color: var(--palette-blue-0); // #0D2976
+}
+
+// Adjacent month days — dimmed
+.dayOtherMonth {
+  color: var(--palette-white-3); // #D5D5D5
+  border-color: transparent;
+}
+
+// Selected day — filled circle
+.daySelected {
+  background-color: var(--palette-blue-1); // #0C1457
+  color: var(--palette-white-0);
+  border-color: transparent;
+  @include ts.body-selected; // 14px / Bold / 115%
+}
+
+// ── Range states ──────────────────────────────────────────────────────────────
+// Start: full circle (32px radius), filled
+// Middle: rect (no radius), filled — forms continuous band
+// End: full circle, filled
+
+.dayRangeStart {
+  background-color: var(--palette-blue-1);
+  color: var(--palette-white-0);
+  border-color: transparent;
+  border-radius: var(--radius-full) 0 0 var(--radius-full);
+  @include ts.body-selected;
+}
+
+.dayRangeMid {
+  background-color: var(--palette-blue-1);
+  color: var(--palette-white-0);
+  border-color: transparent;
+  border-radius: 0;
+  @include ts.body-selected;
+}
+
+.dayRangeEnd {
+  background-color: var(--palette-blue-1);
+  color: var(--palette-white-0);
+  border-color: transparent;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  @include ts.body-selected;
+}
+
+// ── Time input (Date & Time type) ─────────────────────────────────────────────
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 16px;
+}
+
+.timeInput {
+  @include ts.body-unselected; // 14px / Regular / 115%
+  color: var(--palette-blue-0);
+  background: var(--palette-white-0);
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}

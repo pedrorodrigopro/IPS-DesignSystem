@@ -4,3 +4,4 @@ export * from "./alert";
 export * from "./icon";
 export * from "./avatar";
 export * from "./breadcrumbs";
+export * from "./calendar";
