@@ -1,0 +1,280 @@
+// Input — Figma nodes 1779:112429, 13240:87513, 12657:591296, 12120:278386, 14536:52162
+// Shared input box: row, padding 8px, gap 8px, radius 8px, border 1px #CFDAF7 (--palette-neutral-0)
+@use "../../styles/text-styles" as ts;
+
+// ── Field wrapper ─────────────────────────────────────────────────────────────
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+// ── Label row ─────────────────────────────────────────────────────────────────
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+// label-regular (12px/400/150%), --palette-blue-0
+.label {
+  @include ts.label-regular;
+  color: var(--palette-blue-0);
+  flex: 1;
+}
+
+// mandatory asterisk — red
+.mandatory {
+  @include ts.label-regular;
+  color: var(--palette-red-0); // #D42A36
+}
+
+// ── Input box (shared shell) ──────────────────────────────────────────────────
+// row, align center, gap 8px, padding 8px, radius 8px, border 1px --palette-neutral-0
+
+.inputBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius-md); // 8px
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  background-color: var(--palette-white-0);
+  width: 100%;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover:not(.readOnly) {
+    background-color: var(--palette-white-1); // #F7F7F8 — fill_AH29ZC
+  }
+
+  &:focus-within:not(.readOnly) {
+    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);
+    outline: none;
+  }
+
+  // States
+  &.error {
+    background-color: var(--palette-red-2); // #FFE2E2
+    &:hover { background-color: var(--palette-white-1); }
+  }
+
+  &.warning {
+    background-color: var(--palette-orange-2); // #FFE8AD
+    &:hover { background-color: var(--palette-white-1); }
+  }
+
+  // Read-only: no border, no bg, padding 8px 0
+  &.readOnly {
+    border-color: transparent;
+    background-color: transparent;
+    padding: 8px 0;
+    box-shadow: none;
+  }
+}
+
+// ── Input element ─────────────────────────────────────────────────────────────
+// body-selected (14px/Bold/115%), --palette-blue-0
+
+.inputEl {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  @include ts.body-selected; // 14px / Bold / 115%
+  color: var(--palette-blue-0);
+  min-width: 0;
+
+  &::placeholder {
+    @include ts.body-unselected; // 14px / Regular / 115%
+    color: var(--palette-blue-2); // #5C6E9E
+    font-weight: 400;
+  }
+
+  // Hide native search clear button
+  &::-webkit-search-cancel-button { display: none; }
+}
+
+// ── Icon (chevron-down, search) ───────────────────────────────────────────────
+
+.icon {
+  flex-shrink: 0;
+  color: var(--palette-blue-0);
+}
+
+// ── Clear button (search) ─────────────────────────────────────────────────────
+
+.clearBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--palette-blue-0);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+// ── Message row ───────────────────────────────────────────────────────────────
+// row, gap 4px, padding-left 4px
+
+.messageRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 4px;
+}
+
+.message {
+  @include ts.label-regular; // 12px / Regular / 150%
+}
+
+.msg_error        { color: var(--palette-red-0); }    // #D42A36
+.msg_warning      { color: var(--palette-orange-1); } // #9B5A01
+.msg_instructions { color: var(--palette-blue-2); }   // #5C6E9E
+.msg_default      { color: var(--palette-blue-2); }
+
+.msgIconError   { color: var(--palette-red-0);    flex-shrink: 0; }
+.msgIconWarning { color: var(--palette-orange-1); flex-shrink: 0; }
+.msgIconInfo    { color: var(--palette-blue-2);   flex-shrink: 0; }
+
+// ── Multiselect ───────────────────────────────────────────────────────────────
+
+.clearAllBtn {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--palette-blue-2);
+  padding: 0;
+}
+
+.multiBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--palette-neutral-0);
+  background-color: var(--palette-white-0);
+  width: 100%;
+  min-height: 40px;
+
+  &:hover { background-color: var(--palette-white-1); }
+  &:focus-within {
+    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);
+    outline: none;
+  }
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+// Removable pill tag
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px 5px 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--palette-white-1); // #F7F7F8
+  border: 1px solid var(--palette-neutral-0);
+  @include ts.label-unselected; // 12px / Regular / 115%
+  color: var(--palette-blue-0);
+  position: relative;
+}
+
+.tagRemoveIcon { color: var(--palette-blue-2); flex-shrink: 0; }
+
+.tagRemoveBtn {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+
+// ── Booking category ──────────────────────────────────────────────────────────
+// Compact: padding 4px 8px outer, inner content 8px 0
+
+.bookingBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--palette-neutral-0);
+  background-color: var(--palette-white-0);
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { background-color: var(--palette-white-1); }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+.bookingContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 8px 0;
+  min-height: 24px;
+}
+
+.bookingLabel {
+  @include ts.body-selected; // 14px / Bold / 115%
+  color: var(--palette-blue-0);
+}
+
+.colorSwatch {
+  display: inline-block;
+  width: 80px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+// ── Inline label ──────────────────────────────────────────────────────────────
+
+.inlineBox {
+  cursor: pointer;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+// Inline label portion — regular weight (ts1 style from Figma: fontWeight 400)
+.inlineLabel {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body); // 14px
+  font-weight: var(--font-weight-regular); // 400
+  line-height: 115%;
+  color: var(--palette-blue-0);
+}
+
+// Inline value portion — bold
+.inlineValue {
+  @include ts.body-selected; // 14px / Bold / 115%
+  color: var(--palette-blue-0);
+}

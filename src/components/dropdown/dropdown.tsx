@@ -10,7 +10,6 @@
 import classNames from "classnames";
 import { ReactNode, useState } from "react";
 import { Avatar } from "../avatar/avatar";
-import { Checkbox } from "../checkbox/checkbox";
 import { Icon, IconName } from "../icon/icon";
 import css from "./dropdown.module.scss";
 
@@ -91,6 +90,22 @@ export const DropdownSelection = ({ items, selectedId, onSelect, className }: Dr
   </div>
 );
 
+// ── Visual-only checkbox box (no label, no input — for use inside buttons) ────
+const VisualCheckbox = ({ checked, indeterminate }: { checked: boolean; indeterminate?: boolean }) => (
+  <span className={classNames(css.visualBox, { [css.visualBoxChecked]: checked || indeterminate })} aria-hidden="true">
+    {checked && !indeterminate && (
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )}
+    {indeterminate && (
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2.5 6H9.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    )}
+  </span>
+);
+
 // ── Multi-selection dropdown ──────────────────────────────────────────────────
 // Search box + "Select all" + checkboxes per item
 
@@ -146,34 +161,25 @@ export const DropdownMultiSelection = ({
       <div className={css.list}>
         {/* Select all */}
         <button
-          type="button"
-          className={classNames(css.item, css.itemSelection)}
-          onClick={toggleAll}
-        >
-          <Checkbox
-            checked={allSelected}
-            indeterminate={someSelected && !allSelected}
-            onChange={toggleAll}
-            className={css.itemCheckbox}
-          />
-          <span className={css.texts}>
-            <span className={css.line1}>
-              Select all ({items.length})
+            type="button"
+            className={classNames(css.item, css.itemSelection)}
+            onClick={toggleAll}
+          >
+            <VisualCheckbox checked={allSelected} indeterminate={someSelected && !allSelected} />
+            <span className={css.texts}>
+              <span className={css.line1}>
+                Select all ({items.length})
+              </span>
             </span>
-          </span>
-        </button>
-        {filtered.map((item) => (
+          </button>
+          {filtered.map((item) => (
           <button
             key={item.id}
             type="button"
             className={classNames(css.item, css.itemSelection)}
             onClick={() => toggleItem(item.id)}
           >
-            <Checkbox
-              checked={selectedIds.includes(item.id)}
-              onChange={() => toggleItem(item.id)}
-              className={css.itemCheckbox}
-            />
+            <VisualCheckbox checked={selectedIds.includes(item.id)} />
             <span className={css.texts}>
               <span className={css.line1}>{item.label}</span>
               {item.subLabel && <span className={css.line2}>{item.subLabel}</span>}

@@ -127,10 +127,34 @@
   color: var(--palette-blue-0);
 }
 
-// ── Checkbox in multi-selection ───────────────────────────────────────────────
+// ── Visual checkbox box (used inside dropdown buttons — no label/input) ────────
+// Matches Checkbox box: 24×24px, radius 6px, #CFDAF7 border, #0C1457 when checked
 
-.itemCheckbox {
-  pointer-events: none; // click handled by parent button
+.visualBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 6px;
+  background-color: var(--palette-white-0);
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  flex-shrink: 0;
+  align-self: center;
+
+  // When parent button has data-checked (we use CSS :has or just rely on SVG content)
+  // Selected state applied via parent — we show white icon when checked
+  svg { display: block; }
+
+  .item:hover & {
+    border-color: var(--palette-neutral-3);
+  }
+}
+
+.visualBoxChecked {
+  background-color: var(--palette-blue-1); // #0C1457
+  border-color: transparent;
 }
 
 // ── Search box ────────────────────────────────────────────────────────────────
