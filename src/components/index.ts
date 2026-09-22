@@ -7,3 +7,4 @@ export * from "./breadcrumbs";
 export * from "./calendar";
 export * from "./checkbox";
 export * from "./divider";
+export * from "./dropdown";

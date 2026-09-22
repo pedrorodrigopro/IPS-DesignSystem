@@ -1,0 +1,225 @@
+// Dropdown — Figma nodes 1671:37795, 1671:37903, 11580:76761, 10332:397347, 4988:280212, 12228:371904
+// Card: white bg, radius 8px, shadow "0 0 4px rgba(203,225,242,0.8)", padding 8px
+// Item: row, padding 4px 12px, radius 12px, hover rgba(0,0,0,0.04)
+// Line 1: body-unselected (14px/400/115%), --palette-blue-0
+// Line 2: label-regular (12px/400/150%), --palette-blue-2
+@use "../../styles/text-styles" as ts;
+
+// ── Shared wrapper ────────────────────────────────────────────────────────────
+
+.dropdownWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+// ── Card ──────────────────────────────────────────────────────────────────────
+
+.card {
+  background-color: var(--palette-white-0);
+  border-radius: var(--radius-md); // 8px
+  box-shadow: 0 0 4px 0 rgba(203, 225, 242, 0.8); // Elevation - default
+  padding: 8px;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+// ── Item list ─────────────────────────────────────────────────────────────────
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// ── Base item ─────────────────────────────────────────────────────────────────
+// row, padding 4px 12px, radius 12px
+
+.item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.1s ease;
+
+  &:hover {
+    background-color: var(--palette-trans-0); // rgba(0,0,0,0.04)
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+// Selection items: padding 4px 12px 4px 4px (left side has checkmark slot)
+.itemSelection {
+  padding: 4px 12px 4px 4px;
+}
+
+// Category items: space-between for label + pill
+.itemCategory {
+  justify-content: space-between;
+  padding: 4px 12px;
+}
+
+// WM items: taller, aligned with avatar
+.itemWM {
+  padding: 4px 12px;
+  gap: 8px;
+  align-items: center;
+}
+
+// ── Text content ──────────────────────────────────────────────────────────────
+
+.texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+// Line 1: body-unselected (14px / Regular / 115%), --palette-blue-0
+.line1 {
+  @include ts.body-unselected;
+  color: var(--palette-blue-0);
+  white-space: nowrap;
+}
+
+// Line 1 selected: body-selected (14px / Bold / 115%)
+.line1Selected {
+  @include ts.body-selected;
+  color: var(--palette-blue-0);
+  white-space: nowrap;
+}
+
+// Line 2: label-regular (12px / Regular / 150%), --palette-blue-2 (#5C6E9E)
+.line2 {
+  @include ts.label-regular;
+  color: var(--palette-blue-2);
+  white-space: nowrap;
+}
+
+// ── Checkmark slot ────────────────────────────────────────────────────────────
+
+.checkSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.checkIcon {
+  color: var(--palette-blue-0);
+}
+
+// ── Checkbox in multi-selection ───────────────────────────────────────────────
+
+.itemCheckbox {
+  pointer-events: none; // click handled by parent button
+}
+
+// ── Search box ────────────────────────────────────────────────────────────────
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  border-radius: var(--radius-md);
+  margin-bottom: 4px;
+  background: var(--palette-white-0);
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  @include ts.body-unselected;
+  color: var(--palette-blue-0);
+  background: transparent;
+  min-width: 0;
+
+  &::placeholder { color: var(--palette-blue-2); }
+
+  // Hide native search clear button
+  &::-webkit-search-cancel-button { display: none; }
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--palette-blue-0);
+}
+
+// ── Icon grid ─────────────────────────────────────────────────────────────────
+
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.iconCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--palette-blue-0);
+  transition: background-color 0.1s ease;
+
+  &:hover { background-color: var(--palette-trans-0); }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+.iconCellSelected {
+  background-color: var(--palette-neutral-1); // #E7EAF8 — light blue tint
+}
+
+// ── Booking category colour pill ──────────────────────────────────────────────
+
+.colorPill {
+  display: inline-block;
+  width: 80px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+// ── WM avatar ─────────────────────────────────────────────────────────────────
+
+.wmAvatar {
+  flex-shrink: 0;
+}
+
+.wmGroupIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  background-color: var(--palette-neutral-1);
+  color: var(--palette-blue-0);
+  flex-shrink: 0;
+}
