@@ -1,0 +1,18 @@
+@use "../../styles/text-styles" as ts;
+
+.labelSmallRegular { @include ts.label-small-regular; color: var(--palette-blue-0); }
+.labelSmallBold    { @include ts.label-small-bold;    color: var(--palette-blue-0); }
+.labelRegular      { @include ts.label-regular;       color: var(--palette-blue-0); }
+.labelBold         { @include ts.label-bold;          color: var(--palette-blue-0); }
+.labelSelected     { @include ts.label-selected;      color: var(--palette-blue-0); }
+.labelUnselected   { @include ts.label-unselected;    color: var(--palette-blue-0); }
+.bodyRegular       { @include ts.body-regular;        color: var(--palette-blue-0); }
+.bodyBold          { @include ts.body-bold;           color: var(--palette-blue-0); }
+.bodySelected      { @include ts.body-selected;       color: var(--palette-blue-0); }
+.bodyUnselected    { @include ts.body-unselected;     color: var(--palette-blue-0); }
+.heading6          { @include ts.heading-6;           color: var(--palette-blue-0); }
+.heading5          { @include ts.heading-5;           color: var(--palette-blue-0); }
+.heading4          { @include ts.heading-4;           color: var(--palette-blue-0); }
+.heading3          { @include ts.heading-3;           color: var(--palette-blue-0); }
+.heading2          { @include ts.heading-2;           color: var(--palette-blue-0); }
+.heading1          { @include ts.heading-1;           color: var(--palette-blue-0); }

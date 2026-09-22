@@ -1,6 +1,6 @@
 // Button regular new — Figma node 3134:190313
-// Height: 32px | Radius: --radius-md | Padding: 8px 16px | Gap: 8px
-// Font: Mulish Bold 14px / 115%
+// Text style: body-selected (14px / Bold / 115%) for regular, label-selected (12px / Bold / 115%) for small
+@use "../../styles/text-styles" as ts;
 
 .button {
   display: inline-flex;
@@ -11,10 +11,7 @@
   border: 1px solid transparent;
   padding: 8px 16px;
   border-radius: var(--radius-md);
-  font-family: var(--font-family);
-  font-size: var(--font-size-body);
-  font-weight: 700;
-  line-height: 115%;
+  @include ts.body-selected; // 14px / Bold / 115%
   white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
@@ -32,29 +29,22 @@
     box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
   }
 
-  // Primary — --palette-primary-0 fill, white text
   &.primary {
     background-color: var(--palette-primary-0);
     color: var(--palette-white-0);
     border-color: transparent;
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-primary-1);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-primary-1); }
   }
 
-  // Secondary — transparent, --palette-neutral-0 border, --palette-blue-0 text
   &.secondary {
     background-color: transparent;
     color: var(--palette-blue-0);
     border-color: var(--palette-neutral-0);
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-trans-0);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-trans-0); }
   }
 
-  // Tertiary — transparent, no border, --palette-blue-0 text, compact padding
   &.tertiary {
     background-color: transparent;
     color: var(--palette-blue-0);
@@ -62,12 +52,9 @@
     padding: 4px;
     height: auto;
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-trans-0);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-trans-0); }
   }
 
-  // Destructive — transparent, --palette-red-0 border + text
   &.destructive {
     background-color: transparent;
     color: var(--palette-red-0);
@@ -80,29 +67,22 @@
     }
   }
 
-  // Ghost — transparent, --palette-blue-0 border + text
   &.ghost {
     background-color: transparent;
     color: var(--palette-blue-0);
     border-color: var(--palette-blue-0);
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-trans-0);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-trans-0); }
   }
 
-  // Inverted — --palette-blue-0 fill, white text (for dark backgrounds)
   &.inverted {
     background-color: var(--palette-blue-0);
     color: var(--palette-white-0);
     border-color: transparent;
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-blue-1);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-blue-1); }
   }
 
-  // Link — no border, --palette-primary-0 text, underline on hover
   &.link {
     background-color: transparent;
     color: var(--palette-primary-0);
@@ -110,42 +90,37 @@
     padding: 4px 0;
     height: 24px;
 
-    &:hover:not(:disabled) {
-      text-decoration: underline;
-    }
+    &:hover:not(:disabled) { text-decoration: underline; }
   }
 
-  // Icon variants — square, 8px all-round padding
-  &.icon {
+  &.icon,
+  &.iconTertiary,
+  &.iconGhost {
     padding: 8px;
+    height: auto;
+  }
+
+  &.icon {
     background-color: transparent;
     color: var(--palette-blue-0);
     border-color: var(--palette-neutral-0);
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-trans-0);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-trans-0); }
   }
 
   &.iconTertiary {
-    padding: 8px;
     background-color: transparent;
     color: var(--palette-blue-0);
     border-color: transparent;
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-trans-0);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-trans-0); }
   }
 
   &.iconGhost {
-    padding: 8px;
     background-color: transparent;
     color: var(--palette-blue-0);
     border-color: var(--palette-blue-0);
 
-    &:hover:not(:disabled) {
-      background-color: var(--palette-trans-0);
-    }
+    &:hover:not(:disabled) { background-color: var(--palette-trans-0); }
   }
 }

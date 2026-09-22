@@ -1,0 +1,114 @@
+// Text style mixins — Figma node 4949:136702
+// Font: Mulish throughout. Use these mixins in all component SCSS.
+
+@mixin label-small-regular {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label-small); // 10px
+  font-weight: var(--font-weight-regular);  // 400
+  line-height: var(--line-height-small);    // 115%
+}
+
+@mixin label-small-bold {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label-small); // 10px
+  font-weight: var(--font-weight-bold);    // 700
+  line-height: var(--line-height-small);   // 115%
+}
+
+@mixin label-regular {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label); // 12px
+  font-weight: var(--font-weight-regular); // 400
+  line-height: var(--line-height-big);     // 150%
+}
+
+@mixin label-bold {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label); // 12px
+  font-weight: var(--font-weight-bold); // 700
+  line-height: var(--line-height-big);  // 150%
+}
+
+@mixin label-selected {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);   // 12px
+  font-weight: var(--font-weight-bold); // 700
+  line-height: var(--line-height-small); // 115%
+}
+
+@mixin label-unselected {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);      // 12px
+  font-weight: var(--font-weight-regular); // 400
+  line-height: var(--line-height-small);   // 115%
+}
+
+@mixin body-regular {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);       // 14px
+  font-weight: var(--font-weight-regular); // 400
+  line-height: var(--line-height-big);    // 150%
+}
+
+@mixin body-bold {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);   // 14px
+  font-weight: var(--font-weight-bold); // 700
+  line-height: var(--line-height-big);  // 150%
+}
+
+@mixin body-selected {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);    // 14px
+  font-weight: var(--font-weight-bold); // 700
+  line-height: var(--line-height-small); // 115%
+}
+
+@mixin body-unselected {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);       // 14px
+  font-weight: var(--font-weight-regular); // 400
+  line-height: var(--line-height-small);   // 115%
+}
+
+@mixin heading-6 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h6);         // 15px
+  font-weight: var(--font-weight-semibold); // 600
+  line-height: var(--line-height-medium);   // 125%
+}
+
+@mixin heading-5 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h5);         // 16px
+  font-weight: var(--font-weight-semibold); // 600
+  line-height: var(--line-height-medium);   // 125%
+}
+
+@mixin heading-4 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h4);         // 20px
+  font-weight: var(--font-weight-semibold); // 600
+  line-height: var(--line-height-medium);   // 125%
+}
+
+@mixin heading-3 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h3);         // 24px
+  font-weight: var(--font-weight-semibold); // 600
+  line-height: var(--line-height-medium);   // 125%
+}
+
+@mixin heading-2 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h2);         // 28px
+  font-weight: var(--font-weight-semibold); // 600
+  line-height: var(--line-height-medium);   // 125%
+}
+
+@mixin heading-1 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h1);         // 32px
+  font-weight: var(--font-weight-semibold); // 600
+  line-height: var(--line-height-medium);   // 125%
+}

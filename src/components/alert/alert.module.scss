@@ -1,23 +1,55 @@
 // Notification/Alert — Figma nodes 2802:170745 + 5047:257830
-// Radius: --radius-md | Text: Mulish Regular 14px / 150% | Colour: --palette-blue-0
+// Text: body-regular | Header text: body-bold | Actions: body-selected
+@use "../../styles/text-styles" as ts;
 
-// ── Type backgrounds (from Figma) ─────────────────────────────────────────────
-.error       { background-color: var(--palette-red-2); }      /* #FFE2E2 */
-.warning     { background-color: var(--palette-orange-2); }   /* #FFE8AD */
-.success     { background-color: var(--palette-green-2); }    /* #C8EEDE */
-.general     { background-color: var(--palette-neutral-1); }  /* #E7EAF8 */
-.ai          { background-color: var(--palette-neutral-0); }  /* #CFDAF7 */
-.bulk_banner { background-color: var(--palette-primary-3); }  /* #E7F9FE */
+// ── Type backgrounds ──────────────────────────────────────────────────────────
+.error       { background-color: var(--palette-red-2); }      // #FFE2E2
+.warning     { background-color: var(--palette-orange-2); }   // #FFE8AD
+.success     { background-color: var(--palette-green-2); }    // #C8EEDE
+.general     { background-color: var(--palette-neutral-1); }  // #E7EAF8
+.ai          { background-color: var(--palette-neutral-0); }  // #CFDAF7
+.bulk_banner { background-color: var(--palette-primary-3); }  // #E7F9FE
 
 // ── Shared base ───────────────────────────────────────────────────────────────
 .alert {
   border-radius: var(--radius-md);
-  font-family: var(--font-family);
-  font-size: var(--font-size-body);
-  font-weight: 400;
-  line-height: 150%;
+  @include ts.body-regular;
   color: var(--palette-blue-0);
   width: 100%;
+}
+
+// ── Icon colour wrapper ───────────────────────────────────────────────────────
+// Icon SVGs have a hardcoded fill. We recolour via CSS filter matched to each
+// type's semantic colour from the Figma screenshots.
+// error   → --palette-red-0    (#D42A36)  red badge
+// warning → --palette-orange-1 (#9B5A01)  amber triangle
+// success → --palette-green-0  (#248E61)  green check
+// general, ai, bulk-banner → --palette-blue-0 (#0D2976)
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  // Recolour the SVG paths that have fill="#0D2976" (blue-0)
+  // to the type's semantic colour using CSS filter.
+  // Filters generated for exact hex targets:
+
+  .error & {
+    // Target: #D42A36 (--palette-red-0)
+    filter: invert(20%) sepia(90%) saturate(2000%) hue-rotate(338deg) brightness(90%) contrast(95%);
+  }
+
+  .warning & {
+    // Target: #9B5A01 (--palette-orange-1)
+    filter: invert(32%) sepia(70%) saturate(800%) hue-rotate(20deg) brightness(70%) contrast(110%);
+  }
+
+  .success & {
+    // Target: #248E61 (--palette-green-0)
+    filter: invert(42%) sepia(50%) saturate(500%) hue-rotate(120deg) brightness(80%) contrast(95%);
+  }
+
+  // general, ai, bulk-banner → keep original --palette-blue-0 fill, no filter needed
 }
 
 // ── Header=False — inline (row) ───────────────────────────────────────────────
@@ -64,16 +96,14 @@
   width: 100%;
 }
 
-// New/Body bold — Mulish Bold 14px / 150%
 .headerText {
-  font-weight: 700;
-  line-height: 150%;
+  @include ts.body-bold; // 14px / Bold / 150%
   flex: 1;
 }
 
 .body {
   margin: 0;
-  line-height: 150%;
+  @include ts.body-regular; // 14px / Regular / 150%
 }
 
 .actionsBottom {
@@ -83,8 +113,7 @@
   padding-top: 8px;
 }
 
-// ── Action buttons — Ghost style (Type=Ghost from Button regular new) ──────────
-// border: --palette-neutral-0, text: --palette-blue-0
+// ── Action buttons — Ghost style ──────────────────────────────────────────────
 .actionBtn {
   display: inline-flex;
   align-items: center;
@@ -95,18 +124,13 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--palette-blue-0);
   background: transparent;
-  font-family: var(--font-family);
-  font-size: var(--font-size-body);
-  font-weight: 700;
-  line-height: 115%;
+  @include ts.body-selected; // 14px / Bold / 115%
   color: var(--palette-blue-0);
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.15s ease;
 
-  &:hover {
-    background-color: var(--palette-trans-0);
-  }
+  &:hover { background-color: var(--palette-trans-0); }
 
   &:focus-visible {
     outline: none;

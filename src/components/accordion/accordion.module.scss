@@ -1,8 +1,6 @@
 // Accordion — Figma node 1581:35436
-// Default: no border, white bg, row, gap 8px, padding 4px 0
-// Hover: --palette-trans-0 bg, border-radius --radius-md
-// Focus: double ring, border-radius --radius-sm
-// Title: Mulish Bold 14px / 115%, --palette-blue-0
+// Title text styles: body-selected (Body), heading-5, heading-4
+@use "../../styles/text-styles" as ts;
 
 .accordion {
   width: 100%;
@@ -37,26 +35,16 @@
 }
 
 .title {
-  font-family: var(--font-family);
   color: var(--palette-blue-0);
 
-  &.body {
-    font-size: var(--font-size-body);
-    font-weight: 700;
-    line-height: 115%;
-  }
+  // Size=Body — body-selected: Mulish Bold 14px / 115%
+  &.body { @include ts.body-selected; }
 
-  &.heading5 {
-    font-size: var(--font-size-h5);
-    font-weight: 600;
-    line-height: 125%;
-  }
+  // Size=Heading5 — heading-5: Mulish SemiBold 16px / 125%
+  &.heading5 { @include ts.heading-5; }
 
-  &.heading4 {
-    font-size: var(--font-size-h4);
-    font-weight: 600;
-    line-height: 125%;
-  }
+  // Size=Heading4 — heading-4: Mulish SemiBold 20px / 125%
+  &.heading4 { @include ts.heading-4; }
 }
 
 .content {
