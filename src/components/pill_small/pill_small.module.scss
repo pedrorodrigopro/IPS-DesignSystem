@@ -1,0 +1,64 @@
+// Pill small new — Figma node 4195:205036
+// Radius: 16px | Font: Mulish Regular 12px | Padding: 5px 12px
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-family: var(--fontFamilyRegular);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 115%;
+  white-space: nowrap;
+  border: 1px solid transparent;
+
+  &.removable {
+    gap: 4px;
+    padding: 5px 12px 5px 8px;
+  }
+
+  // Status types
+  &.role_new { background-color: #e7eaf8; color: #0d2976; }
+  &.pending, &.in_review, &.invited { background-color: #cfdaf7; color: #0d2976; }
+  &.shortlisting { background-color: #6ef29c; color: #0d2976; }
+  &.partially_filled, &.not_filled { background-color: #ffe8ad; color: #9b5a01; }
+  &.exceptions { background-color: #ffe2e2; color: #a30013; }
+  &.filled { background-color: #c8eede; color: #1f6648; }
+  &.booked, &.partially_booked { background-color: #1f78b4; color: #ffffff; }
+  &.confirmed, &.partially_confirmed { background-color: #0c1457; color: #ffffff; }
+
+  // Input types
+  &.filter, &.custom_field {
+    background-color: #f8f9fd;
+    color: #0d2976;
+    border-color: #cfdaf7;
+  }
+
+  &.input {
+    background-color: #e7eaf8;
+    color: #0d2976;
+    border-color: #cfdaf7;
+  }
+}
+
+.removeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+  opacity: 0.7;
+
+  &:hover { opacity: 1; }
+}
+
+.label {
+  line-height: inherit;
+}
