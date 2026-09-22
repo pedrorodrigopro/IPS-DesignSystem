@@ -1,19 +1,20 @@
 import classNames from "classnames";
 import { ReactNode } from "react";
+import { Icon } from "../icon/icon";
 import css from "./alert.module.scss";
 
-// Type colours — Figma node 2802:170745 (Notification/Alert)
+// Type → background colours — Figma node 2802:170745 (Notification/Alert)
 export type AlertType =
-  | "error"       // #FFE2E2
-  | "warning"     // #FFE8AD
-  | "success"     // #C8EEDE
-  | "general"     // #E7EAF8
-  | "ai"          // #CFDAF7
+  | "error"        // #FFE2E2
+  | "warning"      // #FFE8AD
+  | "success"      // #C8EEDE
+  | "general"      // #E7EAF8
+  | "ai"           // #CFDAF7
   | "bulk-banner"; // #E7F9FE
 
 // Layout variants — Figma node 5047:257830 (.Notification/Alert master)
-// Header=False: single row — icon + text left, actions right
-// Header=True:  column — bold title, body paragraph, actions below
+// "inline"      → Header=False: row, icon + text left, optional actions right
+// "with-header" → Header=True:  column, bold title, body paragraph, optional actions below
 export type AlertLayout = "inline" | "with-header";
 
 export type AlertAction = {
@@ -24,50 +25,23 @@ export type AlertAction = {
 export type AlertProps = {
   type?: AlertType;
   layout?: AlertLayout;
-  /** Main message (inline) or bold title (with-header) */
+  /** Inline: message text. With-header: bold title. */
   message: string;
-  /** Body paragraph — only shown when layout="with-header" */
+  /** Body paragraph — only rendered when layout="with-header" */
   body?: string;
-  /** Up to 2 action buttons */
+  /** Up to 2 action buttons (Ghost style). Optional in both layouts. */
   actions?: [AlertAction?, AlertAction?];
   className?: string;
 };
 
-// Per-type icons as inline SVGs matching Figma icon references (20×20px)
-const icons: Record<AlertType, ReactNode> = {
-  error: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="10" cy="10" r="9" fill="#0D2976" />
-      <path d="M10 6v5M10 14h.01" stroke="#FFE2E2" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  ),
-  warning: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M9.134 3.5a1 1 0 0 1 1.732 0l7.294 12.5A1 1 0 0 1 17.294 17.5H2.706a1 1 0 0 1-.866-1.5L9.134 3.5Z" fill="#0D2976" />
-      <path d="M10 8v4M10 14h.01" stroke="#FFE8AD" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  ),
-  success: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M4 10.5L8 14.5L16 7" stroke="#0D2976" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  general: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="10" cy="10" r="9" fill="#0D2976" />
-      <path d="M10 9v5M10 7h.01" stroke="#E7EAF8" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  ),
-  ai: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M10 3l1.5 4.5L16 9l-4.5 1.5L10 15l-1.5-4.5L4 9l4.5-1.5L10 3Z" fill="#0D2976" />
-    </svg>
-  ),
-  "bulk-banner": (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M5 5L15 15M15 5L5 15" stroke="#0D2976" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  ),
+// Icon names per type — real Figma icon components from node 2976:181531
+const typeIcons: Record<AlertType, ReactNode> = {
+  error: <Icon name="error" size={20} />,
+  warning: <Icon name="warning" size={20} />,
+  success: <Icon name="check" size={20} />,
+  general: <Icon name="info" size={20} />,
+  ai: <Icon name="ai" size={20} />,
+  "bulk-banner": <Icon name="cross" size={20} />,
 };
 
 export const Alert = ({
@@ -79,20 +53,29 @@ export const Alert = ({
   className,
 }: AlertProps) => {
   const typeClass = type === "bulk-banner" ? css.bulk_banner : css[type];
+  const filteredActions = actions?.filter((a): a is AlertAction => !!a) ?? [];
 
   if (layout === "with-header") {
     return (
-      <div className={classNames(css.alert, typeClass, css.withHeader, className)} role="alert">
+      <div
+        className={classNames(css.alert, typeClass, css.withHeader, className)}
+        role="alert"
+      >
         <div className={css.headerRow}>
-          {icons[type]}
+          {typeIcons[type]}
           <span className={css.headerText}>{message}</span>
         </div>
         {body && <p className={css.body}>{body}</p>}
-        {actions && actions.length > 0 && (
+        {filteredActions.length > 0 && (
           <div className={css.actionsBottom}>
-            {actions.filter(Boolean).map((action, i) => (
-              <button key={i} type="button" className={css.actionBtn} onClick={action!.onClick}>
-                {action!.label}
+            {filteredActions.map((action, i) => (
+              <button
+                key={i}
+                type="button"
+                className={css.actionBtn}
+                onClick={action.onClick}
+              >
+                {action.label}
               </button>
             ))}
           </div>
@@ -102,16 +85,24 @@ export const Alert = ({
   }
 
   return (
-    <div className={classNames(css.alert, typeClass, css.inline, className)} role="alert">
+    <div
+      className={classNames(css.alert, typeClass, css.inline, className)}
+      role="alert"
+    >
       <div className={css.left}>
-        {icons[type]}
+        {typeIcons[type]}
         <span className={css.message}>{message}</span>
       </div>
-      {actions && actions.length > 0 && (
+      {filteredActions.length > 0 && (
         <div className={css.actionsRight}>
-          {actions.filter(Boolean).map((action, i) => (
-            <button key={i} type="button" className={css.actionBtn} onClick={action!.onClick}>
-              {action!.label}
+          {filteredActions.map((action, i) => (
+            <button
+              key={i}
+              type="button"
+              className={css.actionBtn}
+              onClick={action.onClick}
+            >
+              {action.label}
             </button>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import { ReactNode, useState } from "react";
+import { Icon } from "../icon/icon";
 import css from "./accordion.module.scss";
 
 // Size variants from .Accordion label (node 11262:130821)
@@ -30,23 +31,11 @@ export const Accordion = ({
         aria-expanded={expanded}
         onClick={() => setExpanded((prev) => !prev)}
       >
-        {/* chevron-right (collapsed) / chevron-down (expanded) — 16×16px, #0D2976 */}
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
+        <Icon
+          name={expanded ? "chevron-down" : "chevron-right"}
+          size={16}
           className={css.chevron}
-          aria-hidden="true"
-        >
-          {expanded ? (
-            /* chevron-down */
-            <path d="M4 6L8 10L12 6" stroke="#0D2976" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          ) : (
-            /* chevron-right */
-            <path d="M6 4L10 8L6 12" stroke="#0D2976" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          )}
-        </svg>
+        />
         <span className={classNames(css.title, css[size])}>{title}</span>
       </button>
       {expanded && children && (

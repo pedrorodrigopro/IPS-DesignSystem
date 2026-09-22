@@ -13,7 +13,9 @@
     },
     "./styles": "./dist/styles/tokens.css"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --noEmit && vite build",
     "storybook": "storybook dev -p 6006",
@@ -47,6 +49,7 @@
     "storybook": "^8.5.3",
     "typescript": "^5.6.2",
     "vite": "^6.4.2",
-    "vite-plugin-dts": "^4.0.0"
+    "vite-plugin-dts": "^4.0.0",
+    "vite-plugin-svgr": "^5.2.0"
   }
 }
