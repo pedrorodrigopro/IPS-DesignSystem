@@ -143,21 +143,20 @@
   }
 }
 
-// Current month days — darker text
-.day:not(.dayOtherMonth) {
+// Current month days — darker text (only when not selected/in-range)
+.day:not(.dayOtherMonth):not(.daySelected):not(.dayRangeStart):not(.dayRangeMid):not(.dayRangeEnd) {
   color: var(--palette-blue-0); // #0D2976
 }
 
-// Adjacent month days — dimmed
-.dayOtherMonth {
+// Adjacent month days — dimmed (only when not selected)
+.dayOtherMonth:not(.daySelected):not(.dayRangeStart):not(.dayRangeMid):not(.dayRangeEnd) {
   color: var(--palette-white-3); // #D5D5D5
-  border-color: transparent;
 }
 
-// Selected day — filled circle
+// Selected day — filled circle, white text from --palette-white-0 token
 .daySelected {
   background-color: var(--palette-blue-1); // #0C1457
-  color: var(--palette-white-0);
+  color: var(--palette-white-0) !important; // white — fill_2MRABA
   border-color: transparent;
   @include ts.body-selected; // 14px / Bold / 115%
 }
@@ -169,7 +168,7 @@
 
 .dayRangeStart {
   background-color: var(--palette-blue-1);
-  color: var(--palette-white-0);
+  color: var(--palette-white-0) !important;
   border-color: transparent;
   border-radius: var(--radius-full) 0 0 var(--radius-full);
   @include ts.body-selected;
@@ -177,7 +176,7 @@
 
 .dayRangeMid {
   background-color: var(--palette-blue-1);
-  color: var(--palette-white-0);
+  color: var(--palette-white-0) !important;
   border-color: transparent;
   border-radius: 0;
   @include ts.body-selected;
@@ -185,7 +184,7 @@
 
 .dayRangeEnd {
   background-color: var(--palette-blue-1);
-  color: var(--palette-white-0);
+  color: var(--palette-white-0) !important;
   border-color: transparent;
   border-radius: 0 var(--radius-full) var(--radius-full) 0;
   @include ts.body-selected;

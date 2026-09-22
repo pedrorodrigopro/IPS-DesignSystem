@@ -6,3 +6,4 @@ export * from "./avatar";
 export * from "./breadcrumbs";
 export * from "./calendar";
 export * from "./checkbox";
+export * from "./divider";
