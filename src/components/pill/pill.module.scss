@@ -1,0 +1,169 @@
+// Pill — Figma node 14765:208276 (.Pill master new)
+// Base: radius 16px, bg #E7EAF8 (--palette-neutral-1), border #CFDAF7
+// Regular: body-unselected (14px/400/115%), gap 8px, padding 8px 16px
+// Small:   label-unselected (12px/400/115%), gap 4px, padding 5px 8px
+@use "../../styles/text-styles" as ts;
+
+// ── Shared base ───────────────────────────────────────────────────────────────
+
+.pill {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 16px;
+  background-color: var(--palette-neutral-1); // #E7EAF8
+  white-space: nowrap;
+}
+
+// ── Simple (Type=Simple) ──────────────────────────────────────────────────────
+// gap 8px, padding 8px 16px (regular) | gap 4px, padding 5px 8px (small)
+
+.simple {
+  &.regular { gap: 8px; padding: 8px 16px; }
+  &.small   { gap: 4px; padding: 5px 8px; }
+}
+
+// ── Removable (Type=Removable) ────────────────────────────────────────────────
+// gap 8px, padding 8px 16px 8px 8px (regular) | gap 4px, padding 5px 12px 5px 8px (small)
+
+.removable {
+  &.regular { gap: 8px; padding: 8px 16px 8px 8px; }
+  &.small   { gap: 4px; padding: 5px 12px 5px 8px; }
+
+  &.bordered { border: 1px solid var(--palette-neutral-0); } // #CFDAF7
+}
+
+// ── Text ──────────────────────────────────────────────────────────────────────
+
+.label {
+  .regular & { @include ts.body-unselected; }   // 14px / Regular / 115%
+  .small &   { @include ts.label-unselected; }  // 12px / Regular / 115%
+  color: inherit;
+}
+
+// ── Icon ──────────────────────────────────────────────────────────────────────
+
+.icon {
+  flex-shrink: 0;
+  color: inherit;
+
+  path, circle, rect, polygon, ellipse {
+    fill: currentColor !important;
+  }
+}
+
+// ── Remove button ─────────────────────────────────────────────────────────────
+
+.removeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+// ── Modifier (Type=Modifier) ──────────────────────────────────────────────────
+// Two joined sections with 1px border between
+
+.modifier {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: stretch;
+  white-space: nowrap;
+}
+
+.modLeft {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 16px 0 0 16px;
+  background-color: var(--palette-neutral-1);
+  border: 1px solid var(--palette-neutral-0);
+  border-right: none;
+  gap: 8px;
+
+  &.regular { padding: 8px; gap: 8px; }
+  &.small   { padding: 5px 5px 5px 8px; gap: 4px; }
+
+  .label { @include ts.body-unselected; color: var(--palette-blue-0); }
+  .modifier.small & .label { @include ts.label-unselected; }
+}
+
+.modRight {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0 16px 16px 0;
+  background: transparent;
+  border: 1px solid var(--palette-neutral-0);
+  border-left: none;
+  cursor: pointer;
+  gap: 8px;
+
+  &.regular { padding: 8px; gap: 8px; }
+  &.small   { padding: 5px 8px 5px 5px; gap: 4px; }
+
+  .label { @include ts.body-unselected; color: var(--palette-blue-0); }
+  .modifier.small & .label { @include ts.label-unselected; }
+
+  &:hover { background-color: var(--palette-trans-0); }
+}
+
+// ── Filter pill (14765:208566) ────────────────────────────────────────────────
+// #F8F9FD bg, #CFDAF7 border, radius 24px, compact padding 2px 16px 3px 8px
+// Two-line text: field (12px/400) + value (14px/700)
+
+.filter {
+  background-color: #F8F9FD; // fill_O0Y298
+  border: 1px solid var(--palette-neutral-0);
+  border-radius: 24px;
+  padding: 2px 16px 3px 8px;
+  gap: 8px;
+}
+
+.filterText {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.filterField {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label); // 12px
+  font-weight: var(--font-weight-regular);
+  line-height: 115%;
+  color: var(--palette-blue-0);
+}
+
+.filterValue {
+  @include ts.body-selected; // 14px / Bold / 115%
+  color: var(--palette-blue-0);
+}
+
+// ── Saved filter pill (14765:208581) ──────────────────────────────────────────
+// #F8F9FD bg, border, radius 24px, bold title + share icon
+
+.savedFilter {
+  background-color: #F8F9FD;
+  border: 1px solid var(--palette-neutral-0);
+  border-radius: 24px;
+  padding: 8px 16px 8px 8px;
+  gap: 8px;
+}
+
+.savedFilterLabel {
+  @include ts.body-selected; // 14px / Bold / 115%
+  color: var(--palette-blue-0);
+}
+
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--palette-blue-0);
+}

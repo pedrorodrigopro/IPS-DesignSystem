@@ -14,3 +14,4 @@ export * from "./loading";
 export * from "./navbar";
 export * from "./navigation";
 export * from "./pagination";
+export * from "./pill";

@@ -29,6 +29,8 @@ import Down from "./svg/down.svg";
 import Edit from "./svg/edit.svg";
 import Engagement from "./svg/engagement.svg";
 import ErrorIcon from "./svg/error.svg";
+import Forbidden from "./svg/forbidden.svg";
+import HourglassHalf from "./svg/hourglass-half.svg";
 import Mandatory from "./svg/mandatory.svg";
 import Help from "./svg/help.svg";
 import Hidden from "./svg/hidden.svg";
@@ -88,7 +90,8 @@ export type IconName =
   | "caret-down" | "caret-left" | "caret-right" | "caret-up"
   | "chat" | "check" | "chevron-down" | "chevron-left" | "chevron-right" | "chevron-up"
   | "cross" | "down" | "edit" | "engagement" | "error"
-  | "help" | "hidden" | "history" | "info" | "insights"
+  | "forbidden"
+  | "help" | "hidden" | "history" | "hourglass-half" | "info" | "insights"
   | "link" | "links" | "list" | "location" | "locked" | "logout"
   | "mail" | "mandatory" | "marketplace" | "menu-horizontal" | "menu-vertical"
   | "merge" | "missing" | "money" | "move"
@@ -136,7 +139,9 @@ const iconMap: Record<IconName, SvgComponent> = {
   "edit": Edit,
   "engagement": Engagement,
   "error": ErrorIcon,
+  "forbidden": Forbidden,
   "help": Help,
+  "hourglass-half": HourglassHalf,
   "hidden": Hidden,
   "history": History,
   "info": Info,
