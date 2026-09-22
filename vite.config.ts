@@ -23,7 +23,7 @@ export default defineConfig({
           "react-dom": "ReactDOM",
         },
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === "style.css") {
+          if (assetInfo.name?.endsWith(".css")) {
             return "styles/tokens.css";
           }
           return assetInfo.name ?? "asset";
