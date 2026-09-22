@@ -1,0 +1,89 @@
+// Avatar — Figma node 1489:27991
+// Small: 30×30px circle, initials body-selected (14px Bold 115%), white text
+// Big:   80×80px circle, initials heading-1 (32px SemiBold 125%), white text
+// Circle fill: #B47DF4 (purple, fill_2S1A7I)
+// Chat badge: --palette-primary-action (#6EF29C), drop shadow
+@use "../../styles/text-styles" as ts;
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background-color: #b47df4; // fill_2S1A7I — avatar purple
+  overflow: hidden;
+  flex-shrink: 0;
+  user-select: none;
+
+  &.small {
+    width: 30px;
+    height: 30px;
+  }
+
+  &.big {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+// Initials — Icon=Text
+.initials {
+  color: var(--palette-white-0);
+  text-align: center;
+
+  .small & {
+    @include ts.body-selected; // 14px / Bold / 115%
+  }
+
+  .big & {
+    @include ts.heading-1; // 32px / SemiBold / 125%
+  }
+}
+
+// Photo — Icon=Photo
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
+  display: block;
+}
+
+// Chat bubble badge — Chat=True
+// Positioned top-left, overlapping the circle
+// fill: --palette-primary-action (#6EF29C)
+// shadow: 0px 6px 12px 0px rgba(27, 72, 195, 0.2)
+.chat {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background-color: var(--palette-primary-action);
+  box-shadow: 0px 6px 12px 0px rgba(27, 72, 195, 0.2);
+  color: var(--palette-white-0); // chat icon is white inside green badge
+  overflow: hidden;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  // Small avatar: badge 15×15px, offset -3px top-left
+  &.chat_small {
+    width: 15px;
+    height: 15px;
+    top: -3px;
+    left: -3px;
+  }
+
+  // Big avatar: badge 31×31px, offset 0px top-left
+  &.chat_big {
+    width: 31px;
+    height: 31px;
+    top: 0;
+    left: 0;
+  }
+}
