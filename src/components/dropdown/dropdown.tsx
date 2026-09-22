@@ -41,8 +41,11 @@ export const DropdownActions = ({ items, onSelect, className }: DropdownActionsP
           className={css.item}
           onClick={() => onSelect(item.id)}
         >
-          <span className={css.line1}>{item.label}</span>
-          {item.subLabel && <span className={css.line2}>{item.subLabel}</span>}
+          {/* Wrap in texts column so line2 appears below line1 */}
+          <span className={css.texts}>
+            <span className={css.line1}>{item.label}</span>
+            {item.subLabel && <span className={css.line2}>{item.subLabel}</span>}
+          </span>
         </button>
       ))}
     </div>

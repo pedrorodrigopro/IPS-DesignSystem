@@ -1,0 +1,124 @@
+// Empty State — Figma node 1527:51923
+// Big:              column centred, gap 32px, width 513px
+// Small vertical:   column centred, gap 3px
+// Small horizontal: row, gap 8px
+@use "../../styles/text-styles" as ts;
+
+// ── Big ───────────────────────────────────────────────────────────────────────
+
+.big {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 513px;
+  max-width: 100%;
+}
+
+.illustration {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bigTexts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: center;
+}
+
+.bigTitle {
+  @include ts.heading-2; // 28px / SemiBold / 125% — New/Heading 2
+  color: var(--palette-blue-0);
+  text-align: center;
+}
+
+.bigSubtitle {
+  @include ts.heading-5; // 16px / SemiBold / 125% — New/Heading 5
+  color: var(--palette-blue-0);
+  text-align: center;
+}
+
+.bigActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+// ── Small vertical ────────────────────────────────────────────────────────────
+// column centred, gap 3px
+
+.smallVertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+// ── Small horizontal ──────────────────────────────────────────────────────────
+// row, gap 8px
+
+.smallHorizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+// ── Shared small elements ─────────────────────────────────────────────────────
+
+// missing icon — colour: --palette-blue-2 (#5C6E9E) — fill_ODM1PB
+.smallIcon {
+  color: var(--palette-blue-2);
+  flex-shrink: 0;
+}
+
+// "No items to show" — label-regular (12px/400/150%), --palette-blue-2
+.smallText {
+  @include ts.label-regular; // 12px / Regular / 150%
+  color: var(--palette-blue-2); // #5C6E9E — fill_ODM1PB
+}
+
+.smallActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+// ── Action buttons — reuse Button regular new styles ──────────────────────────
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  @include ts.body-selected; // 14px / Bold / 115%
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &.primary {
+    background-color: var(--palette-primary-0);
+    color: var(--palette-white-0);
+
+    &:hover { background-color: var(--palette-primary-1); }
+  }
+
+  &.secondary {
+    background-color: transparent;
+    color: var(--palette-blue-0);
+    border-color: var(--palette-neutral-0);
+
+    &:hover { background-color: var(--palette-trans-0); }
+  }
+}

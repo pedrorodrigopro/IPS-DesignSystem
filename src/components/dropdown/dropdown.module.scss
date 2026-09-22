@@ -60,9 +60,10 @@
   }
 }
 
-// Selection items: padding 4px 12px 4px 4px (left side has checkmark slot)
+// Selection items: padding 4px 12px 4px 4px, icon aligned to top (first line)
 .itemSelection {
   padding: 4px 12px 4px 4px;
+  align-items: flex-start; // icon aligns to first line, not centred vertically
 }
 
 // Category items: space-between for label + pill
@@ -110,14 +111,16 @@
 }
 
 // ── Checkmark slot ────────────────────────────────────────────────────────────
+// Aligns to the first line — height matches line-height of body-unselected (115% of 14px ≈ 16px)
 
 .checkSlot {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 16px;
-  height: 16px;
+  height: 16px; // matches body-unselected line-height
   flex-shrink: 0;
+  margin-top: 2px; // visual alignment to first text line
 }
 
 .checkIcon {
