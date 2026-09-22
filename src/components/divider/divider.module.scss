@@ -1,0 +1,14 @@
+.divider {
+  border: none;
+  border-top: 1px solid var(--paletteNeutral3);
+  margin: 0;
+  width: 100%;
+
+  &.vertical {
+    border-top: none;
+    border-left: 1px solid var(--paletteNeutral3);
+    width: auto;
+    height: 100%;
+    align-self: stretch;
+  }
+}
