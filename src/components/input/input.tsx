@@ -1,26 +1,27 @@
 // Input — Figma nodes:
-//   Text field:        1779:112429 (Input new)
-//   Search:            13240:87513 (Input search)
-//   Multiselect:       12657:591296 (Input multiselect)
-//   Booking category:  12120:278386 (Input booking category)
-//   Inline label:      14536:52162 (Input inline)
+//   Text field (Input new):    1779:112429 — label + input box, no chevron
+//   Select:                    derived from Input new with chevron-down icon
+//   Search:                    13240:87513 — search icon / cross when searching
+//   Multiselect:               12657:591296 — removable pill tags + chevron
+//   Booking category:          12120:278386 — mandatory label + colour swatch + chevron, height 32px
+//   Inline label:              14536:52162 — "Label: Value" in one box
 //
-// Shared input box:
-//   row, padding 8px, gap 8px, border-radius 8px, border 1px #CFDAF7
-//   Default bg: white | Hover bg: #F7F7F8 | Error bg: #FFE2E2 | Warning bg: #FFE8AD
-//   Focus: double ring 0 0 0 4px rgba(12,20,87,1), 0 0 0 2px white
-//   Read-only: no border, no bg, padding 8px 0
-//
-// Label: label-regular (12px/400/150%), --palette-blue-0
-// Value: body-selected (14px/Bold/115%), --palette-blue-0
-// Message: label-regular (12px/400/150%)
-//   Error message: --palette-red-0 | Warning: --palette-orange-1 | Instructions: --palette-blue-2
+// Mandatory icon: from Icon tokens (node 12016:234944) — asterisk/star, --palette-red-0
+// Placed immediately after the label text (not right-aligned)
 import classNames from "classnames";
-import { ReactNode, useRef } from "react";
+import { useState } from "react";
 import { Icon } from "../icon/icon";
 import css from "./input.module.scss";
 
+// ── Mandatory icon ────────────────────────────────────────────────────────────
+// From Figma node 12016:234944 — mandatory icon (asterisk star), fill --palette-red-0
+
+const MandatoryIcon = () => (
+  <Icon name="mandatory" size={16} className={css.mandatoryIcon} />
+);
+
 // ── Text field (Input new — 1779:112429) ──────────────────────────────────────
+// No chevron. States: default, hover, focus, error, warning, instructions, read-only.
 
 export type InputState = "default" | "error" | "warning" | "instructions";
 
@@ -33,8 +34,6 @@ export type InputProps = {
   readOnly?: boolean;
   disabled?: boolean;
   mandatory?: boolean;
-  /** Show chevron-down icon (default true for text field) */
-  showChevron?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
@@ -52,7 +51,6 @@ export const Input = ({
   readOnly = false,
   disabled = false,
   mandatory = false,
-  showChevron = false,
   onChange,
   onFocus,
   onBlur,
@@ -64,12 +62,10 @@ export const Input = ({
     {label && (
       <div className={css.labelRow}>
         <label className={css.label} htmlFor={id}>{label}</label>
-        {mandatory && <span className={css.mandatory} aria-label="required">*</span>}
+        {mandatory && <MandatoryIcon />}
       </div>
     )}
-    <div className={classNames(css.inputBox, css[state], {
-      [css.readOnly]: readOnly,
-    })}>
+    <div className={classNames(css.inputBox, css[state], { [css.readOnly]: readOnly })}>
       <input
         id={id}
         type={type}
@@ -82,7 +78,6 @@ export const Input = ({
         onFocus={onFocus}
         onBlur={onBlur}
       />
-      {showChevron && <Icon name="chevron-down" size={16} className={css.icon} />}
     </div>
     {message && (
       <div className={css.messageRow}>
@@ -95,8 +90,59 @@ export const Input = ({
   </div>
 );
 
+// ── Select (Input new + chevron-down) ─────────────────────────────────────────
+// Same as Input but with chevron-down icon on the right — for dropdown triggers
+
+export type InputSelectProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+  onClick?: () => void;
+};
+
+export const InputSelect = ({
+  label,
+  value,
+  placeholder,
+  message,
+  state = "default",
+  readOnly = false,
+  disabled = false,
+  mandatory = false,
+  onClick,
+  className,
+  id,
+}: InputSelectProps) => (
+  <div className={classNames(css.field, { [css.disabled]: disabled }, className)}>
+    {label && (
+      <div className={css.labelRow}>
+        <label className={css.label} htmlFor={id}>{label}</label>
+        {mandatory && <MandatoryIcon />}
+      </div>
+    )}
+    <button
+      id={id}
+      type="button"
+      className={classNames(css.inputBox, css[state], { [css.readOnly]: readOnly })}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <span className={classNames(css.inputEl, css.selectValue, { [css.placeholder]: !value })}>
+        {value ?? placeholder ?? ""}
+      </span>
+      <Icon name="chevron-down" size={16} className={css.icon} />
+    </button>
+    {message && (
+      <div className={css.messageRow}>
+        {state === "error" && <Icon name="error" size={16} className={css.msgIconError} />}
+        {state === "warning" && <Icon name="warning" size={16} className={css.msgIconWarning} />}
+        {state === "instructions" && <Icon name="info" size={16} className={css.msgIconInfo} />}
+        <span className={classNames(css.message, css[`msg_${state}`])}>{message}</span>
+      </div>
+    )}
+  </div>
+);
+
 // ── Search input (Input search — 13240:87513) ─────────────────────────────────
-// No label, search icon right, clear button when has value
+// Searching=False: search icon right
+// Searching=True: cross icon right, value shown
 
 export type InputSearchProps = {
   value?: string;
@@ -115,7 +161,7 @@ export const InputSearch = ({
   className,
   id,
 }: InputSearchProps) => {
-  const hasValue = value && value.length > 0;
+  const isSearching = !!value;
   return (
     <div className={classNames(css.field, className)}>
       <div className={css.inputBox}>
@@ -127,7 +173,7 @@ export const InputSearch = ({
           placeholder={placeholder}
           onChange={onChange}
         />
-        {hasValue && onClear ? (
+        {isSearching ? (
           <button type="button" className={css.clearBtn} onClick={onClear} aria-label="Clear search">
             <Icon name="cross" size={16} />
           </button>
@@ -140,7 +186,6 @@ export const InputSearch = ({
 };
 
 // ── Multiselect input (12657:591296) ──────────────────────────────────────────
-// Label row (label + optional clear-all icon), input row with removable pills + chevron
 
 export type InputMultiselectTag = {
   id: string;
@@ -149,6 +194,7 @@ export type InputMultiselectTag = {
 
 export type InputMultiselectProps = {
   label?: string;
+  mandatory?: boolean;
   tags?: InputMultiselectTag[];
   onRemoveTag?: (id: string) => void;
   onClearAll?: () => void;
@@ -158,6 +204,7 @@ export type InputMultiselectProps = {
 
 export const InputMultiselect = ({
   label,
+  mandatory = false,
   tags = [],
   onRemoveTag,
   onClearAll,
@@ -168,6 +215,7 @@ export const InputMultiselect = ({
     {label && (
       <div className={css.labelRow}>
         <span className={css.label}>{label}</span>
+        {mandatory && <MandatoryIcon />}
         {onClearAll && (
           <button type="button" className={css.clearAllBtn} onClick={onClearAll} aria-label="Clear all">
             <Icon name="cross" size={16} />
@@ -179,16 +227,17 @@ export const InputMultiselect = ({
       <div className={css.tagsRow}>
         {tags.map((tag) => (
           <span key={tag.id} className={css.tag}>
-            <Icon name="cross" size={16} className={css.tagRemoveIcon} />
-            {tag.label}
             {onRemoveTag && (
               <button
                 type="button"
                 className={css.tagRemoveBtn}
                 onClick={() => onRemoveTag(tag.id)}
                 aria-label={`Remove ${tag.label}`}
-              />
+              >
+                <Icon name="cross" size={16} className={css.tagRemoveIcon} />
+              </button>
             )}
+            {tag.label}
           </span>
         ))}
       </div>
@@ -198,8 +247,7 @@ export const InputMultiselect = ({
 );
 
 // ── Booking category input (12120:278386) ─────────────────────────────────────
-// Mandatory label, input with selected label + colour swatch + chevron
-// Compact: padding 4px 8px, inner input 8px 0
+// Mandatory label, box height 32px, label + colour swatch (right-aligned) + chevron
 
 export type InputBookingCategoryProps = {
   label?: string;
@@ -222,28 +270,25 @@ export const InputBookingCategory = ({
     {label && (
       <div className={css.labelRow}>
         <span className={css.label}>{label}</span>
-        {mandatory && <span className={css.mandatory} aria-label="required">*</span>}
+        {mandatory && <MandatoryIcon />}
       </div>
     )}
     <button type="button" className={css.bookingBox} onClick={onClick}>
-      <span className={css.bookingContent}>
-        <span className={css.bookingLabel}>{selectedLabel}</span>
-        {selectedColor && (
-          <span className={css.colorSwatch} style={{ backgroundColor: selectedColor }} aria-hidden="true" />
-        )}
-      </span>
+      <span className={css.bookingLabel}>{selectedLabel}</span>
+      {selectedColor && (
+        <span className={css.colorSwatch} style={{ backgroundColor: selectedColor }} aria-hidden="true" />
+      )}
       <Icon name="chevron-down" size={16} className={css.icon} />
     </button>
   </div>
 );
 
 // ── Inline label input (14536:52162) ──────────────────────────────────────────
-// No top label — value text is "Label: Value" where label part is regular weight
-// Single input box, chevron-down right
 
 export type InputInlineProps = {
   inlineLabel?: string;
   value?: string;
+  mandatory?: boolean;
   onClick?: () => void;
   className?: string;
 };
@@ -251,14 +296,16 @@ export type InputInlineProps = {
 export const InputInline = ({
   inlineLabel,
   value,
+  mandatory = false,
   onClick,
   className,
 }: InputInlineProps) => (
   <div className={classNames(css.field, className)}>
     <button type="button" className={classNames(css.inputBox, css.inlineBox)} onClick={onClick}>
-      <span className={css.inputEl} style={{ textAlign: "left" }}>
+      <span className={css.inlineFlex}>
         {inlineLabel && <span className={css.inlineLabel}>{inlineLabel}: </span>}
         <span className={css.inlineValue}>{value}</span>
+        {mandatory && <MandatoryIcon />}
       </span>
       <Icon name="chevron-down" size={16} className={css.icon} />
     </button>

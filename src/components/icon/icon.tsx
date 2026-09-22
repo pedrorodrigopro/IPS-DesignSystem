@@ -28,6 +28,7 @@ import Down from "./svg/down.svg";
 import Edit from "./svg/edit.svg";
 import Engagement from "./svg/engagement.svg";
 import ErrorIcon from "./svg/error.svg";
+import Mandatory from "./svg/mandatory.svg";
 import Help from "./svg/help.svg";
 import Hidden from "./svg/hidden.svg";
 import History from "./svg/history.svg";
@@ -88,7 +89,7 @@ export type IconName =
   | "cross" | "down" | "edit" | "engagement" | "error"
   | "help" | "hidden" | "history" | "info" | "insights"
   | "link" | "links" | "list" | "location" | "locked" | "logout"
-  | "mail" | "marketplace" | "menu-horizontal" | "menu-vertical"
+  | "mail" | "mandatory" | "marketplace" | "menu-horizontal" | "menu-vertical"
   | "merge" | "missing" | "money" | "move"
   | "note" | "notifications" | "open" | "pin" | "profile"
   | "question" | "reassign" | "refresh" | "remove" | "reports" | "role"
@@ -145,6 +146,7 @@ const iconMap: Record<IconName, SvgComponent> = {
   "locked": Locked,
   "logout": Logout,
   "mail": Mail,
+  "mandatory": Mandatory,
   "marketplace": Marketplace,
   "menu-horizontal": MenuHorizontal,
   "menu-vertical": MenuVertical,

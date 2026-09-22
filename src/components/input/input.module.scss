@@ -32,10 +32,10 @@
   flex: 1;
 }
 
-// mandatory asterisk — red
-.mandatory {
-  @include ts.label-regular;
-  color: var(--palette-red-0); // #D42A36
+// mandatory icon — from Icon tokens (node 12016:234944), right after label
+.mandatoryIcon {
+  color: var(--palette-red-0); // #D42A36 — fill_U9P843
+  flex-shrink: 0;
 }
 
 // ── Input box (shared shell) ──────────────────────────────────────────────────
@@ -199,25 +199,31 @@
   position: relative;
 }
 
-.tagRemoveIcon { color: var(--palette-blue-2); flex-shrink: 0; }
-
 .tagRemoveBtn {
-  position: absolute;
-  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: var(--radius-full);
+  padding: 0;
+  color: var(--palette-blue-2);
+  flex-shrink: 0;
 }
 
+.tagRemoveIcon { color: var(--palette-blue-2); }
+
 // ── Booking category ──────────────────────────────────────────────────────────
-// Compact: padding 4px 8px outer, inner content 8px 0
+// Box height: exactly 32px (padding 8px top+bottom + body line-height = 32px total)
+// Layout: row — [label] [color swatch right-aligned] [chevron]
 
 .bookingBox {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
-  padding: 4px 8px;
+  padding: 0 8px; // no vertical padding — height controlled by fixed height
+  height: 32px;   // exact 32px box height from Figma
   border-radius: var(--radius-md);
   border: 1px solid var(--palette-neutral-0);
   background-color: var(--palette-white-0);
@@ -232,19 +238,14 @@
   }
 }
 
-.bookingContent {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  padding: 8px 0;
-  min-height: 32px; // same height as standard input (padding 8px + body line-height)
-}
-
 .bookingLabel {
   @include ts.body-selected; // 14px / Bold / 115%
   color: var(--palette-blue-0);
-  flex: 1; // push colour pill to the right
+  flex: 1; // push colour swatch to the right
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .colorSwatch {
@@ -253,7 +254,18 @@
   height: 24px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
-  margin-left: auto; // ensure it stays right-aligned
+}
+
+// ── Select value / placeholder ────────────────────────────────────────────────
+
+.selectValue {
+  display: block; // override inputEl's inline behaviour inside button
+  flex: 1;
+}
+
+.placeholder {
+  font-weight: var(--font-weight-regular) !important;
+  color: var(--palette-blue-2) !important;
 }
 
 // ── Inline label ──────────────────────────────────────────────────────────────
@@ -264,6 +276,15 @@
     outline: none;
     box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);
   }
+}
+
+// Inline flex container for label:value + mandatory icon
+.inlineFlex {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
 
 // Inline label portion — regular weight (ts1 style from Figma: fontWeight 400)
