@@ -98,11 +98,26 @@
   flex-shrink: 0;
 }
 
-// Cross row — red × icon, sits above role dots when missing
+// Cross row — sits above role dots when missing
+// Width matches first bar (10px) so cross aligns over bar 1
 .matchCrossRow {
   display: inline-flex;
   align-items: center;
-  height: 10px; // same height as profile dots
+  width: 10px;  // exactly one bar wide — cross aligns over first bar
+  height: 10px; // same height as profile dot
+  overflow: visible;
+}
+
+// Cross icon scaled to 10×10px via width/height override
+.matchCrossIcon {
+  width: 10px !important;
+  height: 10px !important;
+  color: var(--palette-red-0);
+  flex-shrink: 0;
+
+  path, circle, rect, polygon, ellipse {
+    fill: var(--palette-red-0) !important;
+  }
 }
 
 // ── Divider ───────────────────────────────────────────────────────────────────

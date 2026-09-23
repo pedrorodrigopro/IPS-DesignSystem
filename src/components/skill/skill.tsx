@@ -337,10 +337,11 @@ type MatchDotsProps = {
 
 const MatchDots = ({ requiredProficiency, profileProficiency, missing = false, theme = "light" }: MatchDotsProps) => (
   <span className={css.matchDotStack}>
-    {/* Top: profile dots or cross when missing */}
+    {/* Top: profile dots or 10×10px cross when missing */}
     {missing ? (
       <span className={css.matchCrossRow}>
-        <Icon name="cross" size={16} style={{ color: "var(--palette-red-0)" }} />
+        {/* 10×10px cross icon, aligned over the first bar */}
+        <Icon name="cross" size={16} className={css.matchCrossIcon} />
       </span>
     ) : (
       <ProfileDots level={profileProficiency ?? "basic"} theme={theme} />
