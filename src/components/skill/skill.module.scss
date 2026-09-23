@@ -1,0 +1,168 @@
+// Skill — Figma nodes 9732:260872, 9732:260881, 9732:260900
+// Row: align-items center, gap 4px, padding 5px 2px, height 24px
+// Light: #0D2976 (--palette-blue-0) | Dark: #FFFFFF (--palette-white-0)
+@use "../../styles/text-styles" as ts;
+
+// ── Skill row ─────────────────────────────────────────────────────────────────
+
+.skill {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 2px;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  cursor: default;
+  transition: background-color 0.15s ease;
+
+  &.skillHoverable:hover {
+    background-color: var(--palette-trans-0); // rgba(0,0,0,0.04)
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+    border-radius: var(--radius-md);
+  }
+}
+
+// ── Theme colours ─────────────────────────────────────────────────────────────
+
+.light { color: var(--palette-blue-0); }   // #0D2976
+.dark  { color: var(--palette-white-0); }  // #FFFFFF
+
+// ── Label — label-selected (12px/Bold/115%) ───────────────────────────────────
+
+.skillLabel {
+  @include ts.label-selected; // 12px / Bold / 115%
+  color: inherit;
+  white-space: nowrap;
+}
+
+// ── Role dots — 10×4px pill, gap 2px ─────────────────────────────────────────
+// Active: --palette-blue-0 (light) / --palette-white-0 (dark)
+// Inactive: --palette-neutral-0 (#CFDAF7) (light) / --palette-blue-2 (#5C6E9E) (dark)
+
+.roleDots {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.roleDot {
+  display: inline-block;
+  width: 10px;
+  height: 4px;
+  border-radius: 32px; // full pill
+
+  // Default: inactive colour
+  .light & { background-color: var(--palette-neutral-0); } // #CFDAF7
+  .dark  & { background-color: var(--palette-blue-2); }   // #5C6E9E
+
+  // Active
+  &.dotActive {
+    .light & { background-color: var(--palette-blue-0); }   // #0D2976
+    .dark  & { background-color: var(--palette-white-0); } // #FFFFFF
+  }
+}
+
+// ── Profile dots — 10×10px circle, 2×2px gap rects ───────────────────────────
+
+.profileDots {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  // No explicit gap — uses 2×2px gap rects between dots in Figma
+  // We replicate with gap: 2px
+  gap: 2px;
+}
+
+.profileDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full); // full circle
+
+  // Default: inactive
+  .light & { background-color: var(--palette-neutral-0); }
+  .dark  & { background-color: var(--palette-blue-2); }
+
+  // Active
+  &.dotActive {
+    .light & { background-color: var(--palette-blue-0); }
+    .dark  & { background-color: var(--palette-white-0); }
+  }
+
+  // Missing — red cross indicator (profile doesn't have this skill)
+  &.dotMissing {
+    background-color: var(--palette-red-0); // #D42A36 — fill_IJXMTM
+  }
+
+  // Substitute — orange indicator (similar skill found)
+  &.dotSubstitute {
+    background-color: var(--palette-orange-3); // #FF6B00 — fill_SMN6UA
+  }
+}
+
+// ── Match dot group ───────────────────────────────────────────────────────────
+
+.matchDotGroup {
+  display: inline-flex;
+  align-items: center;
+}
+
+// ── Skill icons — 16×16px ─────────────────────────────────────────────────────
+// Each icon uses its own semantic colour
+
+.iconCareer {
+  // Career / learning icon — uses icon's own colour
+  flex-shrink: 0;
+}
+
+// Core — star gold #FFCD38 (fill_I8PMQN / fill_YKDLO5)
+.iconCore {
+  flex-shrink: 0;
+  path, circle, rect, polygon, ellipse { fill: #FFCD38 !important; }
+}
+
+// Development — teal #31A2CE (fill_UBXX0C / fill_8367HE)
+.iconDevelopment {
+  flex-shrink: 0;
+  path, circle, rect, polygon, ellipse { fill: #31A2CE !important; }
+}
+
+// Verified (experience) — green badge #248E61 (fill_0S8OWE / fill_1HGO1B)
+.iconVerified {
+  flex-shrink: 0;
+  path, circle, rect, polygon, ellipse { fill: #248E61 !important; }
+}
+
+// Verified Credly — orange badge #FF6B00 (fill_G73TQO / fill_WZW7XF)
+.iconVerifiedCredy {
+  flex-shrink: 0;
+  path, circle, rect, polygon, ellipse { fill: #FF6B00 !important; }
+}
+
+// Verified Feedback (others) — white badge with check (original fill)
+.iconVerifiedFeedback {
+  flex-shrink: 0;
+}
+
+// ── Vertical divider ──────────────────────────────────────────────────────────
+// 1px wide, self-stretch, light: #CFDAF7 / dark: #E7EAF8
+
+.divider {
+  flex-shrink: 0;
+  align-self: stretch;
+  height: auto;
+  width: 1px;
+  margin: 0;
+}
+
+.divider_light { background-color: var(--palette-neutral-0) !important; }  // #CFDAF7
+.divider_dark  { background-color: var(--palette-neutral-1) !important; }  // #E7EAF8

@@ -24,13 +24,16 @@ import ChevronDown from "./svg/chevron-down.svg";
 import ChevronLeft from "./svg/chevron-left.svg";
 import ChevronRight from "./svg/chevron-right.svg";
 import ChevronUp from "./svg/chevron-up.svg";
+import Core from "./svg/core.svg";
 import Cross from "./svg/cross.svg";
+import Development from "./svg/development.svg";
 import Down from "./svg/down.svg";
 import Edit from "./svg/edit.svg";
 import Engagement from "./svg/engagement.svg";
 import ErrorIcon from "./svg/error.svg";
 import Forbidden from "./svg/forbidden.svg";
 import HourglassHalf from "./svg/hourglass-half.svg";
+import Learning from "./svg/learning.svg";
 import Mandatory from "./svg/mandatory.svg";
 import Help from "./svg/help.svg";
 import Hidden from "./svg/hidden.svg";
@@ -78,6 +81,8 @@ import Unseen from "./svg/unseen.svg";
 import Up from "./svg/up.svg";
 import UserFilled from "./svg/user-filled.svg";
 import Verified from "./svg/verified.svg";
+import VerifiedCredy from "./svg/verified-credly.svg";
+import VerifiedOthers from "./svg/verified-others.svg";
 import Warning from "./svg/warning.svg";
 import Workflow from "./svg/workflow.svg";
 import ZoomIn from "./svg/zoom-in.svg";
@@ -90,8 +95,11 @@ export type IconName =
   | "caret-down" | "caret-left" | "caret-right" | "caret-up"
   | "chat" | "check" | "chevron-down" | "chevron-left" | "chevron-right" | "chevron-up"
   | "cross" | "down" | "edit" | "engagement" | "error"
+  | "core"
+  | "development"
   | "forbidden"
   | "help" | "hidden" | "history" | "hourglass-half" | "info" | "insights"
+  | "learning"
   | "link" | "links" | "list" | "location" | "locked" | "logout"
   | "mail" | "mandatory" | "marketplace" | "menu-horizontal" | "menu-vertical"
   | "merge" | "missing" | "money" | "move"
@@ -100,7 +108,8 @@ export type IconName =
   | "save" | "search" | "share" | "shown" | "skills-framework"
   | "smart-allocation" | "sort" | "split" | "subtract"
   | "table" | "tag" | "undo" | "unseen" | "up" | "user-filled"
-  | "verified" | "warning" | "workflow" | "zoom-in" | "zoom-out";
+  | "verified" | "verified-credly" | "verified-others"
+  | "warning" | "workflow" | "zoom-in" | "zoom-out";
 
 export type IconSize = 14 | 16 | 20 | 24;
 
@@ -134,7 +143,9 @@ const iconMap: Record<IconName, SvgComponent> = {
   "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
   "chevron-up": ChevronUp,
+  "core": Core,
   "cross": Cross,
+  "development": Development,
   "down": Down,
   "edit": Edit,
   "engagement": Engagement,
@@ -142,6 +153,7 @@ const iconMap: Record<IconName, SvgComponent> = {
   "forbidden": Forbidden,
   "help": Help,
   "hourglass-half": HourglassHalf,
+  "learning": Learning,
   "hidden": Hidden,
   "history": History,
   "info": Info,
@@ -188,6 +200,8 @@ const iconMap: Record<IconName, SvgComponent> = {
   "up": Up,
   "user-filled": UserFilled,
   "verified": Verified,
+  "verified-credly": VerifiedCredy,
+  "verified-others": VerifiedOthers,
   "warning": Warning,
   "workflow": Workflow,
   "zoom-in": ZoomIn,
