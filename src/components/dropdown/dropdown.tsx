@@ -346,6 +346,121 @@ export const DropdownWM = ({
   );
 };
 
+// ── Typeahead / autocomplete dropdown (6567:48581) ────────────────────────────
+// search-ac-dropdown: mixed-type search results with bold matched term,
+// type label (PROFILE / ENGAGEMENT / ROLE), open icon, "See all results" link
+//
+// Card: white, radius 8px, shadow 0 6px 12px rgba(27,72,195,0.2), padding 8px
+// Item row: padding 4px 8px, gap 10px, width fills card
+//   Left:  icon 20×20px + title (body-unselected, matched term bold) + subtext
+//   Right: type label (label-unselected uppercase, #5C6E9E) + open icon
+//   Search item: no RIGHT section
+
+export type TypeaheadResultType = "profile" | "engagement" | "role" | "search";
+
+export type TypeaheadResult = {
+  id: string;
+  type: TypeaheadResultType;
+  /** Full label — matched portion shown bold, rest regular */
+  label: string;
+  /** Bold portion (matched query) — rendered bold, rest of label is regular */
+  matchedPart?: string;
+  subLabel?: string;
+  onOpen?: () => void;
+};
+
+const TYPE_ICON: Record<TypeaheadResultType, IconName> = {
+  profile:    "profile",
+  engagement: "engagement",
+  role:       "role",
+  search:     "search",
+};
+
+const TYPE_LABEL: Record<TypeaheadResultType, string> = {
+  profile:    "PROFILE",
+  engagement: "ENGAGEMENT",
+  role:       "ROLE",
+  search:     "",
+};
+
+export type DropdownTypeaheadProps = {
+  results: TypeaheadResult[];
+  onSelect: (id: string) => void;
+  onSeeAll?: () => void;
+  className?: string;
+};
+
+export const DropdownTypeahead = ({
+  results,
+  onSelect,
+  onSeeAll,
+  className,
+}: DropdownTypeaheadProps) => (
+  <div className={classNames(css.card, css.typeaheadCard, className)}>
+    <div className={css.typeaheadList}>
+      {results.map((result) => {
+        const icon = TYPE_ICON[result.type];
+        const typeLabel = TYPE_LABEL[result.type];
+        const showRight = result.type !== "search";
+
+        // Split label into matched (bold) + rest (regular)
+        const { label, matchedPart } = result;
+        let boldPart = matchedPart ?? "";
+        let regularPart = label;
+        if (boldPart && label.toLowerCase().startsWith(boldPart.toLowerCase())) {
+          boldPart = label.slice(0, boldPart.length);
+          regularPart = label.slice(boldPart.length);
+        } else {
+          boldPart = "";
+          regularPart = label;
+        }
+
+        return (
+          <button
+            key={result.id}
+            type="button"
+            className={css.typeaheadItem}
+            onClick={() => onSelect(result.id)}
+          >
+            {/* Left: icon + body */}
+            <span className={css.typeaheadLeft}>
+              <Icon name={icon} size={20} className={css.typeaheadIcon} />
+              <span className={css.typeaheadBody}>
+                <span className={css.typeaheadTitle}>
+                  {boldPart && <strong className={css.typeaheadBold}>{boldPart}</strong>}
+                  {regularPart}
+                </span>
+                {result.subLabel && (
+                  <span className={css.typeaheadSub}>{result.subLabel}</span>
+                )}
+              </span>
+            </span>
+            {/* Right: type label + open icon */}
+            {showRight && (
+              <span className={css.typeaheadRight}>
+                <span className={css.typeaheadTypeLabel}>{typeLabel}</span>
+                <button
+                  type="button"
+                  className={css.typeaheadOpenBtn}
+                  onClick={(e) => { e.stopPropagation(); result.onOpen?.(); }}
+                  aria-label={`Open ${result.label}`}
+                >
+                  <Icon name="open" size={16} className={css.typeaheadOpenIcon} />
+                </button>
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+    {onSeeAll && (
+      <button type="button" className={css.typeaheadSeeAll} onClick={onSeeAll}>
+        See all results
+      </button>
+    )}
+  </div>
+);
+
 // Re-export a unified Dropdown type for convenience
 export type DropdownVariant = "actions" | "selection" | "multi" | "icons" | "booking-category" | "wm";
 

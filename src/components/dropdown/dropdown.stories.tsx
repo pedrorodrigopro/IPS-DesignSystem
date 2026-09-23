@@ -6,6 +6,7 @@ import {
   DropdownIcons,
   DropdownMultiSelection,
   DropdownSelection,
+  DropdownTypeahead,
   DropdownWM,
 } from "./dropdown";
 import type { IconName } from "../icon/icon";
@@ -153,6 +154,21 @@ export const WorkforceMember: StoryFn = () => {
 };
 
 // ── All variants ──────────────────────────────────────────────────────────────
+
+// ── Typeahead ─────────────────────────────────────────────────────────────────
+
+export const Typeahead: StoryFn = () => (
+  <DropdownTypeahead
+    results={[
+      { id: "1", type: "profile",    label: "Ruby Alpha",        matchedPart: "Ruby", subLabel: "ruby.alpha@profinda.com", onOpen: () => {} },
+      { id: "2", type: "engagement", label: "Ruby banking audit", matchedPart: "Ruby", subLabel: "01 Mar 2024",            onOpen: () => {} },
+      { id: "3", type: "role",       label: "Ruby developer",     matchedPart: "Ruby", subLabel: "01 Mar 2024",            onOpen: () => {} },
+      { id: "4", type: "search",     label: "Ruby developer",     matchedPart: "Ruby" },
+    ]}
+    onSelect={(id) => console.log("selected", id)}
+    onSeeAll={() => console.log("see all")}
+  />
+);
 
 export const AllVariants: StoryFn = () => {
   const [singleSel, setSingleSel] = useState("1");

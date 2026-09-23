@@ -255,3 +255,148 @@
   color: var(--palette-blue-0);
   flex-shrink: 0;
 }
+
+// ── Typeahead / autocomplete (6567:48581) ─────────────────────────────────────
+// Card: white, radius 8px, shadow 0 6px 12px rgba(27,72,195,0.2), padding 8px
+
+.typeaheadCard {
+  box-shadow: 0 6px 12px 0 rgba(27, 72, 195, 0.2); // Card with drop shadow
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px;
+  min-width: 300px;
+}
+
+.typeaheadList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; // layout_PK5KTM gap
+  margin-bottom: 4px;
+}
+
+// Item row: padding 4px 8px, gap 10px, space-between left/right
+.typeaheadItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  transition: background-color 0.1s ease;
+
+  &:hover { background-color: var(--palette-trans-0); }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
+// Left: icon + body column
+.typeaheadLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.typeaheadIcon {
+  flex-shrink: 0;
+  color: var(--palette-blue-0);
+  path, circle, rect, polygon, ellipse { fill: var(--palette-blue-0) !important; }
+}
+
+.typeaheadBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px; // layout_5DSQK1 gap
+  min-width: 0;
+}
+
+// Title — body-unselected base, matched term bold
+.typeaheadTitle {
+  @include ts.body-unselected; // 14px / Regular / 115%
+  color: var(--palette-blue-0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Bold matched portion — body-selected weight
+.typeaheadBold {
+  font-weight: var(--font-weight-bold); // 700
+  font-style: normal;
+}
+
+// Subtext — label-unselected (12px/400), #0D2976
+.typeaheadSub {
+  @include ts.label-unselected; // 12px / Regular / 115%
+  color: var(--palette-blue-0);
+  white-space: nowrap;
+}
+
+// Right: type label + open icon
+.typeaheadRight {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+// Type label — uppercase, label-unselected, #5C6E9E (fill_9EGHZK)
+.typeaheadTypeLabel {
+  @include ts.label-unselected; // 12px / Regular / 115%
+  color: var(--palette-blue-2); // #5C6E9E
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+// Open icon button
+.typeaheadOpenBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.typeaheadOpenIcon {
+  color: var(--palette-blue-2);
+  path, circle, rect, polygon, ellipse { fill: var(--palette-blue-2) !important; }
+}
+
+// "See all results" — Button Link style, centred, body-selected, --palette-primary-0
+.typeaheadSeeAll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 0;
+  @include ts.body-selected; // 14px / Bold / 115%
+  color: var(--palette-primary-0); // #2358F8 — fill_KQXAQF
+  transition: text-decoration 0.1s ease;
+
+  &:hover { text-decoration: underline; }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
+  }
+}
