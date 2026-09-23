@@ -98,14 +98,14 @@
   flex-shrink: 0;
 }
 
-// Cross row — sits above role dots when missing
-// Width matches first bar (10px) so cross aligns over bar 1
+// Cross/substitute row — sits above role dots
+// Total bars width: 3×10px + 2×2px = 34px — but icon floats right via padding-left
 .matchCrossRow {
   display: inline-flex;
   align-items: center;
-  width: 10px;  // exactly one bar wide — cross aligns over first bar
+  width: 34px;  // full dots row width (3 bars + 2 gaps)
   height: 10px; // same height as profile dot
-  overflow: visible;
+  box-sizing: border-box;
 }
 
 // Substitute icon — orange, 10×10px
@@ -133,11 +133,11 @@
 // Rendered as <span> so it naturally stretches with align-self: stretch in flex row
 
 .divider {
-  display: inline-block;
+  // Must be block (not inline-block) to respond to align-self: stretch in flex context
+  display: block;
   flex-shrink: 0;
   align-self: stretch; // fills full height of the skill row
   width: 1px;
-  min-height: 14px; // fallback height
 }
 
 .divider_light { background-color: var(--palette-neutral-0); }  // #CFDAF7 — fill_GWXVBY

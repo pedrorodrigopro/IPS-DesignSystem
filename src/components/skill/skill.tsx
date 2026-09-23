@@ -342,12 +342,14 @@ const MatchDots = ({ requiredProficiency, profileProficiency, missing = false, s
     <span className={css.matchDotStack}>
       {/* Top: profile dots / cross (missing) / substitute icon (parent-child) */}
       {missing ? (
-        <span className={css.matchCrossRow}>
+        // Icon positioned above the last active (highest coloured) bar
+        // Bar width=10px, gap=2px → each bar step = 12px
+        // offset = (count - 1) * 12px to align over last coloured bar
+        <span className={css.matchCrossRow} style={{ paddingLeft: `${(count - 1) * 12}px` }}>
           <Icon name="cross" size={16} className={css.matchCrossIcon} />
         </span>
       ) : substitute ? (
-        <span className={css.matchCrossRow}>
-          {/* substitute-parent-child icon — orange #FF6B00, 10×10px */}
+        <span className={css.matchCrossRow} style={{ paddingLeft: `${(count - 1) * 12}px` }}>
           <Icon name="substitute-parent-child" size={16} className={css.matchSubstituteIcon} />
         </span>
       ) : (
