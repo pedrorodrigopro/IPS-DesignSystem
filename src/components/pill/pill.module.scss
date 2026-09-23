@@ -76,6 +76,11 @@
   flex-direction: row;
   align-items: stretch;
   white-space: nowrap;
+  box-sizing: border-box;
+
+  // Fixed heights matching simple/removable
+  &.regular { height: 32px; }
+  &.small   { height: 24px; }
 }
 
 .modLeft {
@@ -85,10 +90,10 @@
   background-color: var(--palette-neutral-1);
   border: 1px solid var(--palette-neutral-0);
   border-right: none;
-  gap: 8px;
+  box-sizing: border-box;
 
-  &.regular { padding: 8px; gap: 8px; }
-  &.small   { padding: 5px 5px 5px 8px; gap: 4px; }
+  &.regular { padding: 0 8px; gap: 8px; }
+  &.small   { padding: 0 5px 0 8px; gap: 4px; }
 
   .label { @include ts.body-unselected; color: var(--palette-blue-0); }
   .modifier.small & .label { @include ts.label-unselected; }
@@ -102,10 +107,10 @@
   border: 1px solid var(--palette-neutral-0);
   border-left: none;
   cursor: pointer;
-  gap: 8px;
+  box-sizing: border-box;
 
-  &.regular { padding: 8px; gap: 8px; }
-  &.small   { padding: 5px 8px 5px 5px; gap: 4px; }
+  &.regular { padding: 0 8px; gap: 8px; }
+  &.small   { padding: 0 8px 0 5px; gap: 4px; }
 
   .label { @include ts.body-unselected; color: var(--palette-blue-0); }
   .modifier.small & .label { @include ts.label-unselected; }
