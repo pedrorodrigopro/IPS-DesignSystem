@@ -16,8 +16,10 @@
   user-select: none;
 
   // Horizontal: row, gap 8px, padding 4px 0 (layout_L427PG)
+  // align-items: flex-start so circle aligns to first line when subtext present
   &.horizontal {
     flex-direction: row;
+    align-items: flex-start;
     gap: 8px;
     padding: 4px 0;
   }
@@ -60,6 +62,9 @@
   border: 1px solid var(--palette-neutral-0); // #CFDAF7 — fill_TLPPSW
   box-sizing: border-box;
   transition: background-color 0.15s ease, border-color 0.15s ease;
+  // Align circle centre to first text line:
+  // body-regular line-height 150% × 14px = 21px, circle 24px → offset (24-21)/2 ≈ 1.5px
+  margin-top: 1px;
 }
 
 // Hover — via parent label hover
