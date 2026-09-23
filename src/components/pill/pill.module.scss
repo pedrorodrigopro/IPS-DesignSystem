@@ -13,6 +13,7 @@
   border-radius: 16px;
   background-color: var(--palette-neutral-1); // #E7EAF8
   white-space: nowrap;
+  box-sizing: border-box; // border must not add to height
 }
 
 // ── Simple (Type=Simple) ──────────────────────────────────────────────────────
@@ -20,15 +21,15 @@
 
 .simple {
   &.regular { gap: 8px; padding: 0 16px; height: 32px; }
-  &.small   { gap: 4px; padding: 0 8px;  height: 26px; }
+  &.small   { gap: 4px; padding: 0 8px;  height: 24px; }
 }
 
 // ── Removable (Type=Removable) ────────────────────────────────────────────────
-// Regular: 32px | Small: 26px
+// Regular: 32px | Small: 24px
 
 .removable {
   &.regular { gap: 8px; padding: 0 16px 0 8px; height: 32px; }
-  &.small   { gap: 4px; padding: 0 12px 0 8px; height: 26px; }
+  &.small   { gap: 4px; padding: 0 12px 0 8px; height: 24px; }
 
   &.bordered { border: 1px solid var(--palette-neutral-0); } // #CFDAF7
 }
@@ -46,6 +47,7 @@
 .icon {
   flex-shrink: 0;
   color: inherit;
+  display: block; // prevent inline baseline gap adding height
 
   path, circle, rect, polygon, ellipse {
     fill: currentColor !important;
