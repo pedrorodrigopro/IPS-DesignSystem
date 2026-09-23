@@ -1,0 +1,120 @@
+// Radiobutton — Figma node 1635:27857
+// Circle: 24×24px, radius full, border #CFDAF7 (--palette-neutral-0)
+// Selected inner dot: 12×12px, #0C1457 (--palette-blue-1)
+// Hover border: #5C6E9E (--palette-blue-2), bg rgba(0,0,0,0.04)
+// Focus: double ring 0 0 0 4px #0C1457, 0 0 0 2px white
+// Label: body-regular (14px/400/150%), #0D2976
+// Subtext: label-regular (12px/400/150%), #5C6E9E
+@use "../../styles/text-styles" as ts;
+
+// ── Label wrapper ─────────────────────────────────────────────────────────────
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+
+  // Horizontal: row, gap 8px, padding 4px 0 (layout_L427PG)
+  &.horizontal {
+    flex-direction: row;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  // Vertical: column, gap 8px — label above, circle below (layout_8664VD)
+  &.vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// ── Hidden input ──────────────────────────────────────────────────────────────
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+// ── Visual circle — 24×24px ───────────────────────────────────────────────────
+
+.circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: var(--radius-full); // full circle
+  background-color: var(--palette-white-0); // white — fill_W2BQO5
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7 — fill_TLPPSW
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+// Hover — via parent label hover
+.radio:hover:not(.disabled) .circle {
+  background-color: var(--palette-trans-0); // rgba(0,0,0,0.04) — fill_OSFC5F
+  border-color: var(--palette-blue-2);       // #5C6E9E — fill_0WG3VK
+}
+
+// Focus ring on circle
+.input:focus-visible + .circle {
+  box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);
+}
+
+// ── Inner dot — 12×12px, shown when selected ──────────────────────────────────
+// fill_UL4FQ9 = #0C1457 (--palette-blue-1) default
+// fill_LJMRWQ = #1531B8 (--palette-primary-1) on hover
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--palette-blue-1); // #0C1457 — fill_UL4FQ9
+  transition: background-color 0.15s ease;
+}
+
+// Hover on selected — dot turns primary-1
+.radio:hover:not(.disabled) .checked .dot {
+  background-color: var(--palette-primary-1); // #1531B8 — fill_LJMRWQ
+}
+
+// ── Label text ────────────────────────────────────────────────────────────────
+
+.labelWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// body-regular (14px/400/150%), #0D2976 — fill_Z0TDLS
+.label {
+  @include ts.body-regular;
+  color: var(--palette-blue-0);
+}
+
+// label-regular (12px/400/150%), #5C6E9E — fill_0WG3VK
+.subLabel {
+  @include ts.label-regular;
+  color: var(--palette-blue-2);
+}
+
+// ── RadioGroup ────────────────────────────────────────────────────────────────
+
+.group {
+  display: flex;
+}
+
+.group_column { flex-direction: column; gap: 8px; }
+.group_row    { flex-direction: row;    gap: 16px; flex-wrap: wrap; }
