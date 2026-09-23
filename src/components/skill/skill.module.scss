@@ -20,7 +20,7 @@
   align-items: center;
   gap: 4px;
   padding: 5px 2px;
-  height: 24px;
+  min-height: 24px; // match can be taller due to stacked dots
   box-sizing: border-box;
   border-radius: 4px;
   cursor: default;
@@ -84,6 +84,25 @@
   height: 10px;
   border-radius: var(--radius-full);
   // colour set inline via theme
+}
+
+// ── Match dot stack — column: profile (top) + role (bottom) ──────────────────
+// From layout_Y37N5E: column, justify flex-end, gap 2px
+
+.matchDotStack {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+// Cross row — red × icon, sits above role dots when missing
+.matchCrossRow {
+  display: inline-flex;
+  align-items: center;
+  height: 10px; // same height as profile dots
 }
 
 // ── Divider ───────────────────────────────────────────────────────────────────

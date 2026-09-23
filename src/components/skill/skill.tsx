@@ -324,6 +324,50 @@ export const SkillProfile = ({
   );
 };
 
+// ── Match proficiency display ─────────────────────────────────────────────────
+// Column: profile dots (circles) top, role dots (pills) bottom — layout_Y37N5E
+// Not-met: cross icon above role dots (no profile dots shown)
+
+type MatchDotsProps = {
+  requiredProficiency: ProficiencyLevel;
+  profileProficiency?: ProficiencyLevel;
+  missing?: boolean;
+  theme?: SkillTheme;
+};
+
+const MatchDots = ({ requiredProficiency, profileProficiency, missing = false, theme = "light" }: MatchDotsProps) => (
+  <span className={css.matchDotStack}>
+    {/* Top: profile dots or cross when missing */}
+    {missing ? (
+      <span className={css.matchCrossRow}>
+        <Icon name="cross" size={16} style={{ color: "var(--palette-red-0)" }} />
+      </span>
+    ) : (
+      <ProfileDots level={profileProficiency ?? "basic"} theme={theme} />
+    )}
+    {/* Bottom: role dots (always shown) — coloured red when missing */}
+    {missing ? (
+      <span className={css.roleDots}>
+        {(() => {
+          const count = requiredProficiency === "basic" ? 1 : requiredProficiency === "intermediate" ? 2 : 3;
+          return [0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className={css.roleDot}
+              style={{
+                backgroundColor: i < count ? "var(--palette-red-0)" : "var(--palette-neutral-0)",
+              }}
+              aria-hidden="true"
+            />
+          ));
+        })()}
+      </span>
+    ) : (
+      <RoleDots level={requiredProficiency} theme={theme} />
+    )}
+  </span>
+);
+
 // ── Skill/Match ───────────────────────────────────────────────────────────────
 
 export type SkillMatchProps = SkillIconFlags & {
@@ -359,14 +403,13 @@ export const SkillMatch = ({
         />
       )}
       <span className={classNames(css.skill, css[theme])}>
-        {/* Profile side — left */}
-        {missing ? (
-          <NotMetDots theme={theme} />
-        ) : (
-          <ProfileDots level={profileProficiency ?? "basic"} theme={theme} />
-        )}
-        {/* Required side — right */}
-        <RoleDots level={requiredProficiency} theme={theme} />
+        {/* Stacked dots: profile (top) + role (bottom) */}
+        <MatchDots
+          requiredProficiency={requiredProficiency}
+          profileProficiency={profileProficiency}
+          missing={missing}
+          theme={theme}
+        />
         <span className={css.skillLabel}>{label}</span>
         <SkillIcons {...icons} />
         {showDivider && <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />}
