@@ -60,11 +60,10 @@
   }
 }
 
-// Selection items: padding 4px 12px 4px 4px
-// align-items: center — works for single-line; checkSlot margin-top handles two-line
+// Selection items: align to top so check icon aligns to first line on two-line items
 .itemSelection {
   padding: 4px 12px 4px 4px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 // Category items: space-between for label + pill
@@ -112,8 +111,8 @@
 }
 
 // ── Checkmark slot ────────────────────────────────────────────────────────────
-// 16×16px — same as body-unselected line-height (115% × 14px ≈ 16px)
-// margin-top aligns it to the first text line
+// 16×16px — matches body-unselected line-height (115% × 14px ≈ 16px)
+// margin-top vertically centres the slot on the first text line
 
 .checkSlot {
   display: inline-flex;
@@ -122,7 +121,7 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  margin-top: 1px; // align to first line
+  margin-top: 2px; // (item padding-top 4px makes first line start at ~2px from top)
 }
 
 .checkIcon {
@@ -143,10 +142,9 @@
   background-color: var(--palette-white-0);
   border: 1px solid var(--palette-neutral-0); // #CFDAF7
   flex-shrink: 0;
-  // Centre the 24px box with the 16px body text line:
-  // (24 - 16) / 2 = 4px, but body line-height 115% × 14 ≈ 16px, so box is already taller
-  // align-self: center keeps single-line items centred; for multi-line parent uses flex-start
+  // align-self: center keeps checkbox centred with label text
   align-self: center;
+  margin-top: 0; // reset — multi-selection items are always single-line
 
   // When parent button has data-checked (we use CSS :has or just rely on SVG content)
   // Selected state applied via parent — we show white icon when checked
