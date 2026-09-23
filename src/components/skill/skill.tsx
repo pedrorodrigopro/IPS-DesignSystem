@@ -3,46 +3,55 @@
 //   Skill/Role:        9732:260872
 //   Skill/Profile:     9732:260881
 //   Skill/Match:       9732:260900
+//   Not-met visual:    12319:240427 — cross + faded dots + level name
+//   Tooltip:           1457:22694  — dark #0C1457 bg, 16px padding, 8px radius
 //
 // Proficiency:
 //   Role dots:    3 × (10×4px pill, radius 32px, gap 2px) — active=#0D2976, inactive=#CFDAF7
-//   Profile dots: 3 × (10×10px circle, radius 32px, 2×2px gap rects) — same colours
+//   Profile dots: 3 × (10×10px circle, radius 32px, 2×2px gap) — same colours
 //   Levels: basic=1, intermediate=2, advanced=3 active dots
 //
 // Skill row: row, align-items center, gap 4px, padding 5px 2px, height 24px
-//   Light: #0D2976 (--palette-blue-0) | Dark: #FFFFFF (--palette-white-0)
+//   Light: #0D2976 | Dark: #FFFFFF
 //
-// Icons (all 16×16px):
-//   core:             star (gold #FFCD38)
-//   development:      bar chart (teal #31A2CE)
-//   verified:         green badge (#248E61)
-//   verified-credly:  orange badge (#FF6B00)
-//   verified-others:  dark badge (white check)
-//   career:           graduation cap (learning icon)
+// Not-met: cross icon (red #D42A36) + faded dots (opacity 0.3) + level name
 //
-// Divider: 1px vertical, #CFDAF7 (light) / #E7EAF8 (dark)
-// Hover: rgba(0,0,0,0.04) bg, dark tooltip #0C1457
+// Tooltip (dark, #0C1457 bg):
+//   Role:    "Required" header + role dots + level name + optional tags
+//   Profile: "Profile" header + profile dots + level name + icons + tags
+//   Match:   two columns (Required | Profile) separated by divider
 import classNames from "classnames";
-import { Icon } from "../icon/icon";
+import { useState } from "react";
 import { Divider } from "../divider/divider";
+import { Icon } from "../icon/icon";
 import css from "./skill.module.scss";
 
 export type ProficiencyLevel = "basic" | "intermediate" | "advanced";
-export type SkillContext = "role" | "profile" | "match";
 export type SkillTheme = "light" | "dark";
 
-// ── Proficiency dots ──────────────────────────────────────────────────────────
+const LEVEL_LABELS: Record<ProficiencyLevel, string> = {
+  basic: "Basic",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
 
-type RoleDotsProps = { level: ProficiencyLevel; theme: SkillTheme };
+// ── Role dots — 10×4px pill ───────────────────────────────────────────────────
 
-const RoleDots = ({ level, theme }: RoleDotsProps) => {
+type RoleDotsProps = { level: ProficiencyLevel; theme?: SkillTheme; faded?: boolean };
+
+const RoleDots = ({ level, theme = "light", faded = false }: RoleDotsProps) => {
   const count = level === "basic" ? 1 : level === "intermediate" ? 2 : 3;
   return (
-    <span className={classNames(css.roleDots, css[theme])}>
+    <span className={classNames(css.roleDots)} style={{ opacity: faded ? 0.3 : 1 }}>
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className={classNames(css.roleDot, { [css.dotActive]: i < count })}
+          className={css.roleDot}
+          style={{
+            backgroundColor: i < count
+              ? (theme === "dark" ? "var(--palette-white-0)" : "var(--palette-blue-0)")
+              : (theme === "dark" ? "var(--palette-blue-2)" : "var(--palette-neutral-0)"),
+          }}
           aria-hidden="true"
         />
       ))}
@@ -50,42 +59,62 @@ const RoleDots = ({ level, theme }: RoleDotsProps) => {
   );
 };
 
-type ProfileDotsProps = { level: ProficiencyLevel; theme: SkillTheme; missing?: boolean };
+// ── Profile dots — 10×10px circle ────────────────────────────────────────────
 
-const ProfileDots = ({ level, theme, missing }: ProfileDotsProps) => {
+type ProfileDotsProps = { level: ProficiencyLevel; theme?: SkillTheme; faded?: boolean };
+
+const ProfileDots = ({ level, theme = "light", faded = false }: ProfileDotsProps) => {
   const count = level === "basic" ? 1 : level === "intermediate" ? 2 : 3;
   return (
-    <span className={classNames(css.profileDots, css[theme])}>
+    <span className={css.profileDots} style={{ opacity: faded ? 0.3 : 1 }}>
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className={classNames(css.profileDot, {
-            [css.dotActive]: !missing && i < count,
-            [css.dotMissing]: missing,
-          })}
+          className={css.profileDot}
+          style={{
+            backgroundColor: i < count
+              ? (theme === "dark" ? "var(--palette-white-0)" : "var(--palette-blue-0)")
+              : (theme === "dark" ? "var(--palette-blue-2)" : "var(--palette-neutral-0)"),
+          }}
           aria-hidden="true"
         />
       ))}
     </span>
   );
 };
+
+// ── Not-met dots — cross + faded profile dots ─────────────────────────────────
+// From node 12319:240427: cross icon (red #D42A36) + faded dots (opacity 0)
+
+const NotMetDots = ({ theme = "light" }: { theme?: SkillTheme }) => (
+  <span className={css.profileDots}>
+    <Icon name="cross" size={16} style={{ color: "var(--palette-red-0)", flex: "none" }} />
+    {[0, 1, 2].map((i) => (
+      <span
+        key={i}
+        className={css.profileDot}
+        style={{
+          backgroundColor: theme === "dark" ? "var(--palette-blue-2)" : "var(--palette-neutral-0)",
+          opacity: 0.3,
+        }}
+        aria-hidden="true"
+      />
+    ))}
+  </span>
+);
 
 // ── Skill icons ───────────────────────────────────────────────────────────────
-// Rendered as coloured SVGs from the icon set
 
-type SkillIconsProps = {
+export type SkillIconFlags = {
   core?: boolean;
   development?: boolean;
   verified?: boolean;
   verifiedCredy?: boolean;
   verifiedFeedback?: boolean;
   career?: boolean;
-  theme?: SkillTheme;
 };
 
-const SkillIcons = ({
-  core, development, verified, verifiedCredy, verifiedFeedback, career,
-}: SkillIconsProps) => (
+const SkillIcons = ({ core, development, verified, verifiedCredy, verifiedFeedback, career }: SkillIconFlags) => (
   <>
     {career && <Icon name="learning" size={16} className={css.iconCareer} />}
     {core && <Icon name="core" size={16} className={css.iconCore} />}
@@ -96,149 +125,252 @@ const SkillIcons = ({
   </>
 );
 
-// ── Skill/Role (9732:260872) ──────────────────────────────────────────────────
-// Role dots + label + optional career icon + optional divider
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+// Dark bg #0C1457, 16px padding, 8px radius, arrow below
+// Role: single column | Profile: single column | Match: two columns
+
+type SkillTooltipRoleProps = {
+  proficiency: ProficiencyLevel;
+  tags?: string[];
+  theme?: SkillTheme;
+};
+
+const TooltipRole = ({ proficiency, tags }: SkillTooltipRoleProps) => (
+  <div className={css.tooltip}>
+    <div className={css.tooltipCol}>
+      <span className={css.tooltipHeader}>Required</span>
+      <div className={css.tooltipRow}>
+        <RoleDots level={proficiency} theme="dark" />
+        <span className={css.tooltipLevel}>{LEVEL_LABELS[proficiency]}</span>
+      </div>
+      {tags && tags.map((tag) => (
+        <span key={tag} className={css.tooltipTag}>{tag}</span>
+      ))}
+    </div>
+    <div className={css.tooltipArrow} />
+  </div>
+);
+
+type SkillTooltipProfileProps = SkillIconFlags & {
+  proficiency: ProficiencyLevel;
+  tags?: string[];
+};
+
+const TooltipProfile = ({ proficiency, tags, ...icons }: SkillTooltipProfileProps) => (
+  <div className={css.tooltip}>
+    <div className={css.tooltipCol}>
+      <span className={css.tooltipHeader}>Profile</span>
+      <div className={css.tooltipRow}>
+        <ProfileDots level={proficiency} theme="dark" />
+        <span className={css.tooltipLevel}>{LEVEL_LABELS[proficiency]}</span>
+      </div>
+      {icons.core && (
+        <div className={css.tooltipRow}>
+          <Icon name="core" size={16} className={css.iconCore} />
+          <span className={css.tooltipLevel}>Core</span>
+        </div>
+      )}
+      {icons.development && (
+        <div className={css.tooltipRow}>
+          <Icon name="development" size={16} className={css.iconDevelopment} />
+          <span className={css.tooltipLevel}>Developmental</span>
+        </div>
+      )}
+      {icons.verified && (
+        <div className={css.tooltipRow}>
+          <Icon name="verified" size={16} className={css.iconVerified} />
+          <span className={css.tooltipLevel}>Experience</span>
+        </div>
+      )}
+      {icons.verifiedCredy && (
+        <div className={css.tooltipRow}>
+          <Icon name="verified-credly" size={16} className={css.iconVerifiedCredy} />
+          <span className={css.tooltipLevel}>Credly</span>
+        </div>
+      )}
+      {icons.verifiedFeedback && (
+        <div className={css.tooltipRow}>
+          <Icon name="verified-others" size={16} className={css.iconVerifiedFeedback} />
+          <span className={css.tooltipLevel}>Feedback</span>
+        </div>
+      )}
+      {icons.career && (
+        <div className={css.tooltipRow}>
+          <Icon name="learning" size={16} className={css.iconCareer} />
+          <span className={css.tooltipLevel}>Career</span>
+        </div>
+      )}
+      {tags && tags.map((tag) => (
+        <span key={tag} className={css.tooltipTag}>{tag}</span>
+      ))}
+    </div>
+    <div className={css.tooltipArrow} />
+  </div>
+);
+
+type SkillTooltipMatchProps = SkillIconFlags & {
+  requiredProficiency: ProficiencyLevel;
+  profileProficiency?: ProficiencyLevel;
+  missing?: boolean;
+  tags?: string[];
+};
+
+const TooltipMatch = ({
+  requiredProficiency, profileProficiency, missing, tags, ...icons
+}: SkillTooltipMatchProps) => (
+  <div className={css.tooltip}>
+    <div className={css.tooltipCols}>
+      {/* Required column */}
+      <div className={css.tooltipCol}>
+        <span className={css.tooltipHeader}>Required</span>
+        <div className={css.tooltipRow}>
+          <RoleDots level={requiredProficiency} theme="dark" />
+          <span className={css.tooltipLevel}>{LEVEL_LABELS[requiredProficiency]}</span>
+        </div>
+      </div>
+      {/* Vertical divider */}
+      <div className={css.tooltipDivider} />
+      {/* Profile column */}
+      <div className={css.tooltipCol}>
+        <span className={css.tooltipHeader}>Profile</span>
+        {missing ? (
+          <div className={css.tooltipRow}>
+            <NotMetDots theme="dark" />
+            <span className={classNames(css.tooltipLevel, css.tooltipMissing)}>Profile does not have this skill</span>
+          </div>
+        ) : (
+          <>
+            <div className={css.tooltipRow}>
+              <ProfileDots level={profileProficiency ?? "basic"} theme="dark" />
+              <span className={css.tooltipLevel}>{LEVEL_LABELS[profileProficiency ?? "basic"]}</span>
+            </div>
+            {icons.core && <div className={css.tooltipRow}><Icon name="core" size={16} className={css.iconCore} /><span className={css.tooltipLevel}>Core</span></div>}
+            {icons.development && <div className={css.tooltipRow}><Icon name="development" size={16} className={css.iconDevelopment} /><span className={css.tooltipLevel}>Developmental</span></div>}
+            {icons.verified && <div className={css.tooltipRow}><Icon name="verified" size={16} className={css.iconVerified} /><span className={css.tooltipLevel}>Experience</span></div>}
+            {icons.verifiedCredy && <div className={css.tooltipRow}><Icon name="verified-credly" size={16} className={css.iconVerifiedCredy} /><span className={css.tooltipLevel}>Credly</span></div>}
+            {icons.verifiedFeedback && <div className={css.tooltipRow}><Icon name="verified-others" size={16} className={css.iconVerifiedFeedback} /><span className={css.tooltipLevel}>Feedback</span></div>}
+            {icons.career && <div className={css.tooltipRow}><Icon name="learning" size={16} className={css.iconCareer} /><span className={css.tooltipLevel}>Career</span></div>}
+          </>
+        )}
+        {tags && tags.map((tag) => <span key={tag} className={css.tooltipTag}>{tag}</span>)}
+      </div>
+    </div>
+    <div className={css.tooltipArrow} />
+  </div>
+);
+
+// ── Skill/Role ────────────────────────────────────────────────────────────────
 
 export type SkillRoleProps = {
   label: string;
   proficiency: ProficiencyLevel;
   career?: boolean;
   showDivider?: boolean;
+  tags?: string[];
   theme?: SkillTheme;
   className?: string;
 };
 
 export const SkillRole = ({
-  label,
-  proficiency,
-  career = false,
-  showDivider = false,
-  theme = "light",
-  className,
-}: SkillRoleProps) => (
-  <span className={classNames(css.skill, css[theme], { [css.skillHoverable]: true }, className)}>
-    <RoleDots level={proficiency} theme={theme} />
-    <span className={css.skillLabel}>{label}</span>
-    {career && <Icon name="learning" size={16} className={css.iconCareer} />}
-    {showDivider && (
-      <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />
-    )}
-  </span>
-);
+  label, proficiency, career = false, showDivider = false, tags, theme = "light", className,
+}: SkillRoleProps) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span
+      className={classNames(css.skillWrapper, className)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {hovered && <TooltipRole proficiency={proficiency} tags={tags} />}
+      <span className={classNames(css.skill, css[theme])}>
+        <RoleDots level={proficiency} theme={theme} />
+        <span className={css.skillLabel}>{label}</span>
+        {career && <Icon name="learning" size={16} className={css.iconCareer} />}
+        {showDivider && <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />}
+      </span>
+    </span>
+  );
+};
 
-// ── Skill/Profile (9732:260881) ───────────────────────────────────────────────
-// Profile dots + label + all optional icons + optional divider
+// ── Skill/Profile ─────────────────────────────────────────────────────────────
 
-export type SkillProfileProps = {
+export type SkillProfileProps = SkillIconFlags & {
   label: string;
   proficiency: ProficiencyLevel;
-  core?: boolean;
-  development?: boolean;
-  verified?: boolean;
-  verifiedCredy?: boolean;
-  verifiedFeedback?: boolean;
-  career?: boolean;
   showDivider?: boolean;
+  tags?: string[];
   theme?: SkillTheme;
   className?: string;
 };
 
 export const SkillProfile = ({
-  label,
-  proficiency,
-  core = false,
-  development = false,
-  verified = false,
-  verifiedCredy = false,
-  verifiedFeedback = false,
-  career = false,
-  showDivider = false,
-  theme = "light",
-  className,
-}: SkillProfileProps) => (
-  <span className={classNames(css.skill, css[theme], className)}>
-    <ProfileDots level={proficiency} theme={theme} />
-    <span className={css.skillLabel}>{label}</span>
-    <SkillIcons
-      core={core}
-      development={development}
-      verified={verified}
-      verifiedCredy={verifiedCredy}
-      verifiedFeedback={verifiedFeedback}
-      career={career}
-      theme={theme}
-    />
-    {showDivider && (
-      <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />
-    )}
-  </span>
-);
+  label, proficiency, showDivider = false, tags, theme = "light", className, ...icons
+}: SkillProfileProps) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span
+      className={classNames(css.skillWrapper, className)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {hovered && <TooltipProfile proficiency={proficiency} tags={tags} {...icons} />}
+      <span className={classNames(css.skill, css[theme])}>
+        <ProfileDots level={proficiency} theme={theme} />
+        <span className={css.skillLabel}>{label}</span>
+        <SkillIcons {...icons} />
+        {showDivider && <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />}
+      </span>
+    </span>
+  );
+};
 
-// ── Skill/Match (9732:260900) ─────────────────────────────────────────────────
-// Profile dots (what person has) + Role dots (what's required) + label + icons + divider
-// Missing: profile doesn't have the skill — shown with red cross on profile dots
-// Substitute: similar skill identified — orange icon
+// ── Skill/Match ───────────────────────────────────────────────────────────────
 
-export type SkillMatchProps = {
+export type SkillMatchProps = SkillIconFlags & {
   label: string;
   requiredProficiency: ProficiencyLevel;
   profileProficiency?: ProficiencyLevel;
   missing?: boolean;
   substitute?: boolean;
-  core?: boolean;
-  development?: boolean;
-  verified?: boolean;
-  verifiedCredy?: boolean;
-  verifiedFeedback?: boolean;
-  career?: boolean;
   showDivider?: boolean;
+  tags?: string[];
   theme?: SkillTheme;
   className?: string;
 };
 
 export const SkillMatch = ({
-  label,
-  requiredProficiency,
-  profileProficiency,
-  missing = false,
-  substitute = false,
-  core = false,
-  development = false,
-  verified = false,
-  verifiedCredy = false,
-  verifiedFeedback = false,
-  career = false,
-  showDivider = false,
-  theme = "light",
-  className,
-}: SkillMatchProps) => (
-  <span className={classNames(css.skill, css[theme], className)}>
-    {/* Profile dots (left) — what the person has */}
-    <span className={css.matchDotGroup}>
-      {missing || substitute ? (
-        <span className={classNames(css.profileDots, css[theme])}>
-          {[0, 1, 2].map((i) => (
-            <span key={i} className={classNames(css.profileDot, { [css.dotMissing]: missing, [css.dotSubstitute]: substitute })} aria-hidden="true" />
-          ))}
-        </span>
-      ) : (
-        <ProfileDots level={profileProficiency ?? "basic"} theme={theme} />
+  label, requiredProficiency, profileProficiency, missing = false, substitute = false,
+  showDivider = false, tags, theme = "light", className, ...icons
+}: SkillMatchProps) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span
+      className={classNames(css.skillWrapper, className)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {hovered && (
+        <TooltipMatch
+          requiredProficiency={requiredProficiency}
+          profileProficiency={profileProficiency}
+          missing={missing}
+          tags={tags}
+          {...icons}
+        />
       )}
+      <span className={classNames(css.skill, css[theme])}>
+        {/* Profile side — left */}
+        {missing ? (
+          <NotMetDots theme={theme} />
+        ) : (
+          <ProfileDots level={profileProficiency ?? "basic"} theme={theme} />
+        )}
+        {/* Required side — right */}
+        <RoleDots level={requiredProficiency} theme={theme} />
+        <span className={css.skillLabel}>{label}</span>
+        <SkillIcons {...icons} />
+        {showDivider && <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />}
+      </span>
     </span>
-    {/* Role dots (right) — what's required */}
-    <RoleDots level={requiredProficiency} theme={theme} />
-    <span className={css.skillLabel}>{label}</span>
-    <SkillIcons
-      core={core}
-      development={development}
-      verified={verified}
-      verifiedCredy={verifiedCredy}
-      verifiedFeedback={verifiedFeedback}
-      career={career}
-      theme={theme}
-    />
-    {showDivider && (
-      <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />
-    )}
-  </span>
-);
+  );
+};
