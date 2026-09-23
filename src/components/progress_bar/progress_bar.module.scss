@@ -1,0 +1,66 @@
+// Progress Bar — Figma nodes 1615:51769 (linear) + 2553:162743 (radial)
+// Linear track: 10px tall, radius 16px, #CFDAF7 bg
+// Radial: 40×40px SVG donut
+@use "../../styles/text-styles" as ts;
+
+// ── Linear ────────────────────────────────────────────────────────────────────
+
+.linear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+// Track — full width, 10px tall, #CFDAF7, radius 16px
+.linearTrack {
+  position: relative;
+  flex: 1;
+  height: 10px;
+  border-radius: 16px;
+  background-color: var(--palette-neutral-0); // #CFDAF7 — fill_NOX8OU
+  overflow: hidden;
+}
+
+// Fill — absolute overlay, same height, animated width
+.linearFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 16px;
+  background-color: var(--palette-blue-1); // #0C1457 — fill_B41KWH (default)
+  transition: width 0.3s ease;
+}
+
+// Percentage label
+.label {
+  @include ts.label-regular; // 12px / Regular / 150%
+  color: var(--palette-blue-2); // #5C6E9E
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+
+// ── Radial ────────────────────────────────────────────────────────────────────
+
+.radial {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg {
+    display: block;
+  }
+}
+
+// Label centred inside the ring
+.radialLabel {
+  position: absolute;
+  @include ts.label-small-bold; // 10px / Bold / 115%
+  color: var(--palette-blue-0);
+  line-height: 1;
+  text-align: center;
+}

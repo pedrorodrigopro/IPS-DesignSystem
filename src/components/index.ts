@@ -15,3 +15,4 @@ export * from "./navbar";
 export * from "./navigation";
 export * from "./pagination";
 export * from "./pill";
+export * from "./progress_bar";
