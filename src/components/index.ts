@@ -18,3 +18,4 @@ export * from "./pill";
 export * from "./progress_bar";
 export * from "./radio";
 export * from "./skill";
+export * from "./slider";

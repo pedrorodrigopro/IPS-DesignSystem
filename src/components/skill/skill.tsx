@@ -22,7 +22,6 @@
 //   Match:   two columns (Required | Profile) separated by divider
 import classNames from "classnames";
 import { useState } from "react";
-import { Divider } from "../divider/divider";
 import { Icon } from "../icon/icon";
 import css from "./skill.module.scss";
 
@@ -286,10 +285,11 @@ export const SkillRole = ({
         <RoleDots level={proficiency} theme={theme} />
         <span className={css.skillLabel}>{label}</span>
         {career && <Icon name="learning" size={16} className={css.iconCareer} />}
-        {showDivider && <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />}
+        {showDivider && <span className={classNames(css.divider, css[`divider_${theme}`])} aria-hidden="true" />}
       </span>
     </span>
   );
+
 };
 
 // ── Skill/Profile ─────────────────────────────────────────────────────────────
@@ -318,7 +318,7 @@ export const SkillProfile = ({
         <ProfileDots level={proficiency} theme={theme} />
         <span className={css.skillLabel}>{label}</span>
         <SkillIcons {...icons} />
-        {showDivider && <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />}
+        {showDivider && <span className={classNames(css.divider, css[`divider_${theme}`])} aria-hidden="true" />}
       </span>
     </span>
   );
@@ -332,42 +332,49 @@ type MatchDotsProps = {
   requiredProficiency: ProficiencyLevel;
   profileProficiency?: ProficiencyLevel;
   missing?: boolean;
+  substitute?: boolean;
   theme?: SkillTheme;
 };
 
-const MatchDots = ({ requiredProficiency, profileProficiency, missing = false, theme = "light" }: MatchDotsProps) => (
-  <span className={css.matchDotStack}>
-    {/* Top: profile dots or 10×10px cross when missing */}
-    {missing ? (
-      <span className={css.matchCrossRow}>
-        {/* 10×10px cross icon, aligned over the first bar */}
-        <Icon name="cross" size={16} className={css.matchCrossIcon} />
-      </span>
-    ) : (
-      <ProfileDots level={profileProficiency ?? "basic"} theme={theme} />
-    )}
-    {/* Bottom: role dots (always shown) — coloured red when missing */}
-    {missing ? (
+const MatchDots = ({ requiredProficiency, profileProficiency, missing = false, substitute = false, theme = "light" }: MatchDotsProps) => {
+  const count = requiredProficiency === "basic" ? 1 : requiredProficiency === "intermediate" ? 2 : 3;
+  return (
+    <span className={css.matchDotStack}>
+      {/* Top: profile dots / cross (missing) / substitute icon (parent-child) */}
+      {missing ? (
+        <span className={css.matchCrossRow}>
+          <Icon name="cross" size={16} className={css.matchCrossIcon} />
+        </span>
+      ) : substitute ? (
+        <span className={css.matchCrossRow}>
+          {/* substitute-parent-child icon — orange #FF6B00, 10×10px */}
+          <Icon name="substitute-parent-child" size={16} className={css.matchSubstituteIcon} />
+        </span>
+      ) : (
+        <ProfileDots level={profileProficiency ?? "basic"} theme={theme} />
+      )}
+      {/* Bottom: role dots — red when missing, orange-first when substitute */}
       <span className={css.roleDots}>
-        {(() => {
-          const count = requiredProficiency === "basic" ? 1 : requiredProficiency === "intermediate" ? 2 : 3;
-          return [0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className={css.roleDot}
-              style={{
-                backgroundColor: i < count ? "var(--palette-red-0)" : "var(--palette-neutral-0)",
-              }}
-              aria-hidden="true"
-            />
-          ));
-        })()}
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className={css.roleDot}
+            style={{
+              backgroundColor: missing
+                ? (i < count ? "var(--palette-red-0)" : "var(--palette-neutral-0)")
+                : substitute
+                  ? (i < count ? "var(--palette-orange-3)" : "var(--palette-neutral-0)") // #FF6B00
+                  : (i < count
+                      ? (theme === "dark" ? "var(--palette-white-0)" : "var(--palette-blue-0)")
+                      : (theme === "dark" ? "var(--palette-blue-2)" : "var(--palette-neutral-0)")),
+            }}
+            aria-hidden="true"
+          />
+        ))}
       </span>
-    ) : (
-      <RoleDots level={requiredProficiency} theme={theme} />
-    )}
-  </span>
-);
+    </span>
+  );
+};
 
 // ── Skill/Match ───────────────────────────────────────────────────────────────
 
@@ -409,11 +416,12 @@ export const SkillMatch = ({
           requiredProficiency={requiredProficiency}
           profileProficiency={profileProficiency}
           missing={missing}
+          substitute={substitute}
           theme={theme}
         />
         <span className={css.skillLabel}>{label}</span>
         <SkillIcons {...icons} />
-        {showDivider && <Divider orientation="vertical" className={classNames(css.divider, css[`divider_${theme}`])} />}
+        {showDivider && <span className={classNames(css.divider, css[`divider_${theme}`])} aria-hidden="true" />}
       </span>
     </span>
   );

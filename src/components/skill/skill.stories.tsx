@@ -87,6 +87,11 @@ export const Match: StoryFn = () => (
       <SkillMatch label="React" requiredProficiency="intermediate" missing />
       <SkillMatch label="Python" requiredProficiency="advanced" missing />
     </Section>
+    <Section label="Substitute — parent-child siblings found (orange icon + bars)">
+      <SkillMatch label="Jira" requiredProficiency="basic" substitute />
+      <SkillMatch label="React" requiredProficiency="intermediate" substitute />
+      <SkillMatch label="Python" requiredProficiency="advanced" substitute />
+    </Section>
     <Section label="Dark theme" dark>
       <SkillMatch label="Jira" requiredProficiency="advanced" profileProficiency="advanced" theme="dark" />
       <SkillMatch label="React" requiredProficiency="intermediate" missing theme="dark" />

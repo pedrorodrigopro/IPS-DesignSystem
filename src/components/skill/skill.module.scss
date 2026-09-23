@@ -108,6 +108,14 @@
   overflow: visible;
 }
 
+// Substitute icon — orange, 10×10px
+.matchSubstituteIcon {
+  width: 10px !important;
+  height: 10px !important;
+  flex-shrink: 0;
+  // SVG already has #FF6B00 fill baked in — no override needed
+}
+
 // Cross icon scaled to 10×10px via width/height override
 .matchCrossIcon {
   width: 10px !important;
@@ -120,18 +128,20 @@
   }
 }
 
-// ── Divider ───────────────────────────────────────────────────────────────────
+// ── Divider — 1px vertical line, stretches full row height ───────────────────
+// layout_AB9NG3: width 1px, align-self stretch, height fill
+// Rendered as <span> so it naturally stretches with align-self: stretch in flex row
 
 .divider {
+  display: inline-block;
   flex-shrink: 0;
-  align-self: stretch;
-  height: auto;
+  align-self: stretch; // fills full height of the skill row
   width: 1px;
-  margin: 0;
+  min-height: 14px; // fallback height
 }
 
-.divider_light { background-color: var(--palette-neutral-0) !important; }  // #CFDAF7
-.divider_dark  { background-color: var(--palette-neutral-1) !important; }  // #E7EAF8
+.divider_light { background-color: var(--palette-neutral-0); }  // #CFDAF7 — fill_GWXVBY
+.divider_dark  { background-color: var(--palette-neutral-1); }  // #E7EAF8
 
 // ── Skill icons — 16×16px ─────────────────────────────────────────────────────
 

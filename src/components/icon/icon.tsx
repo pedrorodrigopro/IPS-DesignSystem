@@ -76,6 +76,7 @@ import Split from "./svg/split.svg";
 import Subtract from "./svg/subtract.svg";
 import Table from "./svg/table.svg";
 import Tag from "./svg/tag.svg";
+import SubstituteParentChild from "./svg/substitute-parent-child.svg";
 import Undo from "./svg/undo.svg";
 import Unseen from "./svg/unseen.svg";
 import Up from "./svg/up.svg";
@@ -100,7 +101,8 @@ export type IconName =
   | "forbidden"
   | "help" | "hidden" | "history" | "hourglass-half" | "info" | "insights"
   | "learning"
-  | "link" | "links" | "list" | "location" | "locked" | "logout"
+  | "link"
+  | "substitute-parent-child" | "links" | "list" | "location" | "locked" | "logout"
   | "mail" | "mandatory" | "marketplace" | "menu-horizontal" | "menu-vertical"
   | "merge" | "missing" | "money" | "move"
   | "note" | "notifications" | "open" | "pin" | "profile"
@@ -195,6 +197,7 @@ const iconMap: Record<IconName, SvgComponent> = {
   "subtract": Subtract,
   "table": Table,
   "tag": Tag,
+  "substitute-parent-child": SubstituteParentChild,
   "undo": Undo,
   "unseen": Unseen,
   "up": Up,
