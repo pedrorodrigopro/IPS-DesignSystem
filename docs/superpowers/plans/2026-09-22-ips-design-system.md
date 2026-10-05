@@ -375,7 +375,7 @@ git commit -m "chore: configure Storybook 8"
   "outputFolderTokens": "src/tokens",
   "outputFormatTokens": "ts",
   "outputFormatColors": "hex",
-  "token": "figd_8GXmtHfEiwiQjc4DBbLz-FXEYrU2d9HsU6oZgRH_",
+  "token": "FIGMA_TOKEN_REDACTED",
   "url": "https://www.figma.com/design/adFvaOeh8E3AKLFKRjYD3r"
 }
 ```
@@ -391,7 +391,7 @@ Expected: `src/tokens/` created with `colors.ts`, `spacing.ts`, `font_sizes.ts`,
 
 If Figmagic errors on the URL format, try:
 ```bash
-FIGMA_TOKEN=figd_8GXmtHfEiwiQjc4DBbLz-FXEYrU2d9HsU6oZgRH_ npx figmagic
+FIGMA_TOKEN=FIGMA_TOKEN_REDACTED npx figmagic
 ```
 
 - [ ] **Step 3: Create `src/styles/reset.scss`**
