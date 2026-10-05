@@ -23,21 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Storybook for GitHub Pages
-        run: npm run build-storybook
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-          STORYBOOK_BASE_URL: /IPS-DesignSystem/
-
-      - name: Upload Pages artifact
+      - name: Upload pre-built Storybook
         uses: actions/upload-pages-artifact@v3
         with:
           path: storybook-static
