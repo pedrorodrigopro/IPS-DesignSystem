@@ -1,6 +1,6 @@
 node_modules/
 dist/
-storybook-static/
+# storybook-static/ — committed for GitHub Pages deployment
 .DS_Store
 *.log
 .superpowers/
