@@ -22,8 +22,10 @@ const config: StorybookConfig = {
     autodocs: true,
   },
   viteFinal: async (config) => {
-    // Set base path for GitHub Pages deployment at /IPS-DesignSystem/
-    config.base = "/IPS-DesignSystem/";
+    // Use base path for GitHub Pages when STORYBOOK_BASE_URL env is set
+    if (process.env.STORYBOOK_BASE_URL) {
+      config.base = process.env.STORYBOOK_BASE_URL;
+    }
     return config;
   },
 };

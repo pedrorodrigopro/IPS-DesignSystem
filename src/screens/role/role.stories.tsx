@@ -701,10 +701,10 @@ function ShortlistTab() {
             <InputSearch value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" />
           </div>
 
-          {/* Skills & Attrs — body-selected + sort icon */}
+          {/* Skills & Attrs — body-selected + sort icon on right */}
           <button style={{ display: "flex", alignItems: "center", gap: 6, height: 36, border: "1px solid var(--palette-neutral-0)", borderRadius: "var(--radius-md)", padding: "0 10px", background: "white", cursor: "pointer", fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, color: "var(--palette-blue-0)" }}>
-            <Icon name="sort" size={14} />
             Skills &amp; Attrs
+            <Icon name="sort" size={14} />
           </button>
 
           {/* Count */}
