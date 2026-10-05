@@ -4,6 +4,7 @@ const config: StorybookConfig = {
   stories: [
     "../src/components/**/*.stories.@(ts|tsx)",
     "../src/prototypes/**/*.stories.@(ts|tsx)",
+    "../src/screens/**/*.stories.@(ts|tsx)",
   ],
   addons: [
     "@storybook/addon-a11y",
@@ -19,6 +20,11 @@ const config: StorybookConfig = {
   },
   docs: {
     autodocs: true,
+  },
+  viteFinal: async (config) => {
+    // Set base path for GitHub Pages deployment at /IPS-DesignSystem/
+    config.base = "/IPS-DesignSystem/";
+    return config;
   },
 };
 
