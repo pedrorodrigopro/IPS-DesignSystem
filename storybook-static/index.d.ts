@@ -161,24 +161,18 @@ export declare type BookingSidePanelData = {
     wmInitials?: string;
     roleName?: string;
     engagementName?: string;
-    duration?: string;
-    totalHours?: string;
+    rules?: BookingSlideshowRule[];
     bookingCategory?: string;
+    bookingCategoryColor?: string;
     description?: string;
     title?: string;
-    totalRules?: number;
-    notes?: {
-        author: string;
-        date: string;
-        text: string;
-    }[];
-    history?: {
-        actor: string;
-        actorInitials: string;
-        date: string;
-        action: string;
-        detail?: string;
-    }[];
+    showPhase?: boolean;
+    phase?: string;
+    showDateCreated?: boolean;
+    dateCreated?: string;
+    notes?: BookingSlideshowNote[];
+    history?: BookingSlideshowHistoryAction[];
+    notesCount?: number;
     onEdit?: () => void;
     onClone?: () => void;
     onReassign?: () => void;
@@ -193,7 +187,7 @@ export declare type BookingSidePanelProps = {
     data?: BookingSidePanelData;
 };
 
-export declare function BookingSlideshow({ tab: tabProp, onTabChange, rules, showVisible, showPhase, phase, showDateCreated, dateCreated, category, title, description, notes, history, hidden, notesCount, width, }: BookingSlideshowProps): default_2.JSX.Element;
+export declare function BookingSlideshow({ tab: tabProp, onTabChange, rules, showVisible, showPhase, phase, showDateCreated, dateCreated, category, categoryColor, title, description, notes, history, hidden, notesCount, width, readOnly, }: BookingSlideshowProps): default_2.JSX.Element;
 
 export declare type BookingSlideshowHistoryAction = {
     type: "simple";
@@ -247,6 +241,8 @@ export declare type BookingSlideshowProps = {
     dateCreated?: string;
     /** Selected booking category label */
     category?: string;
+    /** Booking category colour swatch (hex) — shown as pill in read-only mode */
+    categoryColor?: string;
     /** Booking title */
     title?: string;
     /** Booking description */
@@ -261,6 +257,12 @@ export declare type BookingSlideshowProps = {
     notesCount?: number;
     /** Component width (default 352px per Figma) */
     width?: number | string;
+    /**
+     * Read-only mode (default false).
+     * - true  → Details tab shows plain KV text; tabs (Details/Notes/History) are visible
+     * - false → No tabs; Details shows editable form fields
+     */
+    readOnly?: boolean;
 };
 
 /** One availability rule — maps to a CarouselCard slide */
