@@ -1,0 +1,124 @@
+// Actions — Figma nodes 1601:19589 (content), 10003:166259 (sticky-screen), 6787:163871 (sticky-panel)
+//
+// Shared button: h=32px, padding 8px 16px, radius 8px, body-selected 14px 700
+//   secondary: white bg, 1px #CFDAF7 border, #0D2976 text
+//   primary:   #2358F8 bg, no border, white text
+//
+// content:        inline row, border-top 1px #CFDAF7, padding-top 24px
+// sticky-screen:  position:sticky bottom:0, white bg, upward box-shadow, 1280px centered inner
+// sticky-panel:   position:sticky bottom:0, white bg, upward box-shadow, fills parent width
+
+@use "../../styles/text-styles" as ts;
+
+// Figma shadow: #CFDAF7 blurred ellipse above panel → CSS upward box-shadow
+$panel-shadow: 0 -8px 20px 4px rgba(207, 218, 247, 0.85);
+
+// ── Shared button row ──────────────────────────────────────────────────────────
+.buttonRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+// ── Shared button ──────────────────────────────────────────────────────────────
+.btn {
+  @include ts.body-selected; // 14px 700 115%
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s, opacity 0.12s;
+}
+
+.secondary {
+  background-color: var(--palette-white-0);
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  color: var(--palette-blue-0); // #0D2976
+
+  &:hover:not(:disabled) {
+    background-color: var(--palette-neutral-1); // #E7EAF8
+  }
+}
+
+.primary {
+  background-color: var(--palette-primary-0); // #2358F8
+  border: none;
+  color: var(--palette-white-0);
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+}
+
+.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+// ── content — inline, border-top ──────────────────────────────────────────────
+.content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid var(--palette-neutral-0); // #CFDAF7
+  width: 100%;
+  background-color: var(--palette-white-0);
+}
+
+// ── sticky-screen — fixed to viewport bottom ───────────────────────────────────
+.stickyScreen {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  width: 100%;
+  background-color: var(--palette-white-0);
+  // Upward shadow matches Figma blurred #CFDAF7 ellipse above the panel
+  box-shadow: $panel-shadow;
+  border-top: 1px solid var(--palette-neutral-0);
+}
+
+.screenInner {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 24px 24px;
+}
+
+// ── sticky-panel — fixed to side panel bottom ──────────────────────────────────
+.stickyPanel {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  width: 100%;
+  background-color: var(--palette-white-0);
+  box-shadow: $panel-shadow;
+  border-top: 1px solid var(--palette-neutral-0);
+}
+
+.panelInner {
+  padding: 16px;
+}

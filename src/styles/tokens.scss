@@ -84,6 +84,21 @@
   --spacing-2xl: 2rem;      /* 32px */
   --spacing-3xl: 2.5rem;    /* 40px */
 
+  // ── Tile padding scale ────────────────────────────────────────────
+  // Three levels matching layout context:
+  //   panel   8px  — content blocks inside side panels / overlays
+  //   content 16px — regular content within screen containers
+  //   screen  24px — top-level screen content tiles (main area)
+  --tile-padding-panel:   var(--spacing-md);   /*  8px */
+  --tile-padding-content: var(--spacing-lg);   /* 16px */
+  --tile-padding-screen:  var(--spacing-xl);   /* 24px */
+
+  // ── Tile elevations ───────────────────────────────────────────────
+  // default (no shadow), interactive (hover shadow), card (ambient)
+  --tile-shadow-none:        none;
+  --tile-shadow-interactive: 0px 4px 8px 0px rgba(203, 225, 242, 0.8);  // Elevation - Hover
+  --tile-shadow-card:        0px 0px 8px 0px rgba(203, 225, 242, 0.8);  // Card master default
+
   // ── Radii ─────────────────────────────────────────────────────────
   --radius-xs:   2px;
   --radius-sm:   4px;

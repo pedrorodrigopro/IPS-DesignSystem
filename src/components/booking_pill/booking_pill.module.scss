@@ -1,0 +1,146 @@
+// BookingPill styles — Figma node 39:116612
+// All colours extracted verbatim from Figma fills + strokes.
+
+@use "../../styles/text-styles" as ts;
+
+// ── Base pill ─────────────────────────────────────────────────────────────────
+.pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  cursor: pointer;
+  transition: filter 0.1s ease;
+  min-width: 0;      // allow pill to shrink to container width in Gantt
+  min-height: 42px;  // fixed pill height for consistent Gantt row alignment
+  max-width: 100%;
+  width: 100%;       // fill container so text uses all available space
+
+  &:hover {
+    filter: brightness(0.96);
+  }
+}
+
+// ── Sizes ─────────────────────────────────────────────────────────────────────
+
+.regular {
+  padding: 3px 8px;
+}
+
+.small {
+  padding: 0px 8px;
+  min-height: unset;  // small has no hours row — height is content-driven
+  width: auto;        // small pills hug their content, not fill container
+}
+
+// ── Label row ─────────────────────────────────────────────────────────────────
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.labelIcon {
+  flex-shrink: 0;
+  color: #0D2976;
+}
+
+.label {
+  @include ts.body-selected; // 14px 700 115% — regular default
+  color: #0D2976;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+// Small size overrides label font
+.small .label {
+  @include ts.label-selected; // 12px 700 115%
+}
+
+// ── Hours row ────────────────────────────────────────────────────────────────
+.hoursRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: -2px; // tighten spacing between label row and hours — Figma gap: '-4px'
+}
+
+.hours {
+  @include ts.label-regular; // 12px 400 150%
+  color: #0D2976;
+  white-space: nowrap;
+}
+
+// ── Category variants — exact Figma fills + strokes ───────────────────────────
+
+// booking-blue: rgba(124,168,237,0.8) / #1C4B94 1px solid
+.booking_blue {
+  background: rgba(124, 168, 237, 0.8);
+  border: 1px solid #1C4B94;
+}
+
+// booking-red: rgba(243,161,180,0.8) / #8D112E 1px solid
+.booking_red {
+  background: rgba(243, 161, 180, 0.8);
+  border: 1px solid #8D112E;
+}
+
+// booking-purple: rgba(227,161,243,0.8) / #550568 1px solid
+.booking_purple {
+  background: rgba(227, 161, 243, 0.8);
+  border: 1px solid #550568;
+}
+
+// engagement-booked: rgba(106,130,197,0.8) / #6A82C5 2px solid
+.engagement_booked {
+  background: rgba(106, 130, 197, 0.8);
+  border: 2px solid #6A82C5;
+
+  .label { color: white; }
+  .hours { color: white; }
+  .labelIcon { color: white; }
+}
+
+// engagement-partial: rgba(255,255,255,0.4) / #6A82C5 2px solid
+.engagement_partial {
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid #6A82C5;
+}
+
+// role-booked: rgba(26,175,163,0.8) / #1AAFA3 2px solid
+.role_booked {
+  background: rgba(26, 175, 163, 0.8);
+  border: 2px solid #1AAFA3;
+
+  .label { color: white; }
+  .hours { color: white; }
+  .labelIcon { color: white; }
+}
+
+// role-partial: rgba(255,255,255,0.4) / #1AAFA3 2px solid
+.role_partial {
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid #1AAFA3;
+}
+
+// pending: rgba(217,220,224,0.8) / #9B5A01 2px dashed 8,8
+.pending {
+  background: rgba(217, 220, 224, 0.8);
+  border: 2px dashed #9B5A01;
+}
+
+// hidden: rgba(236,236,236,0.8) / no border
+.hidden {
+  background: rgba(236, 236, 236, 0.8);
+  border: none;
+  height: 36px; // regular height
+  min-width: 40px;
+}

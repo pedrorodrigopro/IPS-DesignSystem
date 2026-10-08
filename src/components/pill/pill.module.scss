@@ -137,10 +137,7 @@
 }
 
 .filterField {
-  font-family: var(--font-family);
-  font-size: var(--font-size-label); // 12px
-  font-weight: var(--font-weight-regular);
-  line-height: 115%;
+  @include ts.label-unselected; // 12px / Regular / 115%
   color: var(--palette-blue-0);
 }
 

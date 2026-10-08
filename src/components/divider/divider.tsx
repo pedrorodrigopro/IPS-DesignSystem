@@ -17,6 +17,7 @@ export type DividerProps = {
   /** Hover state for draggable — turns line blue with resize cursor */
   isHovered?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   onDragHandleMouseDown?: (e: React.MouseEvent) => void;
   onMouseEnter?: (e: React.MouseEvent) => void;
   onMouseLeave?: (e: React.MouseEvent) => void;
@@ -28,6 +29,7 @@ export const Divider = ({
   margins = false,
   isHovered = false,
   className,
+  style,
   onDragHandleMouseDown,
   onMouseEnter,
   onMouseLeave,
@@ -58,6 +60,7 @@ export const Divider = ({
         { [css.margins]: margins },
         className
       )}
+      style={style}
       role="separator"
       aria-orientation={orientation}
     />

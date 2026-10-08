@@ -3,7 +3,7 @@
 import type { Meta, StoryFn } from "@storybook/react";
 
 export default {
-  title: "Atoms/Colours",
+  title: "Tokens/Colours",
   parameters: {
     design: {
       type: "figma",

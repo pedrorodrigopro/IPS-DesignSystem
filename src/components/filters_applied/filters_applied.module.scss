@@ -1,0 +1,130 @@
+// FiltersApplied — Figma node 6848:115955
+//
+// Bar: row, alignItems center, gap 16px, padding 8px 0 8px 8px, min-height 32px
+//
+// Left: row, gap 8px, alignItems center
+//   "Filters" label — body-unselected 14px 400 #0D2976
+//   "Clear all" — link button: filter-clean icon 16×16 + body-selected 14px 700 #2358F8
+//                 padding 4px 0, no bg/border
+//
+// Right: row, gap 8px, alignItems center, flex-wrap wrap
+//   Pill: bg #F8F9FD, border 1px #CFDAF7, radius 32px, padding 5px 16px 5px 8px
+//         [cross 12×12] + [field 10px + value 12px bold]
+//
+// Applied=False → component returns null (no render)
+
+@use "../../styles/text-styles" as ts;
+
+// ── Bar ────────────────────────────────────────────────────────────────────────
+.bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 8px 8px;
+  min-height: 32px;
+}
+
+// ── Left ───────────────────────────────────────────────────────────────────────
+.left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0; // never shrink — keeps label + clear-all always visible
+}
+
+.label {
+  @include ts.body-unselected; // 14px 400 115%
+  color: var(--palette-blue-0); // #0D2976
+  white-space: nowrap;
+}
+
+// "Clear all" — link button style (no bg/border, primary blue text + icon)
+.clearAll {
+  @include ts.body-selected; // 14px 700 115%
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  color: var(--palette-primary-0); // #2358F8
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.clearIcon {
+  flex-shrink: 0;
+  // Inherits #2358F8 from .clearAll — no override needed
+  // Icon SVG uses currentColor, so it picks up the parent button colour
+}
+
+// ── Right — filter pills ───────────────────────────────────────────────────────
+.right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// ── Filter pill ────────────────────────────────────────────────────────────────
+// layout_65L5EO: row, alignItems center, gap 4px, padding 5px 16px 5px 8px
+// fill #F8F9FD, stroke 1px #CFDAF7, radius 32px
+.pill {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 16px 5px 8px;
+  background-color: var(--palette-neutral-2); // #F8F9FD
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  border-radius: 32px;
+}
+
+// Cross remove button — 12×12 icon area
+.pillRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--palette-blue-2); // #5C6E9E
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--palette-blue-0);
+  }
+}
+
+// Two-line text block: field name + value
+.pillText {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+// Field name — label-small-regular 10px, #0D2976
+// ts1 in Figma: fontSize 10, lineHeight 115%
+.pillField {
+  @include ts.label-small-regular; // 10px 400 115%
+  color: var(--palette-blue-0);
+  line-height: var(--line-height-small);
+}
+
+// Value — label-bold 12px 700, #0D2976
+// ts2 in Figma: fontStyle Bold (applied on top of label-regular 12px)
+.pillValue {
+  @include ts.label-bold; // 12px 700 150%
+  color: var(--palette-blue-0);
+  line-height: var(--line-height-small); // tighter 115% to match compact pill
+}

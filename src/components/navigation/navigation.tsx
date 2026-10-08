@@ -14,11 +14,74 @@
 // Tab optional slots: icon (check, 16px), subtitle (label-regular), badge (count)
 //   Badge active:   #436FB6 bg, white text
 //   Badge inactive: #E7EAF8 bg, dark text
+//
+// ── Marketplace variant (Figma section 7433:239440) ──────────────────────────
+// NavigationMarketplace — horizontal dark pill bar used on marketplace/landing screens.
+// Container: bg #0C1457, border-radius 16px, row, gap 24px, padding 16px
+// Item: icon-only (20×20), all icons white, opacity signals state:
+//   Selected: opacity 1.0 (full white)
+//   Resting:  opacity 0.4 (dim white)
+//   Hover:    opacity 0.7 (mid white)
+//   Focus:    opacity 1.0 + box-shadow 0 0 0 2px #2358F8
 import classNames from "classnames";
-import { Icon } from "../icon/icon";
+import { Icon, IconName } from "../icon/icon";
 import css from "./navigation.module.scss";
 
 export type NavigationOrientation = "horizontal" | "vertical";
+
+// ── Marketing navigation ───────────────────────────────────────────────────────
+
+export type MarketplaceNavItem = {
+  id: string;
+  icon: IconName;
+  label: string; // used as aria-label only; not displayed
+};
+
+// Backward-compatible alias
+export type MarketingNavItem = MarketplaceNavItem;
+
+export type NavigationMarketplaceProps = {
+  items: MarketplaceNavItem[];
+  activeId?: string;
+  onChange?: (id: string) => void;
+  className?: string;
+};
+
+// Backward-compatible alias
+export type NavigationMarketingProps = NavigationMarketplaceProps;
+
+export const NavigationMarketplace = ({
+  items,
+  activeId,
+  onChange,
+  className,
+}: NavigationMarketplaceProps) => (
+  <nav
+    className={classNames(css.marketingNav, className)}
+    aria-label="Marketplace navigation"
+    role="tablist"
+  >
+    {items.map((item) => {
+      const isActive = item.id === activeId;
+      return (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={isActive}
+          aria-label={item.label}
+          className={classNames(css.marketingItem, { [css.marketingActive]: isActive })}
+          onClick={() => onChange?.(item.id)}
+        >
+          <Icon name={item.icon} size={20} />
+        </button>
+      );
+    })}
+  </nav>
+);
+
+// Backward-compatible alias
+export const NavigationMarketing = NavigationMarketplace;
 
 export type NavigationTab = {
   id: string;
@@ -37,6 +100,8 @@ export type NavigationProps = {
   tabs: NavigationTab[];
   activeId?: string;
   onChange?: (id: string) => void;
+  /** Each tab stretches to fill equal share of available width */
+  fillWidth?: boolean;
   className?: string;
 };
 
@@ -45,10 +110,11 @@ export const Navigation = ({
   tabs,
   activeId,
   onChange,
+  fillWidth = false,
   className,
 }: NavigationProps) => (
   <nav
-    className={classNames(css.nav, css[orientation], className)}
+    className={classNames(css.nav, css[orientation], { [css.fillWidth]: fillWidth }, className)}
     aria-label="Navigation"
     role="tablist"
   >
@@ -64,6 +130,7 @@ export const Navigation = ({
           className={classNames(css.tab, {
             [css.active]: isActive,
             [css.disabled]: tab.disabled,
+            [css.tabFillWidth]: fillWidth,
           })}
           onClick={() => !tab.disabled && onChange?.(tab.id)}
         >

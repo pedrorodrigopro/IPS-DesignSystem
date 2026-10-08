@@ -4,7 +4,7 @@ import type { Meta, StoryFn } from "@storybook/react";
 import css from "./text_styles.module.scss";
 
 export default {
-  title: "Atoms/Text Styles",
+  title: "Tokens/Text Styles",
   parameters: {
     design: {
       type: "figma",

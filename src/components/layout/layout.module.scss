@@ -1,0 +1,121 @@
+// Layout — Figma node 2834:178203 (Template/Layout + Template/Page)
+//
+// Page bg: #F8F9FD (--palette-neutral-2)
+// Navbar: ~60px wide, bg #0C1457, radius 0 16px 16px 0
+//
+// Layout variants:
+//   full            — col, fill×fill, padding 24px (sides), gap 24px
+//   1280            — col, fill×fill, padding 24px top, alignItems center; inner slot 1280px
+//   profile-regular — row, fill×fill, gap 24px, padding 0 24px 0 0; sidebar 280px
+//   profile-summary — row, fill×fill, gap 24px, padding 0 24px 0 0; sidebar 280px, right 500px
+
+// ── Page shell ─────────────────────────────────────────────────────────────────
+// Full viewport: row, Navbar (fixed) + content (fill)
+.page {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--palette-neutral-2); // #F8F9FD
+}
+
+// Navbar slot — holds the Navbar component; it dictates its own width
+.navbarSlot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+// Content area next to the navbar fills remaining space
+.pageContent {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+// ── Layout base ────────────────────────────────────────────────────────────────
+.layout {
+  display: flex;
+  background-color: var(--palette-neutral-2); // #F8F9FD
+  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+}
+
+// ── full ───────────────────────────────────────────────────────────────────────
+// Column, content stretches to fill, 24px side padding, gap 24px (for when
+// multiple block-level children are stacked — padding is on the layout itself)
+.full {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 24px;
+  gap: 24px;
+
+  .content {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+}
+
+// ── 1280 ──────────────────────────────────────────────────────────────────────
+// Column, centered, content capped at 1280px. Padding: 24px top, centered sides.
+// Class name prefixed with 'v' to avoid leading-digit CSS issue.
+.v1280 {
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0 0;
+  gap: 24px;
+
+  .content {
+    width: 100%;
+    max-width: 1280px;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+}
+
+// ── profile-regular ────────────────────────────────────────────────────────────
+// Row: 280px sidebar | fluid content. Right padding 24px. Gap 24px.
+.profile-regular {
+  flex-direction: row;
+  align-items: stretch;
+  padding: 0 24px 0 0;
+  gap: 24px;
+
+  .sidebar {
+    flex: 0 0 280px;
+    width: 280px;
+    min-width: 0;
+  }
+
+  .content {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+// ── profile-summary ────────────────────────────────────────────────────────────
+// Row: 280px sidebar | fluid content | 500px right panel. Right padding 24px. Gap 24px.
+.profile-summary {
+  flex-direction: row;
+  align-items: stretch;
+  padding: 0 24px 0 0;
+  gap: 24px;
+
+  .sidebar {
+    flex: 0 0 280px;
+    width: 280px;
+    min-width: 0;
+  }
+
+  .content {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .rightPanel {
+    flex: 0 0 500px;
+    width: 500px;
+    min-width: 0;
+  }
+}

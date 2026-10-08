@@ -1,0 +1,253 @@
+// Tooltip — Figma node 1457:22694
+//
+// Bubble: bg #0C1457, radius 8px, padding 16px, body-regular white
+// Arrow: 10×10 triangle, fill #0C1457, overlaps bubble by 3px (gap: -3px in Figma)
+//
+// All placements implemented via:
+//   - .wrapper  position:relative inline-block
+//   - .bubble   position:absolute, hidden by default, shown on wrapper hover/focus-within
+//   - ::after   CSS triangle arrow, colour matches bubble bg
+//
+// Arrow size: ~10px base (border trick: 5px per side)
+// Overlap: 3px (arrow overlaps bubble edge by 3px, matching Figma gap -3px)
+
+@use "../../styles/text-styles" as ts;
+
+$bubble-bg: #0C1457;        // --palette-blue-1
+$arrow:      5px;           // half arrow width (full arrow = 10px)
+$overlap:    3px;           // how much arrow overlaps bubble
+$offset:     8px;           // gap between trigger and bubble
+$min-width:  120px;         // prevent tiny single-word bubbles
+
+// ── Wrapper ────────────────────────────────────────────────────────────────────
+.wrapper {
+  position: relative;
+  display: inline-block;
+
+  // Show bubble on hover or keyboard focus within the wrapper
+  &:hover .bubble,
+  &:focus-within .bubble {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
+}
+
+// ── Bubble ─────────────────────────────────────────────────────────────────────
+.bubble {
+  @include ts.body-regular;
+  position: absolute;
+  z-index: 9100;
+  background-color: $bubble-bg;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  // Allow text to breathe — prevents single words wrapping to multiple lines
+  white-space: nowrap;
+  // Only wrap when content genuinely needs it (controlled by maxWidth prop)
+  min-width: $min-width;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+
+  // Arrow drawn as a CSS border triangle on ::after
+  &::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: $arrow solid transparent;
+  }
+}
+
+// ── Helper: centre-align bubble on an axis ─────────────────────────────────────
+// Horizontal centre relative to trigger: left 50%, translateX(-50%)
+// Vertical centre relative to trigger: top 50%, translateY(-50%)
+
+// ── DOWN variants — bubble above trigger, arrow points downward ────────────────
+// Bubble sits above the trigger; arrow is at the bottom of the bubble.
+
+.downCenter {
+  bottom: calc(100% + #{$offset});
+  left: 50%;
+  transform: translateX(-50%);
+
+  &::after {
+    // Downward triangle: transparent on top/left/right, filled on bottom → no: 
+    // We need an upward-pointing arrow at the bottom of the bubble.
+    // Arrow pointing DOWN (toward trigger): top sides filled, bottom transparent
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-#{$overlap});
+    border-top-color: $bubble-bg;
+    border-bottom: none;
+  }
+}
+
+.downLeft {
+  bottom: calc(100% + #{$offset});
+  left: 0;
+
+  &::after {
+    top: 100%;
+    left: $arrow * 2;
+    transform: translateY(-#{$overlap});
+    border-top-color: $bubble-bg;
+    border-bottom: none;
+  }
+}
+
+.downRight {
+  bottom: calc(100% + #{$offset});
+  right: 0;
+
+  &::after {
+    top: 100%;
+    right: $arrow * 2;
+    transform: translateY(-#{$overlap});
+    border-top-color: $bubble-bg;
+    border-bottom: none;
+  }
+}
+
+// ── UP variants — bubble below trigger, arrow points upward ───────────────────
+// Bubble sits below the trigger; arrow is at the top of the bubble.
+
+.upCenter {
+  top: calc(100% + #{$offset});
+  left: 50%;
+  transform: translateX(-50%);
+
+  &::after {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(#{$overlap});
+    border-bottom-color: $bubble-bg;
+    border-top: none;
+  }
+}
+
+.upLeft {
+  top: calc(100% + #{$offset});
+  left: 0;
+
+  &::after {
+    bottom: 100%;
+    left: $arrow * 2;
+    transform: translateY(#{$overlap});
+    border-bottom-color: $bubble-bg;
+    border-top: none;
+  }
+}
+
+.upRight {
+  top: calc(100% + #{$offset});
+  right: 0;
+
+  &::after {
+    bottom: 100%;
+    right: $arrow * 2;
+    transform: translateY(#{$overlap});
+    border-bottom-color: $bubble-bg;
+    border-top: none;
+  }
+}
+
+// ── LEFT variants — bubble to the right of trigger, arrow points left ──────────
+// (Figma names "Left" = arrow is on the left side of the bubble,
+//  meaning the bubble appears to the RIGHT of the trigger)
+
+.leftCenter {
+  top: 50%;
+  left: calc(100% + #{$offset});
+  transform: translateY(-50%);
+
+  &::after {
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%) translateX(#{$overlap});
+    border-right-color: $bubble-bg;
+    border-left: none;
+  }
+}
+
+.leftUp {
+  top: 0;
+  left: calc(100% + #{$offset});
+
+  &::after {
+    top: $arrow * 2;
+    right: 100%;
+    transform: translateX(#{$overlap});
+    border-right-color: $bubble-bg;
+    border-left: none;
+  }
+}
+
+.leftDown {
+  bottom: 0;
+  left: calc(100% + #{$offset});
+
+  &::after {
+    bottom: $arrow * 2;
+    right: 100%;
+    transform: translateX(#{$overlap});
+    border-right-color: $bubble-bg;
+    border-left: none;
+  }
+}
+
+// ── RIGHT variants — bubble to the left of trigger, arrow points right ─────────
+// (Figma "Right" = arrow on the right side of bubble = bubble to the LEFT)
+
+.rightCenter {
+  top: 50%;
+  right: calc(100% + #{$offset});
+  transform: translateY(-50%);
+
+  &::after {
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%) translateX(-#{$overlap});
+    border-left-color: $bubble-bg;
+    border-right: none;
+  }
+}
+
+.rightUp {
+  top: 0;
+  right: calc(100% + #{$offset});
+
+  &::after {
+    top: $arrow * 2;
+    left: 100%;
+    transform: translateX(-#{$overlap});
+    border-left-color: $bubble-bg;
+    border-right: none;
+  }
+}
+
+.rightDown {
+  bottom: 0;
+  right: calc(100% + #{$offset});
+
+  &::after {
+    bottom: $arrow * 2;
+    left: 100%;
+    transform: translateX(-#{$overlap});
+    border-left-color: $bubble-bg;
+    border-right: none;
+  }
+}
+
+// ── No arrow ───────────────────────────────────────────────────────────────────
+.noArrow {
+  bottom: calc(100% + #{$offset});
+  left: 50%;
+  transform: translateX(-50%);
+
+  &::after {
+    display: none;
+  }
+}

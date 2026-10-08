@@ -1,0 +1,193 @@
+// Switch — Figma node 1635:27830
+//
+// Knob: 43.2×24px, radius 16px (pill)
+// Indicator: 19.2×19.2px circle, 2.4px from edges
+//   Off: bg #CFDAF7, indicator left (translateX 0)
+//   On:  bg #0C1457, indicator right (translateX 19.2px)
+//   Off hover: bg #D5D5D5
+//   On hover:  bg #1531B8
+//   Focus: box-shadow double ring 4px #0C1457 + 2px white inset
+//
+// Label: body-regular 14px 400 #0D2976
+//
+// vertical:        column, gap 8px
+// horizontal-left: row, gap 8px, padding 4px 8px 4px 0
+// mobile-full:     row, justify-between, width fill
+
+@use "../../styles/text-styles" as ts;
+
+// Knob exact dimensions from Figma
+$knob-h:        24px;
+$indicator-d:   19.2px;
+$indicator-off: 2.4px; // same gap on both sides
+
+// ── Layout variants ────────────────────────────────────────────────────────────
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+}
+
+// vertical — column, gap 8px, label above knob
+.vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+// horizontal-left — row, switch left, label right
+// padding: 4px 8px 4px 0 (from Figma layout_W4A0MH)
+.horizontal_left {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 0;
+}
+
+// mobile-full — row, space-between, label left, switch right
+.mobile_full {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+// ── Label ──────────────────────────────────────────────────────────────────────
+.label {
+  @include ts.body-regular; // 14px 400 150%
+  color: var(--palette-blue-0); // #0D2976
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.labelDisabled {
+  cursor: not-allowed;
+}
+
+// ── Knob wrapper ───────────────────────────────────────────────────────────────
+.knobWrapper {
+  position: relative;
+  display: inline-block;
+  width: 43.2px; // Figma exact dimension
+  height: $knob-h;
+  border-radius: 16px;
+  background-color: var(--palette-neutral-0); // Off: #CFDAF7
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #D5D5D5; // Off hover — fill_OWXV4Q
+  }
+
+  // Focus ring on the hidden input — shown via :focus-within
+  &:focus-within {
+    box-shadow:
+      0 0 0 2px var(--palette-white-0),
+      0 0 0 4px rgba(12, 20, 87, 1); // #0C1457 double ring
+    outline: none;
+  }
+}
+
+// On state
+.on {
+  background-color: var(--palette-blue-1); // #0C1457
+
+  &:hover {
+    background-color: var(--palette-primary-1); // On hover: #1531B8
+  }
+
+  .indicator {
+    // Use calc(100% - diameter - offset) so the right gap exactly mirrors
+    // the left gap ($indicator-off), regardless of sub-pixel track rendering.
+    left: calc(100% - #{$indicator-d} - #{$indicator-off});
+    transform: none;
+  }
+}
+
+.knobDisabled {
+  cursor: not-allowed;
+}
+
+// ── Track icons ────────────────────────────────────────────────────────────────
+// Absolutely positioned inside the track, in the zone opposite to the handle.
+// Left icon (check): visible when ON, on the left side
+// Right icon (cross): visible when OFF, on the right side
+//
+// Both sit centred vertically. They are hidden (opacity 0) when the handle
+// slides over them, and fade in on the other side.
+
+.trackIconLeft,
+.trackIconRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 0;
+}
+
+// Check icon — left side (x ≈ 5px from left edge)
+.trackIconLeft {
+  left: 5px;
+  color: var(--palette-white-0); // white check on dark bg
+  opacity: 0; // hidden when OFF; shown when ON via .on modifier
+}
+
+// Cross icon — right side (x ≈ 5px from right edge)
+.trackIconRight {
+  right: 5px;
+  color: var(--palette-blue-0); // #0D2976 cross on light bg
+  opacity: 1; // visible when OFF
+}
+
+// SVG path colour helpers (colour is set via `color: currentColor` on the span)
+.trackIconCheck { display: block; }
+.trackIconCross  { display: block; }
+
+// When ON: show check on left, hide cross on right
+.on {
+  .trackIconLeft  { opacity: 1; }
+  .trackIconRight { opacity: 0; }
+}
+
+// ── Indicator (sliding circle handle) ─────────────────────────────────────────
+.indicator {
+  position: absolute;
+  top: $indicator-off;
+  left: $indicator-off; // off position — overridden by .on .indicator
+  width: $indicator-d;
+  height: $indicator-d;
+  border-radius: 50%;
+  background-color: var(--palette-white-0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  // Animate `left` instead of transform — guarantees same pixel gap on both ends
+  transition: left 0.2s ease;
+  pointer-events: none;
+  z-index: 1; // sits above track icons
+}
+
+// ── Hidden native input ────────────────────────────────────────────────────────
+// Positioned over the knob so it's clickable and receives focus
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}

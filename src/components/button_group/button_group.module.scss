@@ -1,0 +1,141 @@
+// ButtonGroup — Figma node 14520:222688 (Group button)
+//
+// Two joined buttons, h=32px, body-selected 14px 700
+//
+// Primary: #2358F8 bg, no border, white text/icon
+//   First:  radius 8px 0 0 8px
+//   Separator: 1px rgba(255,255,255,0.3) — soft divider between the two
+//   Second: radius 0 8px 8px 0, icon-only (chevron-down)
+//
+// Secondary: white bg, 1px #CFDAF7 border, #0D2976 text/icon
+//   First:  radius 8px 0 0 8px
+//   Separator: covered by border — no explicit separator needed
+//   Second: radius 0 8px 8px 0, border-left:none (avoids double 2px border)
+
+@use "../../styles/text-styles" as ts;
+
+// ── Group wrapper ──────────────────────────────────────────────────────────────
+.group {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: stretch;
+  position: relative;
+}
+
+// When the group is placed in a fixed-width container (e.g. card action col)
+// the parent sets width:100% on the group; this makes the main button fill
+// the remaining space and reduces horizontal padding to fit.
+.group.fill {
+  width: 100%;
+
+  .mainBtn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 8px; // tighter padding to fit within narrow containers
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dropBtn {
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+}
+
+.group.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+// ── Shared button base ─────────────────────────────────────────────────────────
+.mainBtn,
+.dropBtn {
+  @include ts.body-selected; // 14px 700 115%
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.12s, background-color 0.12s;
+  border: none;
+}
+
+// ── Main button ────────────────────────────────────────────────────────────────
+.mainBtn {
+  padding: 0 16px;
+  border-radius: 8px 0 0 8px;
+}
+
+// ── Dropdown button (icon only) ────────────────────────────────────────────────
+.dropBtn {
+  padding: 0 8px;
+  border-radius: 0 8px 8px 0;
+}
+
+// ── Separator (visible only for primary — between the two buttons) ─────────────
+.separator {
+  display: block;
+  width: 1px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+// ── Primary variant ────────────────────────────────────────────────────────────
+.group.primary {
+  .mainBtn {
+    background-color: var(--palette-primary-0); // #2358F8
+    color: var(--palette-white-0);
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  }
+
+  .separator {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .dropBtn {
+    background-color: var(--palette-primary-0);
+    color: var(--palette-white-0); // icon inherits white via currentColor
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  }
+}
+
+// ── Secondary variant ──────────────────────────────────────────────────────────
+.group.secondary {
+  .mainBtn {
+    background-color: var(--palette-white-0);
+    border: 1px solid var(--palette-neutral-0); // #CFDAF7
+    color: var(--palette-blue-0); // #0D2976
+
+    &:hover:not(:disabled) {
+      background-color: var(--palette-neutral-1); // #E7EAF8
+    }
+  }
+
+  .separator {
+    // No visible separator — the shared border line between buttons is implicit;
+    // the right border of mainBtn and left border of dropBtn overlap.
+    // We hide the separator for secondary and rely on the border-left:none on dropBtn.
+    display: none;
+  }
+
+  .dropBtn {
+    background-color: var(--palette-white-0);
+    // Full border on all sides except left — avoids double 2px border
+    border-top:    1px solid var(--palette-neutral-0);
+    border-right:  1px solid var(--palette-neutral-0);
+    border-bottom: 1px solid var(--palette-neutral-0);
+    border-left:   none;
+    color: var(--palette-blue-0);
+
+    &:hover:not(:disabled) {
+      background-color: var(--palette-neutral-1);
+    }
+  }
+}

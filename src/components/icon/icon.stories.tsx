@@ -2,7 +2,7 @@ import type { Meta, StoryFn } from "@storybook/react";
 import { Icon, IconName } from "./icon";
 
 export default {
-  title: "Atoms/Icons",
+  title: "Tokens/Icons",
   component: Icon,
   parameters: {
     design: {
@@ -16,19 +16,50 @@ export default {
 } satisfies Meta<typeof Icon>;
 
 const allIcons: IconName[] = [
+  // Original set
   "activity-feed", "add", "admin", "ai", "arrow-down", "arrow-left",
   "arrow-right", "arrow-up", "audit-planner", "booking", "calendar",
-  "caret-down", "caret-left", "caret-right", "caret-up", "check",
-  "chevron-down", "chevron-left", "chevron-right", "chevron-up", "cross",
-  "down", "edit", "engagement", "error", "help", "hidden", "history",
-  "info", "insights", "link", "links", "list", "location", "locked",
-  "logout", "mail", "marketplace", "menu-horizontal", "menu-vertical",
+  "caret-down", "caret-left", "caret-right", "caret-up", "check", "chat",
+  "chevron-down", "chevron-left", "chevron-right", "chevron-up",
+  "core", "cross", "development", "down", "edit", "engagement", "error",
+  "filter", "filter-clean", "forbidden", "heart", "help", "hidden", "history",
+  "home", "hourglass-half", "info", "insights", "learning",
+  "link", "links", "list", "location", "locked", "logout",
+  "mail", "mandatory", "marketplace", "menu-horizontal", "menu-vertical",
   "merge", "missing", "money", "move", "note", "notifications", "open",
-  "pin", "profile", "question", "reassign", "refresh", "remove", "reports",
-  "role", "save", "search", "share", "shown", "skills-framework",
-  "smart-allocation", "sort", "split", "subtract", "table", "tag", "undo",
-  "unseen", "up", "user-filled", "verified", "warning", "workflow",
+  "pin", "placeholder-profile", "profile", "question", "reassign", "refresh",
+  "remove", "reports", "role", "save", "search", "share", "shown",
+  "skills-framework", "smart-allocation", "sort", "split",
+  "substitute-parent-child", "subtract", "suggested", "table", "tag",
+  "timeline", "undo", "unseen", "up", "user-filled",
+  "verified", "verified-credly", "verified-others", "warning", "workflow",
   "zoom-in", "zoom-out",
+  // New icons (Figma sync)
+  "add-profile", "ai-agent",
+  "arrow-2-directions", "arrow-2-directions-vertical", "arrow-4-directions",
+  "availability", "baby", "bag", "bell", "book", "bubbles", "bug",
+  "bulk", "bulk-move",
+  "calendar-clash", "calendar-delete", "calendar-misaligned",
+  "car", "certificate", "clock", "close-role", "collapse", "compare",
+  "copy", "cost", "created", "department", "dot", "dot-big", "duplicate",
+  "engagement-audit", "expand", "expand-all", "expanded-all",
+  "export", "extend", "face-smile", "facebook",
+  "filter-applied", "filter2", "fire", "flower-spa", "folder",
+  "ghost", "head-heart", "heatmap", "hierarchical",
+  "hourglass-empty", "house-laptop", "house-user",
+  "import", "industry", "instagram", "key", "keyboard", "linkedin",
+  "manage-roles", "mobile", "mouse-cursor", "non-demand",
+  "overbooking", "overbooking-acknowledged", "owner",
+  "palm-tree", "paper-clip", "paper-plane", "path", "pen",
+  "person-minus", "pf-logo", "phone", "plane", "play", "postpone",
+  "preferences", "profile-field", "profiles",
+  "refresh-clean", "refresh-warning", "remove-all",
+  "role-audit", "rollforward", "save-add", "save-remove",
+  "sector", "segment", "skype", "skype-for-business", "snooze",
+  "soft-exception", "split2",
+  "substitute-child", "substitute-parent",
+  "target-allocation", "task", "teams", "twitter", "unpin",
+  "user-interest", "web", "wine-glass", "work",
 ];
 
 export const AllIcons: StoryFn<typeof Icon> = () => (

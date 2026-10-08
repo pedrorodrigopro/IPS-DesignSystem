@@ -1,0 +1,124 @@
+// SavedFilters — Figma node 6792:167638
+//
+// Container: column, gap 8px, padding-bottom 16px, border-bottom 1px #CFDAF7
+//
+// Header row: row, justify-between, gap 16px, wrap
+//   Accordion btn: row, gap 8px, padding 4px 0
+//     chevron 16×16 (rotates 0° collapsed / -180° expanded)
+//     label: body-selected 14px 700 #0D2976
+//
+// Pills row: row, wrap, gap 16px
+//   Pill: #F8F9FD bg, 1px #CFDAF7 border, radius 16px
+//         padding 8px 12px 8px 8px
+//         remove icon + body-unselected label + share icon
+
+@use "../../styles/text-styles" as ts;
+
+// ── Container ─────────────────────────────────────────────────────────────────
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--palette-neutral-0); // #CFDAF7
+  width: 100%;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.accordionBtn {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--palette-primary-0);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--palette-blue-0);
+  transition: transform 0.2s ease;
+  transform: rotate(-90deg); // collapsed: pointing right
+}
+
+.chevronOpen {
+  transform: rotate(0deg); // expanded: pointing down
+}
+
+.headerLabel {
+  @include ts.body-selected; // 14px 700 115%
+  color: var(--palette-blue-0); // #0D2976
+}
+
+.headerRight {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+// ── Pills row ─────────────────────────────────────────────────────────────────
+.pills {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+// ── Individual pill ───────────────────────────────────────────────────────────
+// layout_TF2DYF: row, alignItems center, gap 8px, padding 8px 12px 8px 8px
+// fill: #F8F9FD (--palette-neutral-2), stroke: 1px #CFDAF7, radius 16px
+.pill {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 8px;
+  background-color: var(--palette-neutral-2); // #F8F9FD
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  border-radius: 16px;
+}
+
+.pillLabel {
+  @include ts.body-unselected; // 14px 400 115%
+  color: var(--palette-blue-0); // #0D2976
+}
+
+// Icon buttons inside pill (remove / share)
+.pillIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--palette-blue-2); // #5C6E9E
+  flex-shrink: 0;
+  border-radius: 2px;
+  transition: color 0.12s;
+
+  &:hover {
+    color: var(--palette-blue-0);
+  }
+}

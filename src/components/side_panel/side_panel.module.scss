@@ -1,0 +1,54 @@
+// SidePanel styles — Figma node 1578:29068 (Template/Sidepanel)
+//
+// Panel: fixed right, full height, slides in from right
+// Shadow: -6px 0 12px 0 rgba(27,72,195,0.2) — left-side depth
+// Radius: 8px 0 0 8px — rounded only on left corners (facing the page)
+// Transition: 300ms ease — matches typical panel animation timing
+
+// ── Backdrop ──────────────────────────────────────────────────────────────────
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(12, 20, 87, 0);  // palette-blue-1 tint
+  transition: background 0.3s ease;
+  pointer-events: none;
+
+  &.backdropVisible {
+    background: rgba(12, 20, 87, 0.18);
+    pointer-events: auto;
+  }
+}
+
+// ── Panel ─────────────────────────────────────────────────────────────────────
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  z-index: 901;
+  background: #FFFFFF;
+  border-radius: 8px 0 0 8px;  // Figma: borderRadius "8px 0px 0px 8px"
+  box-shadow: -6px 0px 12px 0px rgba(27, 72, 195, 0.2);  // Figma effect_J2EAZE
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; // clips children; scrollable area is inside .content
+
+  // Slide-in animation — starts offscreen to the right
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+
+  &.panelVisible {
+    transform: translateX(0);
+  }
+}
+
+// ── Scrollable content area (used by ProfileSidePanel) ────────────────────────
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;  // Figma: layout_YBAFH8 padding 24px
+  display: flex;
+  flex-direction: column;
+  gap: 16px;      // Figma: layout_YBAFH8 gap 16px
+}

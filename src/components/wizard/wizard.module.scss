@@ -1,0 +1,129 @@
+// Wizard — Figma nodes 8273:200202 (Steps) + 8273:197838 (Wizard Step)
+//
+// Container: row, gap 16px, each step flex:1 (equal width)
+// Step: column, gap 8px, stretch
+//   Title: body-selected (current) / body-unselected (others), #0D2976
+//   Bar:   fill × 12px height, no radius (flat bar)
+//
+// Bar colours:
+//   current:          #0D2976 (fill_8S2WPL)
+//   enabled-previous: #8F9ED1 (fill_40Q0IM) — completed
+//   enabled-next:     #0D2976 (fill_8S2WPL) — available
+//   disabled:         #8F9ED1, opacity 0.5
+//   hover:            #2358F8 (fill_VPV22R) — on enabled steps only
+
+@use "../../styles/text-styles" as ts;
+
+// ── Wizard container ───────────────────────────────────────────────────────────
+.wizard {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  width: 100%;
+}
+
+// ── Step button ────────────────────────────────────────────────────────────────
+// Reset button styles; all layout is handled here.
+.step {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: default; // overridden for enabled states below
+  transition: none;
+
+  // Hover — only on enabled steps (CSS only, no JS)
+  &:hover:not(:disabled) .bar {
+    background-color: var(--palette-primary-0); // #2358F8
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    .bar {
+      background-color: var(--palette-primary-0); // #2358F8
+      box-shadow: 0 0 0 2px var(--palette-primary-0);
+    }
+  }
+}
+
+// ── Label ──────────────────────────────────────────────────────────────────────
+.label {
+  @include ts.body-unselected; // default; overridden for current
+  color: var(--palette-blue-0); // #0D2976
+  display: block;
+}
+
+// ── Indicator bar ──────────────────────────────────────────────────────────────
+.bar {
+  display: block;
+  height: 12px;
+  border-radius: 0; // flat bar as in Figma
+  transition: background-color 0.15s ease;
+}
+
+// ── State variants ─────────────────────────────────────────────────────────────
+
+// Current step — bold label, dark bar
+.current {
+  cursor: default;
+  pointer-events: none;
+
+  .label {
+    @include ts.body-selected; // 700 14px
+    color: var(--palette-blue-0);
+  }
+
+  .bar {
+    background-color: var(--palette-blue-0); // #0D2976
+  }
+}
+
+// Enabled previous — visited, muted bar, clickable
+.enabled-previous {
+  cursor: pointer;
+
+  .label {
+    @include ts.body-unselected;
+    color: var(--palette-blue-0);
+  }
+
+  .bar {
+    background-color: var(--palette-neutral-3); // #8F9ED1
+  }
+}
+
+// Enabled next — available but not yet visited, dark bar, clickable
+.enabled-next {
+  cursor: pointer;
+
+  .label {
+    @include ts.body-unselected;
+    color: var(--palette-blue-0);
+  }
+
+  .bar {
+    background-color: var(--palette-blue-0); // #0D2976 — same as current bar
+  }
+}
+
+// Disabled — future unavailable step, muted + translucent
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+
+  .label {
+    @include ts.body-unselected;
+    color: var(--palette-blue-0);
+  }
+
+  .bar {
+    background-color: var(--palette-neutral-3); // #8F9ED1
+  }
+}

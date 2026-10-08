@@ -11,7 +11,8 @@
   justify-content: space-between;
   align-items: center;
   width: 60px;
-  height: 1091px;
+  min-height: 100vh; // always full viewport height
+  height: 100%;      // stretch to fill parent if taller
   background-color: var(--palette-blue-1); // #0C1457
   border-radius: 0 16px 16px 0;
   padding: 24px 0 40px;
@@ -167,7 +168,7 @@
   font-family: var(--font-family);
   font-size: var(--font-size-body); // 14px
   font-weight: var(--font-weight-bold); // 700
-  line-height: 115%;
+  line-height: var(--line-height-small); // 115%
   white-space: nowrap;
   padding: 8px;
   border-radius: var(--radius-md); // 8px

@@ -1,6 +1,7 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import { useState } from "react";
-import { Navigation } from "./navigation";
+import { Navigation, NavigationMarketplace } from "./navigation";
+import type { MarketplaceNavItem } from "./navigation";
 
 export default {
   title: "Components/Navigation",
@@ -139,3 +140,60 @@ Default.args = {
   tabs,
   activeId: "matches",
 };
+
+// ── Marketing variant (Figma section 7433:239440) ─────────────────────────────
+// Horizontal dark pill nav, icon-only. Used on marketing / landing screens.
+
+const marketingItems: MarketplaceNavItem[] = [
+  { id: "home",        icon: "home",        label: "Home" },
+  { id: "marketplace", icon: "marketplace", label: "Marketplace" },
+  { id: "workflow",    icon: "workflow",    label: "Workflow" },
+  { id: "insights",    icon: "insights",    label: "Insights" },
+  { id: "profiles",    icon: "profile",     label: "Profiles" },
+];
+
+export const Marketing: StoryFn<typeof Navigation> = () => {
+  const [activeId, setActiveId] = useState("home");
+  return (
+    <div style={{ padding: 40, background: "#F8F9FD", display: "inline-block" }}>
+      <NavigationMarketplace
+        items={marketingItems}
+        activeId={activeId}
+        onChange={setActiveId}
+      />
+    </div>
+  );
+};
+Marketing.storyName = "Marketing (dark pill)";
+
+export const MarketingAllStates: StoryFn<typeof Navigation> = () => (
+  <div style={{ padding: 40, display: "flex", flexDirection: "column", gap: 24 }}>
+    <div>
+      <p style={{ fontFamily: "Mulish, sans-serif", fontSize: 11, color: "#5C6E9E", marginBottom: 8 }}>
+        First item selected
+      </p>
+      <NavigationMarketplace
+        items={marketingItems}
+        activeId="home"
+      />
+    </div>
+    <div>
+      <p style={{ fontFamily: "Mulish, sans-serif", fontSize: 11, color: "#5C6E9E", marginBottom: 8 }}>
+        Middle item selected
+      </p>
+      <NavigationMarketplace
+        items={marketingItems}
+        activeId="workflow"
+      />
+    </div>
+    <div>
+      <p style={{ fontFamily: "Mulish, sans-serif", fontSize: 11, color: "#5C6E9E", marginBottom: 8 }}>
+        No selection
+      </p>
+      <NavigationMarketplace
+        items={marketingItems}
+      />
+    </div>
+  </div>
+);
+MarketingAllStates.storyName = "Marketing — all states";

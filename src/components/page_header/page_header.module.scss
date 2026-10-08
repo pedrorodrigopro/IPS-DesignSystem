@@ -1,0 +1,9 @@
+// PageHeader — column, gap 8px, fill width
+// Composes: Breadcrumbs + Header (page size) + RoleSubtitle
+
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}

@@ -1,0 +1,421 @@
+// Card — Figma nodes 9780:173416 (Match) + 9786:67261 (Directory)
+//
+// Shell: white bg, radius 8px, box-shadow 0 0 8px 0 rgba(203,225,242,0.8), padding 16px
+//
+// Scores (match): row 148px, gap 8px → pair row gap 16px
+//   Match number: 800/36px #0D2976  + "%" 700/14px
+//   Avail number: 300/36px #1531B8  + "%" 700/14px
+//   Label: label-regular 12px #5C6E9E
+//
+// Action col: 120px fixed, column, align flex-end, gap 8px
+//   All buttons fill width (width: 100%)
+//
+// Expand animation: max-height + opacity on .expandedWrapper
+//   collapsed: max-height 0, opacity 0, overflow hidden
+//   expanded:  max-height 600px, opacity 1, 300ms ease
+//
+// Expanded body: row
+//   Role fields: column, width 156px, border-right 1px #CFDAF7, gap 8px
+//   Extra skills: column, gap 24px, padding-left 16px, fill
+
+@use "../../styles/text-styles" as ts;
+
+// ── Card shell ─────────────────────────────────────────────────────────────────
+// Default:  bg #FFFFFF, box-shadow 0 0 8px 0 rgba(203,225,242,0.8) — Card master default
+// Hover:    bg rgba(0,0,0,0.04), box-shadow 0 0 12px 0 rgba(187,202,242,1) — Card master hovering
+// Focus:    box-shadow 0 0 0 4px rgba(12,20,87,1), 0 0 0 2px white
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background-color: var(--palette-white-0);
+  border-radius: 8px;
+  box-shadow: 0 0 8px 0 rgba(203, 225, 242, 0.8);
+  width: 100%;
+  cursor: default;
+  transition: box-shadow 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04); // fill_NVRBU4
+    box-shadow: 0 0 12px 0 rgba(187, 202, 242, 1); // Card master hovering
+  }
+
+  &:focus-within {
+    box-shadow:
+      0 0 0 2px var(--palette-white-0),
+      0 0 0 4px rgba(12, 20, 87, 1),
+      0 4px 4px 0 rgba(0, 0, 0, 0.25);
+    outline: none;
+  }
+}
+
+// ── Content row ────────────────────────────────────────────────────────────────
+.contentRow {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+// ── Match column: expand toggle + scores ───────────────────────────────────────
+// Width = expand btn (28px) + gap (4px) + scores (148px) = 180px
+// This must match .roleFields width so the expanded left col aligns perfectly.
+$match-col-width: 180px;
+
+.matchCol {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 4px;
+  flex-shrink: 0;
+  width: $match-col-width;
+}
+
+.expandBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--palette-blue-0);
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 4px;
+
+  &:hover { background-color: var(--palette-neutral-1); }
+  &:focus-visible { outline: 2px solid var(--palette-primary-0); }
+}
+
+.expandIcon { flex-shrink: 0; }
+
+// ── Scores ─────────────────────────────────────────────────────────────────────
+// Outer: fixed 148px, row, gap 8px (layout_MBGIOZ)
+.scores {
+  display: flex;
+  flex-direction: row;
+  width: 148px;
+  flex-shrink: 0;
+}
+
+// Inner pair: row, gap 16px, fills the 148px (layout_5HQKBQ)
+.scoresPair {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  width: 100%;
+}
+
+// Each score column
+.scoreField {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.scoreLabel {
+  @include ts.label-regular; // 12px 400 150%
+  color: var(--palette-blue-2); // #5C6E9E
+  line-height: 1.2;
+}
+
+.scoreValue {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 1px;
+}
+
+// Colour wrappers — both the number and % suffix inherit via currentColor
+// from these parent spans, ensuring consistent colour for the whole score.
+.scoreValueMatch { color: var(--palette-blue-0); }  // Match: #0D2976
+.scoreValueAvail { color: var(--palette-blue-0); }  // Avail: #0D2976 (user spec — consistent with Match)
+
+// Match number — ExtraBold 800, 36px — colour from .scoreValueMatch
+.scoreNumberMatch {
+  font-family: var(--font-family);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  color: currentColor;
+}
+
+// Avail number — Light 300, 36px — colour from .scoreValueAvail (#1531B8)
+.scoreNumberAvail {
+  font-family: var(--font-family);
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1;
+  color: currentColor; // inherits #1531B8 from .scoreValueAvail wrapper
+}
+
+// "%" suffix — body-selected 14px 700 — inherits colour from parent wrapper
+.scoreSuffix {
+  @include ts.body-selected; // 14px 700 115%
+  line-height: 1;
+  color: currentColor;
+}
+
+// ── Profile column ─────────────────────────────────────────────────────────────
+.profileCol {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 8px;
+}
+
+.profileColBorder {
+  border-left: 1px solid var(--palette-neutral-0); // #CFDAF7
+  padding-left: 16px;
+}
+
+.profileTop {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.wm {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+// ── Action column ──────────────────────────────────────────────────────────────
+// 120px fixed (user spec), column, align right, gap 8px
+.actionCol {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; // buttons fill width
+  gap: 8px;
+  flex-shrink: 0;
+  width: 120px;
+}
+
+// Status row: label + history icon button side by side, right-aligned
+// layout_2AI68O: row, justify flex-end, align center, gap 8px, fill width
+.statusRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.statusBadge {
+  @include ts.label-unselected; // 12px 400 100% (Figma: lineHeight 100%)
+  color: var(--palette-blue-0); // #0D2976
+  text-align: right;
+  white-space: nowrap;
+}
+
+// History (revert) icon button — small, tertiary style
+// Button small new, Type=Icon header: padding 5px, icon 14×14
+.revertBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--palette-blue-2); // #5C6E9E — tertiary icon colour
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background-color 0.12s, color 0.12s;
+
+  &:hover {
+    background-color: var(--palette-neutral-1);
+    color: var(--palette-blue-0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--palette-primary-0);
+  }
+}
+
+.btn {
+  @include ts.body-selected; // 14px 700 115%
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  width: 100%;
+  transition: opacity 0.12s, background-color 0.12s;
+
+  &:hover { opacity: 0.9; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.primary {
+  background-color: var(--palette-primary-0); // #2358F8
+  border: none;
+  color: var(--palette-white-0);
+}
+
+.secondary {
+  background-color: var(--palette-white-0);
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  color: var(--palette-blue-0);
+  &:hover { background-color: var(--palette-neutral-1); opacity: 1; }
+}
+
+.destructive {
+  background-color: var(--palette-white-0);
+  border: 1px solid var(--palette-red-0); // #D42A36
+  color: var(--palette-red-0);
+  &:hover { background-color: var(--palette-red-2); opacity: 1; }
+}
+
+// ButtonGroup uses fill=true prop — no extra class needed here
+
+// ── Skills ─────────────────────────────────────────────────────────────────────
+.skills {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skillGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skillGroupTitle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.skillGroupLabel {
+  @include ts.label-regular; // 12px 400 150%
+  color: var(--palette-blue-0);
+}
+
+.skillGroupCount {
+  @include ts.label-bold; // 12px 700
+  color: var(--palette-blue-0);
+}
+
+// Skill row: wrap, gap 16px/8px — SkillMatch component handles its own layout
+.skillRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 8px;
+}
+
+// ── Expand/collapse animation ──────────────────────────────────────────────────
+// max-height + opacity transition on wrapper; actual content inside is unstyled
+
+.expandedWrapper {
+  max-height: 0;
+  opacity: 0;
+  // overflow:hidden needed for max-height animation to work.
+  // Use a generous max-height so content is never clipped when open.
+  overflow: hidden;
+  transition:
+    max-height 350ms ease,
+    opacity 250ms ease;
+}
+
+.expandedWrapperOpen {
+  // 2000px is well beyond any realistic expanded card height.
+  // Using a large value allows max-height animation to work without JS measurement.
+  max-height: 2000px;
+  opacity: 1;
+  overflow: visible; // restore so skill tooltips (z-index:200) are not clipped
+  transition:
+    max-height 350ms ease,
+    opacity 250ms ease 30ms;
+}
+
+// ── Expanded content ───────────────────────────────────────────────────────────
+.expandedContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 0; // card gap: 8px above expandedWrapper handles separation
+}
+
+.expandedDivider {
+  height: 1px;
+  background-color: var(--palette-neutral-0); // #CFDAF7
+  margin: 0 -16px; // bleed to card edges
+}
+
+// Row: role fields (fixed) + expanded skills (fill)
+.expandedBody {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+}
+
+// ── Role fields (left column) ─────────────────────────────────────────────────
+// Width = matchCol (180px) + contentRow gap (8px) = 188px so its right border
+// lands exactly where the profileCol's left border starts in the row above.
+// padding-right provides breathing room before the border line.
+.roleFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(#{$match-col-width} + 8px); // 188px — aligns with profileColBorder
+  flex-shrink: 0;
+  border-right: 1px solid var(--palette-neutral-0);
+  padding-right: 16px;
+}
+
+.roleField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.roleFieldLabel {
+  @include ts.label-regular; // 12px 400 150%
+  color: var(--palette-blue-0); // #0D2976 — same colour family as value, just lighter weight
+}
+
+.roleFieldValue {
+  @include ts.label-bold; // 12px 700 150%
+  color: var(--palette-blue-0); // #0D2976
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.matchIcon {
+  color: var(--palette-green-0); // #248E61
+  flex-shrink: 0;
+}
+
+.missIcon {
+  color: var(--palette-red-0); // #D42A36
+  flex-shrink: 0;
+}
+
+// ── Expanded skills (right area) ───────────────────────────────────────────────
+.expandedSkills {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-left: 16px;
+  flex: 1 1 0;
+  min-width: 0;
+}

@@ -190,7 +190,9 @@ export const PillSavedFilter = ({ label, onRemove, onShare, className }: PillSav
 export type WFState =
   | "new" | "shortlisting" | "in-review" | "invited"
   | "partially-filled" | "filled" | "partially-booked" | "booked"
-  | "partially-confirmed" | "confirmed" | "not-filled" | "exceptions" | "pending";
+  | "partially-confirmed" | "confirmed" | "not-filled" | "exceptions" | "pending"
+  // Audit-planner-specific overlay states (red, bold label)
+  | "technical-overlay" | "accreditations";
 
 const WF_STATE_CONFIG: Record<WFState, { label: string; bg: string; color: string; icon?: IconName }> = {
   "new":                  { label: "New",                 bg: "#E7EAF8", color: "#0D2976" },
@@ -206,6 +208,8 @@ const WF_STATE_CONFIG: Record<WFState, { label: string; bg: string; color: strin
   "confirmed":            { label: "Confirmed",           bg: "#0C1457", color: "#FFFFFF" },
   "not-filled":           { label: "Not filled",          bg: "#FFE8AD", color: "#9B5A01" },
   "exceptions":           { label: "Exceptions",          bg: "#FFE2E2", color: "#A30013", icon: "error" },
+  "technical-overlay":   { label: "Technical Overlay",   bg: "#FFE2E2", color: "#A30013" },
+  "accreditations":      { label: "Accreditations",      bg: "#FFE2E2", color: "#A30013" },
 };
 
 export type PillWFStateProps = {

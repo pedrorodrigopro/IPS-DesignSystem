@@ -1,0 +1,37 @@
+// RoleSubtitle — Figma node 12685:585963
+//
+// Row: wrap, gap 8px, padding-bottom 16px, align-items center
+// Text: body-unselected 14px 400 #0D2976; value span bold
+// Vertical divider: 1px × 18px #CFDAF7 (Figma layout_BIYGQT)
+
+@use "../../styles/text-styles" as ts;
+
+// ── Row ────────────────────────────────────────────────────────────────────────
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+// ── Label:Value text ───────────────────────────────────────────────────────────
+// "Label **Value**" — body-unselected for both, only weight differs
+.labelValue {
+  @include ts.body-unselected; // 14px 400 115%
+  color: var(--palette-blue-0); // #0D2976
+  white-space: nowrap;
+}
+
+.valueStrong {
+  font-weight: var(--font-weight-bold); // 700 — inherits size/family from parent
+}
+
+// ── Vertical divider override ──────────────────────────────────────────────────
+// Figma layout_BIYGQT: 1px wide × 18px tall, fill #CFDAF7
+// Override Divider's default align-self:stretch / height:100%
+.divider {
+  height: 18px !important;
+  align-self: center !important;
+}

@@ -1,5 +1,6 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import { Button } from "./button";
+import { Icon } from "../icon/icon";
 
 export default {
   title: "Components/Button",
@@ -88,6 +89,45 @@ export const Small: StoryFn<typeof Button> = () => (
     </Row>
   </div>
 );
+
+// ── Icon Only variants ────────────────────────────────────────────────────────
+// Three kinds: icon (neutral-0 border), iconTertiary (no border), iconGhost (blue-0 border)
+// Two sizes: regular (36×36), small (26×26)
+// States: resting → hover (trans-0 bg) → focus (double-ring) → disabled (opacity 0.5)
+
+export const IconOnly: StoryFn<typeof Button> = () => {
+  const kinds = [
+    { kind: "icon"         as const, label: "Icon"          },
+    { kind: "iconTertiary" as const, label: "Icon Tertiary"  },
+    { kind: "iconGhost"    as const, label: "Icon Ghost"     },
+  ];
+  const sizes = ["regular", "small"] as const;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: 24 }}>
+      {sizes.map(size => (
+        <div key={size}>
+          <SectionLabel>{size} size</SectionLabel>
+          <div style={{ display: "flex", gap: 40, alignItems: "flex-start", marginTop: 12 }}>
+            {kinds.map(({ kind, label }) => (
+              <div key={kind} style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
+                <span style={{ fontFamily: "Mulish, sans-serif", fontSize: 11, fontWeight: 700, color: "var(--palette-neutral-3)", textTransform: "uppercase" }}>{label}</span>
+                {/* Resting */}
+                <Button size={size} kind={kind} title="Add"><Icon name="add" size={size === "regular" ? 20 : 16} /></Button>
+                {/* Hover simulation */}
+                <Button size={size} kind={kind} title="Add (hover)" style={{ backgroundColor: "var(--palette-trans-0)" }}><Icon name="add" size={size === "regular" ? 20 : 16} /></Button>
+                {/* Focus simulation */}
+                <Button size={size} kind={kind} title="Add (focus)" style={{ boxShadow: "0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0)", outline: "none" }}><Icon name="add" size={size === "regular" ? 20 : 16} /></Button>
+                {/* Disabled */}
+                <Button size={size} kind={kind} title="Add (disabled)" disabled><Icon name="add" size={size === "regular" ? 20 : 16} /></Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // ── Side by side comparison ───────────────────────────────────────────────────
 

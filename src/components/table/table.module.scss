@@ -1,0 +1,315 @@
+// Table — Figma nodes 5797:225575 (Standard) + 6207:127526 (Compact)
+//
+// Row border: 1px solid #CFDAF7 bottom (--palette-neutral-0)
+// Header text: New/Body regular (#5C6E9E)
+// Standard row height: 56px (16px top/bottom padding)
+// Compact row height:  40px (8px top/bottom padding)
+// Checkbox cell width: 56px (standard only)
+// Cell horizontal padding: 16px standard / 12px compact
+//
+// Sticky column:
+//   .stickyCol on th/td — position:sticky; right:0
+//   .scrollGradient — absolutely-positioned div rendered inside the wrapper
+//     when overflowing, showing white-to-transparent gradient just to the left
+//     of the sticky column.
+
+@use "../../styles/text-styles" as ts;
+
+// ── Wrapper ────────────────────────────────────────────────────────────────────
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--palette-white-0);
+  // Required so the absolutely-positioned gradient div clips to this container
+  position: relative;
+}
+
+// ── Scroll gradient overlay ────────────────────────────────────────────────────
+// Rendered as a sibling to <table> inside .tableWrapper.
+// position:sticky right:0 keeps it pinned to the right viewport edge even as
+// the table scrolls. height/top:0 + the padding-bottom trick via inset gives
+// it full height. We use position:sticky on this block element so it stays
+// at the right of the *visible* area (not the scroll area).
+.scrollGradient {
+  position: sticky;
+  right: 0;
+  // Float right so it doesn't push the table down
+  float: right;
+  // Zero-size anchor — the actual gradient is on ::before
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  // z-index: 1 — below table cell content (z-index: auto) and below sticky
+  // col (z-index: 2), so row borders and icons paint on top of the gradient.
+  // The gradient only washes the background layer.
+  z-index: 1;
+
+  &::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    // 9999px tall — clipped by the wrapper's overflow:auto
+    height: 9999px;
+    width: 80px;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.85) 50%,
+      rgba(255, 255, 255, 1) 100%
+    );
+    pointer-events: none;
+  }
+}
+
+// ── Table element ──────────────────────────────────────────────────────────────
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// ── Header row ─────────────────────────────────────────────────────────────────
+.headerRow {
+  border-bottom: 1px solid var(--palette-neutral-0);
+  // Stacking context so header border paints above gradient
+  position: relative;
+  z-index: 2;
+}
+
+.th {
+  padding: 12px 16px;
+  text-align: left;
+  white-space: nowrap;
+  background-color: var(--palette-white-0);
+
+  .headerContent {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .headerLabel {
+    @include ts.body-regular;
+    color: var(--palette-blue-2); // #5C6E9E
+  }
+}
+
+.th.sortable {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover .headerLabel {
+    color: var(--palette-blue-1);
+  }
+}
+
+// ── Sort icon pair ─────────────────────────────────────────────────────────────
+.sortIcon {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  top: 0;
+  width: 14px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.4;
+
+  svg {
+    display: block;
+  }
+}
+
+.caretUp,
+.caretDown {
+  color: var(--palette-blue-2);
+
+  &.active {
+    color: var(--palette-blue-1);
+    opacity: 1;
+  }
+}
+
+.sortIcon:has(.active) {
+  opacity: 1;
+}
+
+// ── Data rows ──────────────────────────────────────────────────────────────────
+.row {
+  border-bottom: 1px solid var(--palette-neutral-0); // #CFDAF7
+  background-color: var(--palette-white-0);
+  // Stacking context so row borders paint above the gradient (z-index: 1)
+  position: relative;
+  z-index: 2;
+
+  &:hover {
+    background-color: var(--palette-neutral-2); // #F8F9FD
+
+    .stickyCol {
+      background-color: var(--palette-neutral-2);
+    }
+  }
+}
+
+.rowSelected {
+  background-color: var(--palette-primary-3); // #E7F9FE
+
+  .stickyCol {
+    background-color: var(--palette-primary-3);
+  }
+}
+
+// ── Standard size ──────────────────────────────────────────────────────────────
+.standard {
+  .td {
+    padding: 16px 16px;
+    vertical-align: middle;
+  }
+
+  .th {
+    padding: 12px 16px;
+  }
+
+  .checkboxCell {
+    width: 56px;
+    padding: 0 16px;
+  }
+}
+
+// ── Compact size ───────────────────────────────────────────────────────────────
+.compact {
+  .td {
+    padding: 8px 12px;
+    vertical-align: middle;
+  }
+
+  .th {
+    padding: 10px 12px;
+  }
+}
+
+// ── Cell ────────────────────────────────────────────────────────────────────────
+.td {
+  text-align: left;
+}
+
+// ── Alignment helpers ──────────────────────────────────────────────────────────
+.align-left   { text-align: left; }
+.align-center { text-align: center; }
+.align-right  { text-align: right; }
+
+// ── Sticky column ──────────────────────────────────────────────────────────────
+// Applied to both th and td when column.sticky = true.
+// Background inherits per-row state via .row hover / .rowSelected overrides above.
+.stickyCol {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: var(--palette-white-0); // default row bg
+}
+
+// ── Cell types ─────────────────────────────────────────────────────────────────
+
+.textPrimary {
+  @include ts.body-selected;
+  color: var(--palette-blue-1); // #0C1457
+  display: block;
+}
+
+.textRegular {
+  @include ts.body-unselected;
+  color: var(--palette-blue-1); // #0C1457
+  display: block;
+}
+
+// Workforce Member cell
+.wmCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wmName {
+  @include ts.body-selected;
+  color: var(--palette-blue-1);
+}
+
+// Number cell (right-aligned value)
+.numberCell {
+  display: block;
+  text-align: right;
+}
+
+.percentValue {
+  @include ts.body-selected;
+  color: var(--palette-blue-1);
+}
+
+.percentSign {
+  @include ts.body-unselected;
+  color: var(--palette-blue-1);
+  margin-left: 1px;
+}
+
+// Button cell (action buttons group)
+.buttonCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cellButton {
+  @include ts.label-selected;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  border-radius: 4px;
+  background: var(--palette-white-0);
+  color: var(--palette-blue-1);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--palette-neutral-1);
+  }
+
+  &:active {
+    background: var(--palette-neutral-0);
+  }
+}
+
+// Icon button cell
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--palette-blue-2);
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--palette-neutral-1);
+    color: var(--palette-blue-1);
+  }
+}
+
+// Checkbox cell alignment
+.checkboxCell {
+  text-align: center;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+  }
+}

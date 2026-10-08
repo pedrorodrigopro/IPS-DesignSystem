@@ -1,0 +1,250 @@
+// WorkforceMember — Figma node 2249:141815 (Workforce Member)
+//
+// All text: #0D2976 (--palette-blue-0)
+//
+// Profile icons:
+//   Placeholder / Suspended / Interest: 16×16
+//   Timeline (contractual time slice) / Suggested: 20×20
+//   Each has a Tooltip on hover
+//
+// Named resource pill: #E7EAF8 bg, label-unselected 12px, radius 16px, padding 5px 12px
+//
+// Variants:
+//   small-1line  — row, gap 4px, padding 4px, height 28px; hover bg rgba(0,0,0,0.04) r8
+//   small-2lines — row, gap 4px; avatar 40px; col: name row + email
+//   small-3lines — row, gap 4px; avatar 40px; col: name row + job title + email
+//   big          — row, gap 8px; avatar 80px; col: name row + datapoints
+//   card         — row, gap 8px; avatar 48px; col right: name/heading + job title + shortlist
+
+@use "../../styles/text-styles" as ts;
+
+// ── Base wrapper ──────────────────────────────────────────────────────────────
+.wm {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  color: var(--palette-blue-0); // #0D2976
+}
+
+.clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.12s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+// ── small-1line (layout_CYCFM9 / layout_VEUSJ7) ───────────────────────────────
+// row, alignItems center, gap 4px, padding 4px, height 28px fixed
+.small1line {
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  height: 28px;
+}
+
+// Avatar wrapper for small-1line (20×20)
+// Avatar renders at its native size; we wrap it in a fixed container
+.avatarSm {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ── small-2lines (layout_DNWF8N) ─────────────────────────────────────────────
+// row, gap 4px, avatar 40×40
+.small2lines {
+  align-items: flex-start;
+  gap: 4px;
+}
+
+// Avatar wrapper for small-2lines / small-3lines (40×40)
+.avatarMd {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ── small-3lines (layout_2G8LYH) ─────────────────────────────────────────────
+// same as small-2lines structure
+.small3lines {
+  align-items: flex-start;
+  gap: 4px;
+}
+
+// ── big (layout_0AGFRS) ───────────────────────────────────────────────────────
+// row, gap 8px, avatar 80×80
+.big {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+// ── card (layout_SUGTD8) ─────────────────────────────────────────────────────
+// row, gap 8px, avatar 48×48
+.card {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+// Avatar wrapper for card (48×48)
+.avatarCard {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ── Text column (used by all multi-line variants) ─────────────────────────────
+.textCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// ── Name row — name text + profile icons inline ────────────────────────────────
+// layout_MQPAQD: row, alignItems center, gap 8px, height 16px
+.nameRow {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  height: 16px; // matches Figma fixed height on label frame
+}
+
+// Name text styles
+.nameBodySelected {
+  @include ts.body-selected; // 14px 700 115%
+  color: var(--palette-blue-0);
+}
+
+.nameHeading5 {
+  @include ts.heading-5; // 16px 600 125%
+  color: var(--palette-blue-0);
+}
+
+.nameHeading4 {
+  @include ts.heading-4; // 20px 600 125%
+  color: var(--palette-blue-0);
+}
+
+// ── Secondary text ────────────────────────────────────────────────────────────
+.email,
+.secondary {
+  @include ts.label-regular; // 12px 400 150%
+  color: var(--palette-blue-0);
+}
+
+// ── Profile icons ─────────────────────────────────────────────────────────────
+.profileIcons {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+// Icon wrapper — needed for Tooltip trigger (inline-block)
+.profileIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--palette-blue-0);
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.profileIconSm {
+  width: 16px;
+  height: 16px;
+}
+
+// Named resource pill — #E7EAF8 bg, label-unselected 12px, radius 16px
+.namedResourcePill {
+  @include ts.label-unselected; // 12px 400 115%
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  background-color: var(--palette-neutral-1); // #E7EAF8
+  border-radius: 16px;
+  color: var(--palette-blue-0);
+  white-space: nowrap;
+}
+
+// ── Card right column ─────────────────────────────────────────────────────────
+.cardRight {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardNameRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+
+  .nameRow {
+    height: auto; // card heading is taller
+  }
+}
+
+.cardJobTitle {
+  @include ts.label-regular; // 12px 400 150%
+  color: var(--palette-blue-0);
+  display: block;
+}
+
+// Shortlist "Added by" row
+.shortlistRow {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.shortlistLink {
+  @include ts.label-selected; // 12px 700 115%
+  color: var(--palette-primary-0); // #2358F8 — link style
+  cursor: pointer;
+}
+
+// ── Datapoints (big variant) ──────────────────────────────────────────────────
+// layout_AKLASR: column, gap 2px, height 96px fixed (4 rows)
+.datapoints {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.datapointRow {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.datapointLabel {
+  @include ts.label-regular; // 12px 400 150% — "New/Label regular"
+  color: var(--palette-blue-0);
+  min-width: 80px;
+}
+
+.datapointValue {
+  @include ts.label-bold; // 12px 700 150% — "New/Label bold"
+  color: var(--palette-blue-0);
+}

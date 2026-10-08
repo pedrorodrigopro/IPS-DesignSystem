@@ -1,0 +1,131 @@
+// Toggle — Figma nodes 4473:102864 + 1817:105580
+//
+// Field: column, gap 4px
+// Label: label-regular (12px 400 Mulish, #0D2976)
+// Buttons row: row, align-items flex-end, fill width
+// Button cell: padding 8px 16px, justify-content center
+//
+// Selected:         bg #0C1457, border #0C1457, text white, body-selected
+// Unselected rest:  bg white,   border #CFDAF7, text #0D2976, body-unselected
+// Unselected hover: bg rgba(0,0,0,0.04), border #CFDAF7
+// Unselected focus: bg white,   border #CFDAF7, outline 2px rgba(13,41,118,1)
+//
+// Position radii:
+//   first:  8px 0 0 8px
+//   middle: 0
+//   last:   0 8px 8px 0
+//
+// Border strategy:
+//   first:  1px solid all sides
+//   middle: 1px 1px 1px 0  (left=0 avoids double border with previous button)
+//   last:   1px 1px 1px 0
+
+@use "../../styles/text-styles" as ts;
+
+// ── Field container ────────────────────────────────────────────────────────────
+.field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.field.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+// ── Label row ──────────────────────────────────────────────────────────────────
+.labelRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.label {
+  @include ts.label-regular;
+  color: var(--palette-blue-0); // #0D2976
+}
+
+// Mandatory icon — matches Input component exactly (Icon name="mandatory" size=16)
+.mandatoryIcon {
+  color: var(--palette-red-0); // #D42A36
+  flex-shrink: 0;
+}
+
+// ── Buttons row ────────────────────────────────────────────────────────────────
+.buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  width: 100%;
+}
+
+// ── Individual button ──────────────────────────────────────────────────────────
+.btn {
+  @include ts.body-unselected; // overridden per state below
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  outline: none;
+  transition:
+    background-color 0.12s,
+    box-shadow 0.12s;
+  white-space: nowrap;
+
+  // ── Position: first ──
+  &.first {
+    border-radius: 8px 0 0 8px;
+    border: 1px solid;
+  }
+
+  // ── Position: middle ──
+  &.middle {
+    border-radius: 0;
+    border-top:    1px solid;
+    border-right:  1px solid;
+    border-bottom: 1px solid;
+    border-left:   none;
+  }
+
+  // ── Position: last ──
+  &.last {
+    border-radius: 0 8px 8px 0;
+    border-top:    1px solid;
+    border-right:  1px solid;
+    border-bottom: 1px solid;
+    border-left:   none;
+  }
+}
+
+// ── Selected state ─────────────────────────────────────────────────────────────
+.btn.selected {
+  @include ts.body-selected;
+  background-color: var(--palette-blue-1); // #0C1457
+  border-color: var(--palette-blue-1);
+  color: var(--palette-white-0);
+}
+
+// ── Unselected states ──────────────────────────────────────────────────────────
+.btn.unselected {
+  @include ts.body-unselected;
+  background-color: var(--palette-white-0);
+  border-color: var(--palette-neutral-0); // #CFDAF7
+  color: var(--palette-blue-0); // #0D2976
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(13, 41, 118, 1);
+    // Raise above siblings so the focus ring isn't clipped
+    position: relative;
+    z-index: 1;
+  }
+}

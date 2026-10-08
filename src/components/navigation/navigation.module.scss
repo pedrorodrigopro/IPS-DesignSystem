@@ -15,6 +15,16 @@
   gap: 8px;
 }
 
+// Fill-width variant — each tab stretches equally
+.fillWidth {
+  width: 100%;
+}
+
+.tabFillWidth {
+  flex: 1;
+  justify-content: center;
+}
+
 // Vertical — column, width 175px, tabs fill width (layout_NUEWWL)
 .vertical {
   flex-direction: column;
@@ -132,4 +142,53 @@
 .badgeActive {
   background-color: var(--palette-primary-5); // #436FB6 — fill_BH3QVI
   color: var(--palette-white-0);
+}
+
+// ── Marketing navigation (Figma section 7433:239440) ─────────────────────────
+// Horizontal pill bar; dark bg #0C1457, radius 16px, gap 24px, padding 16px.
+// Icon-only items: no text labels. Icon colours per state.
+
+.marketingNav {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  padding: 16px;
+  background-color: var(--palette-blue-1); // #0C1457
+  border-radius: 16px;
+}
+
+// Icon button — all icons are white; opacity carries the state signal.
+// Selected:  opacity 1   (full white)
+// Resting:   opacity 0.4 (dim white — matches screenshot muted look)
+// Hover:     opacity 0.7 (mid white)
+// Focus:     opacity 1   + #2358F8 rounded ring around the button
+.marketingItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  color: var(--palette-white-0); // always white — opacity varies
+  opacity: 0.4;                  // resting
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover:not(.marketingActive) {
+    opacity: 0.7; // hover
+  }
+
+  &:focus-visible {
+    outline: none;
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--palette-primary-0); // #2358F8 ring
+  }
+}
+
+// Selected state: full white, not interactive
+.marketingActive {
+  opacity: 1;
+  cursor: default;
 }

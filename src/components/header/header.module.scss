@@ -1,0 +1,138 @@
+// Header — Figma node 1506:25833
+//
+// Column layout; Line 1 = row space-between; Line 2 = subtitle
+//
+// Title styles:
+//   page    — Heading 1: 600 32px 125% #0D2976
+//   section — Heading 2: 600 28px 125% #0D2976
+//   content — Heading 4: 600 20px 125% #0D2976
+//
+// Subtitle: body-unselected 400 14px 115% #5C6E9E
+//
+// Button sizes:
+//   Regular (page/section): h=32px, padding 8px 16px, radius 8px
+//   Small (content):        padding 5px 8px, radius 4px
+//
+// Button types:
+//   secondary: bg white, border 1px #CFDAF7, text #0D2976
+//   primary:   bg #2358F8, no border, text white
+
+@use "../../styles/text-styles" as ts;
+
+// ── Header container ───────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+// ── Line 1 ─────────────────────────────────────────────────────────────────────
+.line1 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.line1WithRight {
+  justify-content: space-between;
+}
+
+// ── Left — icon + title + icon ─────────────────────────────────────────────────
+.left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--palette-blue-0); // #0D2976
+}
+
+// ── Title text ─────────────────────────────────────────────────────────────────
+.title {
+  color: var(--palette-blue-0); // #0D2976
+}
+
+.title-page {
+  @include ts.heading-1; // 600 32px 125%
+}
+
+.title-section {
+  @include ts.heading-2; // 600 28px 125%
+}
+
+.title-content {
+  @include ts.heading-4; // 600 20px 125%
+}
+
+// ── Right — action buttons + extra content ─────────────────────────────────────
+.right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+// ── Action buttons ─────────────────────────────────────────────────────────────
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s, opacity 0.12s;
+}
+
+// Button regular (page + section) — h=32px, padding 8px 16px, radius 8px
+.actionBtnRegular {
+  @include ts.body-selected; // 14px 700
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+}
+
+// Button small (content) — padding 5px 8px, radius 4px
+.actionBtnSmall {
+  @include ts.label-selected; // 12px 700
+  padding: 5px 8px;
+  border-radius: 4px;
+}
+
+// Secondary: white bg, #CFDAF7 border, #0D2976 text
+.secondary {
+  background-color: var(--palette-white-0);
+  border: 1px solid var(--palette-neutral-0); // #CFDAF7
+  color: var(--palette-blue-0);
+
+  &:hover {
+    background-color: var(--palette-neutral-1); // #E7EAF8
+  }
+}
+
+// Primary: #2358F8 bg, no border, white text
+.primary {
+  background-color: var(--palette-primary-0); // #2358F8
+  border: none;
+  color: var(--palette-white-0);
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+// ── Line 2 — subtitle ──────────────────────────────────────────────────────────
+.line2 {
+  display: flex;
+  flex-direction: row;
+  align-self: stretch;
+  margin-top: 8px;
+}
+
+.subtitle {
+  @include ts.body-unselected; // 400 14px 115%
+  color: var(--palette-blue-2); // #5C6E9E
+}

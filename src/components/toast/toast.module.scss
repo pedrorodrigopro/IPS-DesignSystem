@@ -1,0 +1,147 @@
+// Toast — Figma node 1465:25421 (Notification/Toast)
+//
+// Fixed bottom-centre of viewport, z-index 9000
+// border-radius: 8px
+// Left: padding 16px 0 16px 16px, gap 10px (icon 20×20 + bold text)
+// Right: padding 16px 8px, gap 8px (close icon button 5px padding)
+// Text: 14px 700 Mulish
+//
+// Colours:
+//   success: #0D2976 bg, white text/icon
+//   warning: #FFCD38 bg, #0D2976 text/icon
+//   error:   #A30013 bg, white text/icon
+//
+// Animation:
+//   Enter: translateY(120%) → translateY(0), opacity 0→1, 300ms ease-out
+//   Exit:  translateY(0) → translateY(120%), opacity 1→0, 250ms ease-in
+
+@use "../../styles/text-styles" as ts;
+
+// ── Fixed container — bottom-centre ────────────────────────────────────────────
+.container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none; // let clicks pass through the container itself
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+// ── Toast shell ────────────────────────────────────────────────────────────────
+.toast {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 8px;
+  overflow: hidden; // clip children to the radius
+  // min-width so short messages don't look too narrow
+  min-width: 260px;
+  max-width: 480px;
+  box-shadow: 0 4px 16px rgba(12, 20, 87, 0.18);
+
+  // Enter/exit animation
+  transition:
+    transform 300ms ease-out,
+    opacity   300ms ease-out;
+
+  &.hidden {
+    transform: translateY(120%);
+    opacity: 0;
+    transition:
+      transform 250ms ease-in,
+      opacity   250ms ease-in;
+  }
+
+  &.visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// ── Type colours ───────────────────────────────────────────────────────────────
+.success {
+  background-color: #0D2976; // --palette-blue-0
+
+  .typeIcon,
+  .message,
+  .closeBtn {
+    color: var(--palette-white-0);
+  }
+}
+
+.warning {
+  background-color: var(--palette-orange-0); // #FFCD38
+
+  .typeIcon,
+  .message,
+  .closeBtn {
+    color: #0D2976; // --palette-blue-0
+  }
+}
+
+.error {
+  background-color: var(--palette-red-1); // #A30013
+
+  .typeIcon,
+  .message,
+  .closeBtn {
+    color: var(--palette-white-0);
+  }
+}
+
+// ── Left section — icon + text ─────────────────────────────────────────────────
+.left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0 16px 16px;
+  flex: 1 1 auto;
+}
+
+.typeIcon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  // colour set by .success/.warning/.error above
+}
+
+.message {
+  @include ts.body-bold; // 14px 700 150% — line-height already included in mixin
+  // colour set by .success/.warning/.error above
+}
+
+// ── Right section — close button ───────────────────────────────────────────────
+.right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 16px 8px;
+  flex-shrink: 0;
+}
+
+.closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  // colour set by .success/.warning/.error above
+  opacity: 0.8;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 1;
+  }
+}

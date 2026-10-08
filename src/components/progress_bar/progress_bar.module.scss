@@ -61,6 +61,6 @@
   position: absolute;
   @include ts.label-small-bold; // 10px / Bold / 115%
   color: var(--palette-blue-0);
-  line-height: 1;
+  line-height: var(--line-height-small); // 115% — tight for centred radial label
   text-align: center;
 }
