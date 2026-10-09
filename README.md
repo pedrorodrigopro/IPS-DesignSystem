@@ -2,7 +2,7 @@
 
 Components, tokens, screens and prototyping skill for ProFinda.
 
-**Live Storybook:** https://pedrorodrigopro.github.io/IPS-DesignSystem/
+**Live Storybook:** https://profinda.github.io/ips-design_system/
 
 ---
 
