@@ -12,18 +12,18 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 
-import { Navbar }         from "../../components/navbar/navbar";
-import { Page }           from "../../components/layout/layout";
-import { Tile }           from "../../components/tile/tile";
-import { Divider }        from "../../components/divider/divider";
-import { Icon }           from "../../components/icon/icon";
-import { Button }         from "../../components/button/button";
-import { Avatar }         from "../../components/avatar/avatar";
-import { ProgressLinear } from "../../components/progress_bar/progress_bar";
-import { Navigation }     from "../../components/navigation/navigation";
-import { Checkbox }       from "../../components/checkbox/checkbox";
-import { SkillProfile }   from "../../components/skill/skill";
-import { InputSearch }    from "../../components/input/input";
+import { Navbar }                    from "../../components/navbar/navbar";
+import { Page }                      from "../../components/layout/layout";
+import { Tile }                      from "../../components/tile/tile";
+import { Divider }                   from "../../components/divider/divider";
+import { Icon }                      from "../../components/icon/icon";
+import { Button }                    from "../../components/button/button";
+import { Avatar }                    from "../../components/avatar/avatar";
+import { ProgressLinear }            from "../../components/progress_bar/progress_bar";
+import { Navigation }                from "../../components/navigation/navigation";
+import { Checkbox }                  from "../../components/checkbox/checkbox";
+import { SkillList, SkillProfile }   from "../../components/skill/skill";
+import { InputSearch }               from "../../components/input/input";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -302,18 +302,7 @@ function SkillGroupsSection() {
               <span style={bodyBold}>{group.title}</span>
               <Icon name="info" size={14} style={{ color: "var(--palette-blue-2)" }} />
             </Row>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {group.skills.map(skill => (
-                <SkillProfile
-                  key={skill.label}
-                  label={skill.label}
-                  proficiency={skill.proficiency}
-                  core={skill.core}
-                  verified={skill.verified}
-                  verifiedCredy={skill.verifiedCredy}
-                />
-              ))}
-            </div>
+            <SkillList items={group.skills} />
           </Tile>
         ))}
       </div>
