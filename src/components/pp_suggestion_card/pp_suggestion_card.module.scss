@@ -22,20 +22,24 @@
 }
 
 // ── Dismissed state ───────────────────────────────────────────────────────────
+// No blanket opacity — use AA-compliant specific colours instead
 
 .dismissed {
-  opacity: 0.5;
+  // Slightly muted border to signal inactive without breaking contrast
+  border-style: dashed;
 }
 
 .dismissedLabel {
   font-family: var(--font-family);
   font-size: var(--font-size-label); // 12px
   font-weight: var(--font-weight-regular);
+  // palette-blue-2 (#5C6E9E) on neutral-2 (#F8F9FD) = ~4.6:1 — AA ✓
   color: var(--palette-blue-2);
 }
 
 .dark.dismissed .dismissedLabel {
-  color: rgba(255, 255, 255, 0.6);
+  // white 70% on dark glass ≈ 7:1 — AA ✓
+  color: rgba(255, 255, 255, 0.7);
 }
 
 // ── Accepted state ────────────────────────────────────────────────────────────
