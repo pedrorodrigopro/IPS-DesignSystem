@@ -1,5 +1,5 @@
 import type { Meta, StoryFn } from "@storybook/react";
-import { SkillMatch, SkillProfile, SkillRole } from "./skill";
+import { SkillList, SkillMatch, SkillProfile, SkillRole } from "./skill";
 
 export default {
   title: "Components/Skill",
@@ -101,7 +101,7 @@ export const Match: StoryFn = () => (
 
 // ── Skill list ────────────────────────────────────────────────────────────────
 
-export const SkillList: StoryFn = () => (
+export const SkillListStory: StoryFn = () => (
   <div style={{ padding: "80px 24px 24px" }}>
     <Section label="Role requirements">
       <SkillRole label="Jira" proficiency="advanced" showDivider />
@@ -120,3 +120,36 @@ export const SkillList: StoryFn = () => (
     </Section>
   </div>
 );
+
+// ── SkillList component ───────────────────────────────────────────────────────
+
+/** SkillList — vertical list with automatic dividers. Light theme (default). */
+export const SkillListComponent: StoryFn = () => (
+  <div style={{ padding: 24, width: 280 }}>
+    <SkillList
+      items={[
+        { label: "Workforce Planning",     proficiency: "advanced",     core: true, verified: true },
+        { label: "Project Management",     proficiency: "advanced",     core: true },
+        { label: "HR Business Partnering", proficiency: "advanced",     core: true, verified: true },
+        { label: "Stakeholder Management", proficiency: "intermediate", verifiedCredy: true },
+        { label: "Budget Management",      proficiency: "intermediate", core: true, verified: true },
+      ]}
+    />
+  </div>
+);
+
+/** SkillList — dark theme, suitable for use on navy/dark backgrounds. */
+export const SkillListDark: StoryFn = () => (
+  <div style={{ padding: 24, width: 280, background: "#0D2976", borderRadius: 8 }}>
+    <SkillList
+      theme="dark"
+      items={[
+        { label: "Data Analysis",      proficiency: "basic",        verifiedCredy: true },
+        { label: "Risk Management",    proficiency: "basic",        verifiedCredy: true },
+        { label: "Talent Acquisition", proficiency: "intermediate", verifiedCredy: true },
+        { label: "Change Management",  proficiency: "intermediate", verifiedCredy: true },
+      ]}
+    />
+  </div>
+);
+SkillListDark.parameters = { backgrounds: { default: "dark", values: [{ name: "dark", value: "#0D2976" }] } };

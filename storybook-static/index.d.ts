@@ -1325,6 +1325,21 @@ export declare type SkillItem = {
     tags?: string[];
 };
 
+export declare const SkillList: ({ items, theme, disableTooltip, className, }: SkillListProps) => JSX.Element;
+
+export declare type SkillListItem = SkillIconFlags & {
+    label: string;
+    proficiency: ProficiencyLevel;
+    tags?: string[];
+};
+
+export declare type SkillListProps = {
+    items: SkillListItem[];
+    theme?: SkillTheme;
+    disableTooltip?: boolean;
+    className?: string;
+};
+
 export declare const SkillMatch: ({ label, requiredProficiency, profileProficiency, missing, substitute, showDivider, tags, theme, className, ...icons }: SkillMatchProps) => JSX.Element;
 
 export declare type SkillMatchProps = SkillIconFlags & {

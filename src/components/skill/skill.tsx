@@ -430,3 +430,48 @@ export const SkillMatch = ({
     </span>
   );
 };
+
+// ── SkillList ─────────────────────────────────────────────────────────────────
+// Renders a vertical list of SkillProfile items with dividers applied
+// automatically between items. Mirrors the "skill list" pattern from the
+// MyProfile screen — no need to set showDivider manually on each item.
+
+export type SkillListItem = SkillIconFlags & {
+  label: string;
+  proficiency: ProficiencyLevel;
+  tags?: string[];
+};
+
+export type SkillListProps = {
+  items: SkillListItem[];
+  theme?: SkillTheme;
+  disableTooltip?: boolean;
+  className?: string;
+};
+
+export const SkillList = ({
+  items,
+  theme = "light",
+  disableTooltip = false,
+  className,
+}: SkillListProps) => (
+  <div className={className}>
+    {items.map((item, idx) => (
+      <SkillProfile
+        key={item.label}
+        label={item.label}
+        proficiency={item.proficiency}
+        theme={theme}
+        disableTooltip={disableTooltip}
+        showDivider={idx < items.length - 1}
+        tags={item.tags}
+        core={item.core}
+        verified={item.verified}
+        verifiedCredy={item.verifiedCredy}
+        development={item.development}
+        career={item.career}
+        verifiedFeedback={item.verifiedFeedback}
+      />
+    ))}
+  </div>
+);
