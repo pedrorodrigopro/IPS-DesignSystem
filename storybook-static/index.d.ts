@@ -1011,19 +1011,21 @@ export declare type PPNavbarItemProps = {
     label?: string;
 };
 
-export declare function PPSuggestionCard({ action, detail, variant, state, previewHint, onAccept, onDismiss, onMouseEnter, onMouseLeave, className, }: PPSuggestionCardProps): default_2.JSX.Element;
+export declare function PPSuggestionCard({ action, detail, variant, state, previewHint, children, onAccept, onDismiss, onMouseEnter, onMouseLeave, className, }: PPSuggestionCardProps): default_2.JSX.Element;
 
 export declare type PPSuggestionCardProps = {
     /** Bold action label shown at top */
     action: string;
     /** Supporting detail text */
     detail: string;
-    /** Visual variant — dark for floating glass, light for docked panel */
+    /** Visual variant — use "dark" inside the floating glass window, "light" inside the docked panel */
     variant?: PPSuggestionCardVariant;
     /** Current state of the card */
     state?: PPSuggestionCardState;
     /** Optional label shown as hover-preview hint (e.g. "Hover to preview result") */
     previewHint?: string;
+    /** Optional content rendered between detail and buttons (e.g. a skill table) */
+    children?: default_2.ReactNode;
     /** Called when Apply is clicked */
     onAccept?: () => void;
     /** Called when Dismiss is clicked */

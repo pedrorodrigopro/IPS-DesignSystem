@@ -22,12 +22,14 @@ export type PPSuggestionCardProps = {
   action: string;
   /** Supporting detail text */
   detail: string;
-  /** Visual variant — dark for floating glass, light for docked panel */
+  /** Visual variant — use "dark" inside the floating glass window, "light" inside the docked panel */
   variant?: PPSuggestionCardVariant;
   /** Current state of the card */
   state?: PPSuggestionCardState;
   /** Optional label shown as hover-preview hint (e.g. "Hover to preview result") */
   previewHint?: string;
+  /** Optional content rendered between detail and buttons (e.g. a skill table) */
+  children?: React.ReactNode;
   /** Called when Apply is clicked */
   onAccept?: () => void;
   /** Called when Dismiss is clicked */
@@ -44,6 +46,7 @@ export function PPSuggestionCard({
   variant = "dark",
   state = "default",
   previewHint,
+  children,
   onAccept,
   onDismiss,
   onMouseEnter,
@@ -84,6 +87,7 @@ export function PPSuggestionCard({
           <span aria-hidden="true">👆</span> {previewHint}
         </div>
       )}
+      {children && <div className={css.childrenSlot}>{children}</div>}
       <div className={css.actions}>
         <button
           onClick={onAccept}
