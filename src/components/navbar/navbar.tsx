@@ -8,6 +8,7 @@
 import classNames from "classnames";
 import { Avatar } from "../avatar/avatar";
 import { Icon, IconName } from "../icon/icon";
+import { PPNavbarItem } from "./pp_navbar_item";
 import css from "./navbar.module.scss";
 
 export type NavItem = {
@@ -22,6 +23,10 @@ export type NavbarProps = {
   avatarInitials?: string;
   avatarSrc?: string;
   className?: string;
+  /** Whether the ProPilot panel is currently open */
+  proPlilotOpen?: boolean;
+  /** Called when the ProPilot button is clicked */
+  onProPilot?: () => void;
 };
 
 const ACTION_ITEMS: NavItem[] = [
@@ -92,6 +97,8 @@ export const Navbar = ({
   avatarInitials = "CP",
   avatarSrc,
   className,
+  proPlilotOpen = false,
+  onProPilot,
 }: NavbarProps) => (
   <nav className={classNames(css.navbar, className)} aria-label="Main navigation">
     <div className={css.top}>
@@ -135,6 +142,9 @@ export const Navbar = ({
         </button>
         <span className={css.tooltip} aria-hidden="true">Profile</span>
       </div>
+
+      {/* ProPilot — animated button, always last */}
+      <PPNavbarItem open={proPlilotOpen} onClick={onProPilot} />
     </div>
   </nav>
 );

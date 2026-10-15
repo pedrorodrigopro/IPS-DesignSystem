@@ -162,6 +162,7 @@ import Owner                from "./svg/owner.svg";
 import PalmTree             from "./svg/palm-tree.svg";
 import PaperClip            from "./svg/paper-clip.svg";
 import PaperPlane           from "./svg/paper-plane.svg";
+import Propilot             from "./svg/propilot.svg";
 import Path                 from "./svg/path.svg";
 import Pen                  from "./svg/pen.svg";
 import PersonMinus          from "./svg/person-minus.svg";
@@ -240,7 +241,7 @@ export type IconName =
   | "import" | "industry" | "instagram" | "key" | "keyboard" | "linkedin"
   | "manage-roles" | "mobile" | "mouse-cursor" | "non-demand"
   | "overbooking" | "overbooking-acknowledged" | "owner"
-  | "palm-tree" | "paper-clip" | "paper-plane" | "path" | "pen"
+  | "palm-tree" | "paper-clip" | "paper-plane" | "propilot" | "path" | "pen"
   | "person-minus" | "pf-logo" | "phone" | "plane" | "play" | "postpone"
   | "preferences" | "profile-field" | "profiles"
   | "refresh-clean" | "refresh-warning" | "remove-all"
@@ -251,7 +252,7 @@ export type IconName =
   | "target-allocation" | "task" | "teams" | "twitter" | "unpin"
   | "user-interest" | "web" | "wine-glass" | "work";
 
-export type IconSize = 14 | 16 | 20 | 24;
+export type IconSize = 14 | 16 | 20 | 24 | 32;
 
 export type IconProps = SVGProps<SVGSVGElement> & {
   name: IconName;
@@ -421,6 +422,7 @@ const iconMap: Record<IconName, SvgComponent> = {
   "palm-tree": PalmTree,
   "paper-clip": PaperClip,
   "paper-plane": PaperPlane,
+  "propilot": Propilot,
   "path": Path,
   "pen": Pen,
   "person-minus": PersonMinus,

@@ -15,7 +15,7 @@
   height: 100%;      // stretch to fill parent if taller
   background-color: var(--palette-blue-1); // #0C1457
   border-radius: 0 16px 16px 0;
-  padding: 24px 0 40px;
+  padding: 24px 0 16px;
   flex-shrink: 0;
   overflow: visible; // allow tooltip to escape
 }

@@ -50,7 +50,7 @@ const allIcons: IconName[] = [
   "import", "industry", "instagram", "key", "keyboard", "linkedin",
   "manage-roles", "mobile", "mouse-cursor", "non-demand",
   "overbooking", "overbooking-acknowledged", "owner",
-  "palm-tree", "paper-clip", "paper-plane", "path", "pen",
+   "palm-tree", "paper-clip", "paper-plane", "propilot", "path", "pen",
   "person-minus", "pf-logo", "phone", "plane", "play", "postpone",
   "preferences", "profile-field", "profiles",
   "refresh-clean", "refresh-warning", "remove-all",

@@ -608,7 +608,7 @@ export declare type HeaderSize = "page" | "section" | "content";
 
 export declare const Icon: ({ name, size, className, style, ...rest }: IconProps) => JSX.Element | null;
 
-export declare type IconName = "activity-feed" | "add" | "admin" | "ai" | "arrow-down" | "arrow-left" | "arrow-right" | "arrow-up" | "audit-planner" | "booking" | "calendar" | "caret-down" | "caret-left" | "caret-right" | "caret-up" | "chat" | "check" | "chevron-down" | "chevron-left" | "chevron-right" | "chevron-up" | "cross" | "down" | "edit" | "engagement" | "error" | "core" | "development" | "forbidden" | "help" | "hidden" | "history" | "hourglass-half" | "info" | "insights" | "learning" | "link" | "substitute-parent-child" | "links" | "list" | "location" | "locked" | "logout" | "mail" | "mandatory" | "marketplace" | "menu-horizontal" | "menu-vertical" | "merge" | "missing" | "money" | "move" | "note" | "notifications" | "open" | "pin" | "profile" | "question" | "reassign" | "refresh" | "remove" | "reports" | "role" | "save" | "search" | "share" | "shown" | "skills-framework" | "smart-allocation" | "sort" | "split" | "subtract" | "table" | "tag" | "undo" | "unseen" | "up" | "user-filled" | "verified" | "verified-credly" | "verified-others" | "warning" | "workflow" | "zoom-in" | "zoom-out" | "heart" | "placeholder-profile" | "suggested" | "timeline" | "filter" | "filter-clean" | "home" | "add-profile" | "ai-agent" | "arrow-2-directions" | "arrow-2-directions-vertical" | "arrow-4-directions" | "availability" | "baby" | "bag" | "bell" | "book" | "bubbles" | "bug" | "bulk" | "bulk-move" | "calendar-clash" | "calendar-delete" | "calendar-misaligned" | "car" | "certificate" | "clock" | "close-role" | "collapse" | "compare" | "copy" | "cost" | "created" | "department" | "dot" | "dot-big" | "duplicate" | "engagement-audit" | "expand" | "expand-all" | "expanded-all" | "export" | "extend" | "face-smile" | "facebook" | "filter-applied" | "filter2" | "fire" | "flower-spa" | "folder" | "ghost" | "head-heart" | "heatmap" | "hierarchical" | "hourglass-empty" | "house-laptop" | "house-user" | "import" | "industry" | "instagram" | "key" | "keyboard" | "linkedin" | "manage-roles" | "mobile" | "mouse-cursor" | "non-demand" | "overbooking" | "overbooking-acknowledged" | "owner" | "palm-tree" | "paper-clip" | "paper-plane" | "path" | "pen" | "person-minus" | "pf-logo" | "phone" | "plane" | "play" | "postpone" | "preferences" | "profile-field" | "profiles" | "refresh-clean" | "refresh-warning" | "remove-all" | "role-audit" | "rollforward" | "save-add" | "save-remove" | "sector" | "segment" | "skype" | "skype-for-business" | "snooze" | "soft-exception" | "split2" | "substitute-child" | "substitute-parent" | "target-allocation" | "task" | "teams" | "twitter" | "unpin" | "user-interest" | "web" | "wine-glass" | "work";
+export declare type IconName = "activity-feed" | "add" | "admin" | "ai" | "arrow-down" | "arrow-left" | "arrow-right" | "arrow-up" | "audit-planner" | "booking" | "calendar" | "caret-down" | "caret-left" | "caret-right" | "caret-up" | "chat" | "check" | "chevron-down" | "chevron-left" | "chevron-right" | "chevron-up" | "cross" | "down" | "edit" | "engagement" | "error" | "core" | "development" | "forbidden" | "help" | "hidden" | "history" | "hourglass-half" | "info" | "insights" | "learning" | "link" | "substitute-parent-child" | "links" | "list" | "location" | "locked" | "logout" | "mail" | "mandatory" | "marketplace" | "menu-horizontal" | "menu-vertical" | "merge" | "missing" | "money" | "move" | "note" | "notifications" | "open" | "pin" | "profile" | "question" | "reassign" | "refresh" | "remove" | "reports" | "role" | "save" | "search" | "share" | "shown" | "skills-framework" | "smart-allocation" | "sort" | "split" | "subtract" | "table" | "tag" | "undo" | "unseen" | "up" | "user-filled" | "verified" | "verified-credly" | "verified-others" | "warning" | "workflow" | "zoom-in" | "zoom-out" | "heart" | "placeholder-profile" | "suggested" | "timeline" | "filter" | "filter-clean" | "home" | "add-profile" | "ai-agent" | "arrow-2-directions" | "arrow-2-directions-vertical" | "arrow-4-directions" | "availability" | "baby" | "bag" | "bell" | "book" | "bubbles" | "bug" | "bulk" | "bulk-move" | "calendar-clash" | "calendar-delete" | "calendar-misaligned" | "car" | "certificate" | "clock" | "close-role" | "collapse" | "compare" | "copy" | "cost" | "created" | "department" | "dot" | "dot-big" | "duplicate" | "engagement-audit" | "expand" | "expand-all" | "expanded-all" | "export" | "extend" | "face-smile" | "facebook" | "filter-applied" | "filter2" | "fire" | "flower-spa" | "folder" | "ghost" | "head-heart" | "heatmap" | "hierarchical" | "hourglass-empty" | "house-laptop" | "house-user" | "import" | "industry" | "instagram" | "key" | "keyboard" | "linkedin" | "manage-roles" | "mobile" | "mouse-cursor" | "non-demand" | "overbooking" | "overbooking-acknowledged" | "owner" | "palm-tree" | "paper-clip" | "paper-plane" | "propilot" | "path" | "pen" | "person-minus" | "pf-logo" | "phone" | "plane" | "play" | "postpone" | "preferences" | "profile-field" | "profiles" | "refresh-clean" | "refresh-warning" | "remove-all" | "role-audit" | "rollforward" | "save-add" | "save-remove" | "sector" | "segment" | "skype" | "skype-for-business" | "snooze" | "soft-exception" | "split2" | "substitute-child" | "substitute-parent" | "target-allocation" | "task" | "teams" | "twitter" | "unpin" | "user-interest" | "web" | "wine-glass" | "work";
 
 export declare type IconProps = SVGProps<SVGSVGElement> & {
     name: IconName;
@@ -616,7 +616,7 @@ export declare type IconProps = SVGProps<SVGSVGElement> & {
     className?: string;
 };
 
-export declare type IconSize = 14 | 16 | 20 | 24;
+export declare type IconSize = 14 | 16 | 20 | 24 | 32;
 
 export declare const Input: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, onChange, onFocus, onBlur, className, id, type, }: InputProps) => JSX.Element;
 
@@ -733,7 +733,36 @@ export declare type MarketplaceNavItem = {
     label: string;
 };
 
-export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, }: NavbarProps) => JSX.Element;
+export declare type MisalignmentItem = {
+    fieldName: string;
+    expected: string;
+    current: string;
+};
+
+export declare type MisalignmentRange = {
+    id: string;
+    dateRange: string;
+    subtitle: string;
+    items: MisalignmentItem[];
+    onShow?: () => void;
+};
+
+export declare function MisalignmentSidePanel({ open, onClose, data, }: MisalignmentSidePanelProps): default_2.JSX.Element;
+
+export declare type MisalignmentSidePanelData = {
+    roleName: string;
+    wmFilterValue?: string;
+    sortValue?: string;
+    ranges: MisalignmentRange[];
+};
+
+export declare type MisalignmentSidePanelProps = {
+    open: boolean;
+    onClose: () => void;
+    data?: MisalignmentSidePanelData;
+};
+
+export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, }: NavbarProps) => JSX.Element;
 
 export declare type NavbarProps = {
     activeId?: string;
@@ -741,6 +770,10 @@ export declare type NavbarProps = {
     avatarInitials?: string;
     avatarSrc?: string;
     className?: string;
+    /** Whether the ProPilot panel is currently open */
+    proPlilotOpen?: boolean;
+    /** Called when the ProPilot button is clicked */
+    onProPilot?: () => void;
 };
 
 export declare const Navigation: ({ orientation, tabs, activeId, onChange, fillWidth, className, }: NavigationProps) => JSX.Element;
@@ -930,6 +963,17 @@ export declare type PillWFStateProps = {
     state: WFState;
     size?: PillSize;
     className?: string;
+};
+
+export declare const PPNavbarItem: ({ open, onClick, label }: PPNavbarItemProps) => default_2.JSX.Element;
+
+export declare type PPNavbarItemProps = {
+    /** Whether ProPilot is currently open (shows open/docked variant) */
+    open?: boolean;
+    /** Click handler */
+    onClick?: () => void;
+    /** Optional tooltip label override */
+    label?: string;
 };
 
 export declare type ProficiencyLevel = "basic" | "intermediate" | "advanced";
