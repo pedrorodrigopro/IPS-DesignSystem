@@ -1,4 +1,5 @@
 export * from "./button";
+export * from "./pp_bubble";
 export * from "./accordion";
 export * from "./alert";
 export * from "./icon";

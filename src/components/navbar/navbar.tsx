@@ -27,6 +27,8 @@ export type NavbarProps = {
   proPlilotOpen?: boolean;
   /** Called when the ProPilot button is clicked */
   onProPilot?: () => void;
+  /** Override the default section nav items (Marketplace → Booking) */
+  sectionItems?: NavItem[];
 };
 
 const ACTION_ITEMS: NavItem[] = [
@@ -99,6 +101,7 @@ export const Navbar = ({
   className,
   proPlilotOpen = false,
   onProPilot,
+  sectionItems = SECTION_ITEMS,
 }: NavbarProps) => (
   <nav className={classNames(css.navbar, className)} aria-label="Main navigation">
     <div className={css.top}>
@@ -115,7 +118,7 @@ export const Navbar = ({
       <div className={css.divider} aria-hidden="true" />
 
       <div className={css.group}>
-        {SECTION_ITEMS.map((item) => (
+        {sectionItems.map((item) => (
           <NavButton key={item.id} item={item} isActive={activeId === item.id} onClick={() => onSelect?.(item.id)} />
         ))}
       </div>

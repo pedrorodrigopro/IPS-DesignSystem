@@ -762,7 +762,7 @@ export declare type MisalignmentSidePanelProps = {
     data?: MisalignmentSidePanelData;
 };
 
-export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, }: NavbarProps) => JSX.Element;
+export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, sectionItems, }: NavbarProps) => JSX.Element;
 
 export declare type NavbarProps = {
     activeId?: string;
@@ -774,6 +774,8 @@ export declare type NavbarProps = {
     proPlilotOpen?: boolean;
     /** Called when the ProPilot button is clicked */
     onProPilot?: () => void;
+    /** Override the default section nav items (Marketplace → Booking) */
+    sectionItems?: NavItem[];
 };
 
 export declare const Navigation: ({ orientation, tabs, activeId, onChange, fillWidth, className, }: NavigationProps) => JSX.Element;
@@ -964,6 +966,19 @@ export declare type PillWFStateProps = {
     size?: PillSize;
     className?: string;
 };
+
+export declare function PPBubble({ children, variant, className, }: PPBubbleProps): default_2.JSX.Element;
+
+export declare type PPBubbleProps = {
+    /** The message text to display inside the bubble */
+    children: default_2.ReactNode;
+    /** Visual variant — use "dark" inside the floating glass window, "light" inside the docked panel */
+    variant?: PPBubbleVariant;
+    /** Additional class names */
+    className?: string;
+};
+
+export declare type PPBubbleVariant = "dark" | "light";
 
 export declare const PPNavbarItem: ({ open, onClick, label }: PPNavbarItemProps) => default_2.JSX.Element;
 
