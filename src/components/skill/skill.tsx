@@ -301,19 +301,21 @@ export type SkillProfileProps = SkillIconFlags & {
   tags?: string[];
   theme?: SkillTheme;
   className?: string;
+  /** Suppress the hover tooltip — useful when SkillProfile is used inside a table or list */
+  disableTooltip?: boolean;
 };
 
 export const SkillProfile = ({
-  label, proficiency, showDivider = false, tags, theme = "light", className, ...icons
+  label, proficiency, showDivider = false, tags, theme = "light", className, disableTooltip = false, ...icons
 }: SkillProfileProps) => {
   const [hovered, setHovered] = useState(false);
   return (
     <span
       className={classNames(css.skillWrapper, className)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={disableTooltip ? undefined : () => setHovered(true)}
+      onMouseLeave={disableTooltip ? undefined : () => setHovered(false)}
     >
-      {hovered && <TooltipProfile proficiency={proficiency} tags={tags} {...icons} />}
+      {hovered && !disableTooltip && <TooltipProfile proficiency={proficiency} tags={tags} {...icons} />}
       <span className={classNames(css.skill, css[theme])}>
         <ProfileDots level={proficiency} theme={theme} />
         <span className={css.skillLabel}>{label}</span>

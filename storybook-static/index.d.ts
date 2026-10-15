@@ -1328,7 +1328,7 @@ export declare type SkillMatchProps = SkillIconFlags & {
     className?: string;
 };
 
-export declare const SkillProfile: ({ label, proficiency, showDivider, tags, theme, className, ...icons }: SkillProfileProps) => JSX.Element;
+export declare const SkillProfile: ({ label, proficiency, showDivider, tags, theme, className, disableTooltip, ...icons }: SkillProfileProps) => JSX.Element;
 
 export declare type SkillProfileProps = SkillIconFlags & {
     label: string;
@@ -1337,6 +1337,8 @@ export declare type SkillProfileProps = SkillIconFlags & {
     tags?: string[];
     theme?: SkillTheme;
     className?: string;
+    /** Suppress the hover tooltip — useful when SkillProfile is used inside a table or list */
+    disableTooltip?: boolean;
 };
 
 export declare const SkillRole: ({ label, proficiency, career, showDivider, tags, theme, className, }: SkillRoleProps) => JSX.Element;
