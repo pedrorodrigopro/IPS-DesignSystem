@@ -1011,6 +1011,17 @@ export declare type PPNavbarItemProps = {
     label?: string;
 };
 
+export declare function PPPreviewBanner({ visible, label, className }: PPPreviewBannerProps): default_2.JSX.Element | null;
+
+export declare type PPPreviewBannerProps = {
+    /** Whether the banner is visible */
+    visible: boolean;
+    /** Optional label shown after the title — e.g. "Result after applying — Kevin & Diana" */
+    label?: string;
+    /** Additional class for positioning overrides */
+    className?: string;
+};
+
 export declare function PPSuggestionCard({ action, detail, variant, state, previewHint, children, onAccept, onDismiss, onMouseEnter, onMouseLeave, className, }: PPSuggestionCardProps): default_2.JSX.Element;
 
 export declare type PPSuggestionCardProps = {
