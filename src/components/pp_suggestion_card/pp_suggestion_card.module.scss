@@ -1,0 +1,145 @@
+// PPSuggestionCard
+
+.card {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
+// ── Dark variant (floating glass window) ──────────────────────────────────────
+
+.dark {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+// ── Light variant (docked white panel) ────────────────────────────────────────
+
+.light {
+  background: var(--palette-neutral-1);
+  border-color: var(--palette-neutral-0);
+}
+
+// ── Dismissed state ───────────────────────────────────────────────────────────
+
+.dismissed {
+  opacity: 0.5;
+}
+
+.dismissedLabel {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label); // 12px
+  font-weight: var(--font-weight-regular);
+  color: var(--palette-blue-2);
+}
+
+.dark.dismissed .dismissedLabel {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+// ── Accepted state ────────────────────────────────────────────────────────────
+
+.accepted {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(36, 142, 97, 0.15);
+  border: 1px solid rgba(36, 142, 97, 0.4);
+}
+
+.acceptedLabel {
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  color: var(--palette-green-1); // #1F6648
+}
+
+.acceptedLabelDark {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+// ── Content ───────────────────────────────────────────────────────────────────
+
+.action {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body); // 14px
+  font-weight: var(--font-weight-bold);
+  color: var(--palette-blue-0);
+  margin-bottom: 4px;
+}
+
+.actionDark {
+  color: white;
+}
+
+.detail {
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  color: var(--palette-blue-2);
+  line-height: var(--line-height-big); // 150%
+  margin-bottom: 10px;
+}
+
+.detailDark {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.hint {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label); // 12px
+  color: var(--palette-blue-2);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hintDark {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.applyBtn {
+  flex: 1;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: var(--palette-primary-0); // #2358F8
+  color: white;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--palette-primary-1);
+  }
+}
+
+.dismissBtn {
+  flex: 1;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--palette-neutral-0);
+  background: transparent;
+  color: var(--palette-blue-2);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  cursor: pointer;
+}
+
+.dismissBtnDark {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+}

@@ -1,5 +1,7 @@
 export * from "./button";
 export * from "./pp_bubble";
+export * from "./pp_suggestion_card";
+export * from "./pp_conflict_block";
 export * from "./accordion";
 export * from "./alert";
 export * from "./icon";

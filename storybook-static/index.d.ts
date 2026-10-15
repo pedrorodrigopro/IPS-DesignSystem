@@ -980,6 +980,26 @@ export declare type PPBubbleProps = {
 
 export declare type PPBubbleVariant = "dark" | "light";
 
+export declare function PPConflictBlock({ severity, person, description, variant, children, className, }: PPConflictBlockProps): default_2.JSX.Element;
+
+export declare type PPConflictBlockProps = {
+    /** Severity controls the dot colour: error = red, warning = orange */
+    severity: PPConflictBlockSeverity;
+    /** Bold heading — person name + conflict label */
+    person: string;
+    /** Supporting description */
+    description: string;
+    /** Visual variant */
+    variant?: PPConflictBlockVariant;
+    /** Suggestion cards or other content rendered below the description */
+    children?: default_2.ReactNode;
+    className?: string;
+};
+
+export declare type PPConflictBlockSeverity = "error" | "warning";
+
+export declare type PPConflictBlockVariant = "dark" | "light";
+
 export declare const PPNavbarItem: ({ open, onClick, label }: PPNavbarItemProps) => default_2.JSX.Element;
 
 export declare type PPNavbarItemProps = {
@@ -990,6 +1010,33 @@ export declare type PPNavbarItemProps = {
     /** Optional tooltip label override */
     label?: string;
 };
+
+export declare function PPSuggestionCard({ action, detail, variant, state, previewHint, onAccept, onDismiss, onMouseEnter, onMouseLeave, className, }: PPSuggestionCardProps): default_2.JSX.Element;
+
+export declare type PPSuggestionCardProps = {
+    /** Bold action label shown at top */
+    action: string;
+    /** Supporting detail text */
+    detail: string;
+    /** Visual variant — dark for floating glass, light for docked panel */
+    variant?: PPSuggestionCardVariant;
+    /** Current state of the card */
+    state?: PPSuggestionCardState;
+    /** Optional label shown as hover-preview hint (e.g. "Hover to preview result") */
+    previewHint?: string;
+    /** Called when Apply is clicked */
+    onAccept?: () => void;
+    /** Called when Dismiss is clicked */
+    onDismiss?: () => void;
+    /** Hover handlers — used by parent to drive preview state */
+    onMouseEnter?: default_2.MouseEventHandler<HTMLDivElement>;
+    onMouseLeave?: default_2.MouseEventHandler<HTMLDivElement>;
+    className?: string;
+};
+
+export declare type PPSuggestionCardState = "default" | "accepted" | "dismissed";
+
+export declare type PPSuggestionCardVariant = "dark" | "light";
 
 export declare type ProficiencyLevel = "basic" | "intermediate" | "advanced";
 

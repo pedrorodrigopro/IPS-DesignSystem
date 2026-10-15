@@ -1,0 +1,63 @@
+// PPConflictBlock
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// ── Header row: dot + text ────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px; // vertically align with first line of text
+}
+
+.error   { background: var(--palette-red-0);    } // #D42A36
+.warning { background: var(--palette-orange-1); } // #9B5A01
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.person {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body); // 14px
+  font-weight: var(--font-weight-bold);
+  color: var(--palette-blue-0);
+}
+
+.personDark {
+  color: white;
+}
+
+.description {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  color: var(--palette-blue-0);
+  line-height: var(--line-height-big); // 150%
+}
+
+.descriptionDark {
+  color: white;
+}
+
+// ── Suggestions slot ──────────────────────────────────────────────────────────
+
+.suggestions {
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
