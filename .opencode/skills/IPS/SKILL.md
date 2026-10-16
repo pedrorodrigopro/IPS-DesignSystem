@@ -9,13 +9,9 @@ You are a ProFinda prototyping agent. Your job is to turn descriptions, screensh
 
 **Everything you need is in this file.** Do not invent components, colours, icons or patterns not listed here.
 
-> **Requires a code-capable AI** (one that can run terminal commands, install packages, and execute builds). A plain chat AI cannot produce working prototypes from this skill.
-
-**IPS Storybook (live):** `https://pedrorodrigopro.github.io/IPS-DesignSystem/`
-**IPS source (GitHub, public):** `https://github.com/pedrorodrigopro/IPS-DesignSystem`
-**Screen stories base URL:** `https://raw.githubusercontent.com/pedrorodrigopro/IPS-DesignSystem/main/src/screens/`
-
-> **Note:** A separate Storybook is also deployed at `https://profinda.github.io/ips-design_system/` (Profinda org repo — may be private). If screen story URLs return 404, use the pedrorodrigopro URLs above.
+**IPS Storybook (live):** `https://profinda.github.io/ips-design_system/`
+**IPS source (GitHub):** `https://github.com/Profinda/ips-design_system`
+**Screen stories base URL:** `https://raw.githubusercontent.com/Profinda/ips-design_system/main/src/screens/`
 
 ---
 
@@ -59,7 +55,7 @@ digraph ips {
 If matched, read the story source file and adapt it. Do not rebuild from scratch.
 
 Fetch story source from GitHub using the raw URL pattern:
-`https://raw.githubusercontent.com/pedrorodrigopro/IPS-DesignSystem/main/src/screens/{folder}/{file}.stories.tsx`
+`https://raw.githubusercontent.com/Profinda/ips-design_system/main/src/screens/{folder}/{file}.stories.tsx`
 
 | Screen | Raw URL | Variants |
 |---|---|---|
@@ -279,9 +275,7 @@ Props: `label`, `onRemove`, `onShare`
 #### `BookingPill`
 Props: `category`, `label`, `hours`, `size`, `nonDemand`, `otherBookings`, `onClick`
 
-`category` values: `"booking-blue"` `"booking-red"` `"booking-purple"` `"engagement-booked"` `"engagement-partial"` `"role-booked"` `"role-partial"` `"pending"` `"hidden"` `"preview"`
-
-> `"preview"` — white fill, 2px ProPilot gradient stroke, used for ProPilot suggested bookings in the Gantt.
+`category` values: `"booking-blue"` `"booking-red"` `"booking-purple"` `"engagement-booked"` `"engagement-partial"` `"role-booked"` `"role-partial"` `"pending"` `"hidden"`
 
 ---
 
@@ -543,19 +537,6 @@ const link:     React.CSSProperties = { fontFamily: "var(--font-family)", fontSi
 
 Run this when the prototype folder is empty.
 
-**Step 0 — clone and build IPS Design System (required before first prototype)**
-
-`@ips/design-system` is not on npm. It must be cloned locally and built before use:
-
-```bash
-git clone https://github.com/pedrorodrigopro/IPS-DesignSystem.git /path/to/IPS-DesignSystem
-cd /path/to/IPS-DesignSystem
-npm install
-npm run build
-```
-
-Ask the user where they cloned it, or clone it yourself to a known path (e.g. `~/workspace/IPS-DesignSystem`).
-
 **`package.json`**
 ```json
 {
@@ -567,8 +548,9 @@ Ask the user where they cloned it, or clone it yourself to a known path (e.g. `~
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@ips/design-system": "file:/path/to/IPS-DesignSystem"
+    "@ips/design-system": "file:PATH_TO_IPS_DESIGN_SYSTEM"
   },
+  "notes": "Replace PATH_TO_IPS_DESIGN_SYSTEM with the local path to your clone of https://github.com/Profinda/ips-design_system",
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -580,7 +562,7 @@ Ask the user where they cloned it, or clone it yourself to a known path (e.g. `~
 }
 ```
 
-Replace `/path/to/IPS-DesignSystem` with the absolute local path to the cloned repo (e.g. `file:/Users/yourname/workspace/IPS-DesignSystem`).
+> Ask the user for their local path to the IPS Design System repo and replace `PATH_TO_IPS_DESIGN_SYSTEM`.
 
 **`vite.config.ts`**
 ```ts
@@ -665,7 +647,7 @@ Tell the user: **"Your prototype is running at http://localhost:5173"**
 
 **Only these names are valid for `<Icon name="..." size={16} />`. Do not invent icon names.**
 
-Size values: `14 | 16 | 20 | 24 | 32`
+Size values: `14 | 16 | 20 | 24`
 
 ```
 activity-feed  add  add-profile  admin  ai  ai-agent
@@ -691,7 +673,7 @@ mail  manage-roles  mandatory  marketplace
 menu-horizontal  menu-vertical  merge  missing  mobile  money  mouse-cursor  move
 non-demand  note  notifications
 open  overbooking  overbooking-acknowledged  owner
-palm-tree  paper-clip  paper-plane  path  pen  person-minus  pf-logo  propilot
+palm-tree  paper-clip  paper-plane  path  pen  person-minus  pf-logo
 phone  pin  placeholder-profile  plane  play  postpone  preferences
 profile  profile-field  profiles
 question
