@@ -39,7 +39,8 @@ export type BookingPillCategory =
   | "role-booked"
   | "role-partial"
   | "pending"
-  | "hidden";
+  | "hidden"
+  | "preview";
 
 export type BookingPillSize = "regular" | "small";
 

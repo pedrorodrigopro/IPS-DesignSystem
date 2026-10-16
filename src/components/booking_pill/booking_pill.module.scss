@@ -144,3 +144,20 @@
   height: 36px; // regular height
   min-width: 40px;
 }
+
+// preview: white fill + 2px ProPilot gradient stroke
+// Uses background-image double-gradient trick: white on padding-box, gradient on border-box
+.preview {
+  background-color: transparent;
+  background-image:
+    linear-gradient(white, white),
+    linear-gradient(138deg, rgba(10, 16, 72, 1) 0%, rgba(64, 58, 157, 1) 28%, rgba(13, 75, 176, 1) 61%, rgba(24, 39, 174, 1) 96%);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  border: 2px solid transparent;
+  box-shadow: 0 0 8px rgba(72, 69, 189, 0.35);
+
+  // Override default dark text to keep #0D2976 on white
+  .label { color: var(--palette-blue-0); }
+  .hours { color: var(--palette-blue-0); }
+}

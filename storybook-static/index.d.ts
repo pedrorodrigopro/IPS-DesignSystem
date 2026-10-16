@@ -134,7 +134,7 @@ export declare type BookingCellState = "default" | "read-only";
 
 export declare function BookingPill({ category, label, hours, nonDemand, otherBookings, size, className, onClick, }: BookingPillProps): default_2.JSX.Element;
 
-export declare type BookingPillCategory = "booking-blue" | "booking-red" | "booking-purple" | "engagement-booked" | "engagement-partial" | "role-booked" | "role-partial" | "pending" | "hidden";
+export declare type BookingPillCategory = "booking-blue" | "booking-red" | "booking-purple" | "engagement-booked" | "engagement-partial" | "role-booked" | "role-partial" | "pending" | "hidden" | "preview";
 
 export declare type BookingPillProps = {
     category: BookingPillCategory;
