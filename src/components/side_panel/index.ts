@@ -4,3 +4,6 @@ export * from "./booking_category_side_panel";
 export * from "./engagement_side_panel";
 export * from "./role_side_panel";
 export * from "./booking_side_panel";
+export * from "./misalignment_side_panel";
+export * from "./notifications_side_panel";
+export * from "./smart_allocate_side_panel";
