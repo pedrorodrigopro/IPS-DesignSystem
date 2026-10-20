@@ -54,17 +54,20 @@ export type NotificationChange = {
 };
 
 export type NotificationItem = {
-  id:           string;
-  unseen:       boolean;
-  urgent?:      boolean;
-  title:        string;
-  body:         string;
-  changes?:     NotificationChange;
-  engagement?:  string;
-  role?:        string;
-  date:         string;
-  onOptions?:   () => void;
-  onOpenHistory?: () => void;
+  id:              string;
+  unseen:          boolean;
+  urgent?:         boolean;
+  title:           string;
+  body:            string;
+  changes?:        NotificationChange;
+  engagement?:     string;
+  role?:           string;
+  date:            string;
+  onOptions?:      () => void;
+  onOpenHistory?:  () => void;
+  /** When set, replaces the "Options + Open history" row with a single primary button */
+  primaryLabel?:   string;
+  onPrimary?:      () => void;
 };
 
 export type NotificationFilters = {
@@ -324,26 +327,25 @@ function NotificationItemRow({ item }: { item: NotificationItem }) {
 
       {/* Actions — always visible */}
       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
-        <Button kind="secondary" size="small" onClick={item.onOptions}>
-          Options <Icon name="chevron-down" size={14} />
-        </Button>
-        <div style={{ display: "flex" }}>
-          <Button
-            kind="primary"
-            size="small"
-            onClick={item.onOpenHistory}
-            style={{ borderRadius: "4px 0 0 4px" }}
-          >
-            Open history
+        {item.primaryLabel ? (
+          <Button kind="primary" size="small" onClick={item.onPrimary}>
+            {item.primaryLabel}
           </Button>
-          <Button
-            kind="primary"
-            size="small"
-            style={{ borderRadius: "0 4px 4px 0", borderLeft: "1px solid rgba(255,255,255,0.3)", padding: "0 6px" }}
-          >
-            <Icon name="chevron-down" size={14} />
-          </Button>
-        </div>
+        ) : (
+          <>
+            <Button kind="secondary" size="small" onClick={item.onOptions}>
+              Options <Icon name="chevron-down" size={14} />
+            </Button>
+            <div style={{ display: "flex" }}>
+              <Button kind="primary" size="small" onClick={item.onOpenHistory} style={{ borderRadius: "4px 0 0 4px" }}>
+                Open history
+              </Button>
+              <Button kind="primary" size="small" style={{ borderRadius: "0 4px 4px 0", borderLeft: "1px solid rgba(255,255,255,0.3)", padding: "0 6px" }}>
+                <Icon name="chevron-down" size={14} />
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -368,7 +370,7 @@ export function NotificationsSidePanel({
 
   return (
     // Note: opens from LEFT — borderRadius 0 8px 8px 0, placed after navbar
-    <SidePanel open={open} onClose={onClose} width={400}>
+    <SidePanel open={open} onClose={onClose} width={400} placement="left">
       <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
 
         {/* Scrollable content */}

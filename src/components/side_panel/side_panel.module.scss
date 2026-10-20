@@ -32,7 +32,9 @@
   box-shadow: -6px 0px 12px 0px rgba(27, 72, 195, 0.2);  // Figma effect_J2EAZE
   display: flex;
   flex-direction: column;
-  overflow: hidden; // clips children; scrollable area is inside .content
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px;
 
   // Slide-in animation — starts offscreen to the right
   transform: translateX(100%);

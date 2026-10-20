@@ -22,9 +22,11 @@ export type SidePanelProps = {
   /** Width override — defaults to 600px */
   width?: number;
   className?: string;
+  /** Which edge to attach to — defaults to "right" */
+  placement?: "left" | "right";
 };
 
-export function SidePanel({ open, onClose, children, width = 600, className }: SidePanelProps) {
+export function SidePanel({ open, onClose, children, width = 600, className, placement = "right" }: SidePanelProps) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
 
@@ -54,7 +56,17 @@ export function SidePanel({ open, onClose, children, width = 600, className }: S
       {/* Panel */}
       <aside
         className={classNames(css.panel, { [css.panelVisible]: visible }, className)}
-        style={{ width }}
+        style={{
+          width,
+          ...(placement === "left" ? {
+            right: "auto",
+            left: 60,
+            borderRadius: "0 8px 8px 0",
+            boxShadow: "6px 0px 12px 0px rgba(27, 72, 195, 0.2)",
+            transform: visible ? "translateX(0)" : "translateX(-100%)",
+          } : {}),
+          padding: 0,
+        }}
         aria-modal="true"
         role="dialog"
       >

@@ -166,6 +166,7 @@ export function MisalignmentSidePanel({
           <InputSelect
             label="Workforce Member"
             value={data.wmFilterValue ?? "All (2 vacancies)"}
+            readOnly
           />
 
           {/* Sort row */}
