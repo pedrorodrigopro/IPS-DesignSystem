@@ -75,7 +75,27 @@ const modules = import.meta.glob<Record<string, any>>(
   { eager: true },
 );
 
-export const stories: Record<string, StoryEntry> = {};
+const registry: Record<string, StoryEntry> = {};
+
+/**
+ * Every Storybook story, keyed by its Storybook id (see index.json).
+ * Asking for an id that does not exist throws a message that says what to do,
+ * instead of a cryptic "undefined" error.
+ */
+export const stories: Record<string, StoryEntry> = new Proxy(registry, {
+  get(target, key, receiver) {
+    if (typeof key === "string" && !(key in target) && key !== "then" && key !== "toJSON") {
+      const near = Object.keys(target)
+        .filter((k) => k.startsWith(key.split("--")[0]))
+        .slice(0, 8);
+      throw new Error(
+        `IPS: there is no story with id "${key}". Look the id up in index.json.` +
+          (near.length ? ` Similar ids: ${near.join(", ")}` : ""),
+      );
+    }
+    return Reflect.get(target, key, receiver);
+  },
+});
 
 for (const mod of Object.values(modules)) {
   const meta = mod.default;
@@ -108,6 +128,6 @@ for (const mod of Object.values(modules)) {
       return React.createElement(C, args);
     };
 
-    stories[id] = { id, title: meta.title, name, Component };
+    registry[id] = { id, title: meta.title, name, Component };
   }
 }
