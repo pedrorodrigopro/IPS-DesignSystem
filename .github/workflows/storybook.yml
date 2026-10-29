@@ -23,10 +23,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Upload pre-built Storybook
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Built fresh from this commit, so the published story list (index.json)
+      # and the standalone bundle can never be out of date with the code.
+      - name: Build Storybook
+        run: npx storybook build -o site
+        env:
+          STORYBOOK_BASE_URL: /ips-design_system/
+          STORYBOOK_DISABLE_TELEMETRY: "1"
+
+      - name: Build standalone bundle
+        run: npm run build:standalone
+
+      # https://profinda.github.io/ips-design_system/standalone/ips.js and ips.css
+      - name: Add the standalone bundle to the site
+        run: |
+          mkdir -p site/standalone
+          cp dist-standalone/ips.js dist-standalone/ips.css site/standalone/
+
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: storybook-static
+          path: site
 
       - name: Deploy to GitHub Pages
         id: deployment

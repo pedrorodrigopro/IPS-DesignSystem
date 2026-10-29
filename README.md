@@ -22,6 +22,36 @@ When done, ask: _"export this so I can share it"_ — you get a single `dist/ind
 
 ---
 
+## Standalone bundle — one HTML file, no npm
+
+Every deploy publishes a ready-made browser bundle next to Storybook, with React included:
+
+- `https://profinda.github.io/ips-design_system/standalone/ips.js`
+- `https://profinda.github.io/ips-design_system/standalone/ips.css` (tokens, reset, component CSS and the Mulish font, all embedded)
+
+```html
+<link rel="stylesheet" href="ips.css">
+<div id="root"></div>
+<script src="ips.js"></script>
+<script>
+  const { html, mount, stories, Navbar, Page, Tile, Header, Button } = IPS;
+
+  // An existing Storybook screen — same id as in Storybook's index.json
+  mount("#root", html`<${stories["screens-workflow--engagements"].Component} />`);
+
+  // Or compose a new screen from components (wrap Page in a full-height container)
+  // html`<${Tile} tileStyle="highlight" padding="content"><${Button} kind="primary">Save<//><//>`
+</script>
+```
+
+`IPS` exposes every component, `stories` (every Storybook story, keyed by its Storybook id), `html` (JSX-like tagged templates), `mount`, `React` and `createRoot`.
+The list of what exists is Storybook's own: https://profinda.github.io/ips-design_system/index.json
+
+To inline for a single shareable file, paste the contents of `ips.css` into a `<style>` tag and `ips.js` into a `<script>` tag.
+Build it locally with `npm run build:standalone` (output in `dist-standalone/`).
+
+---
+
 ## What screens are available
 
 | Screen | What it includes |
@@ -46,6 +76,7 @@ npm install
 npm run build          # build the package
 npm run storybook      # run Storybook locally on port 6006
 npm run build-storybook # build static Storybook
+npm run build:standalone # build the standalone browser bundle (dist-standalone/)
 ```
 
-Storybook deploys automatically to GitHub Pages on every push to `main`.
+On every push to `main`, the `storybook.yml` workflow builds Storybook and the standalone bundle from that commit and deploys both to GitHub Pages.
