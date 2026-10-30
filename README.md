@@ -24,7 +24,7 @@ When done, ask: _"export this so I can share it"_ — you get a single `dist/ind
 
 ## Standalone bundle — one HTML file, no npm
 
-Every deploy publishes a ready-made browser bundle next to Storybook, with React included:
+The site publishes a ready-made browser bundle next to Storybook, with React included:
 
 - `https://profinda.github.io/ips-design_system/standalone/ips.js`
 - `https://profinda.github.io/ips-design_system/standalone/ips.css` (tokens, reset, component CSS and the Mulish font, all embedded)
@@ -77,6 +77,7 @@ npm run build          # build the package
 npm run storybook      # run Storybook locally on port 6006
 npm run build-storybook # build static Storybook
 npm run build:standalone # build the standalone browser bundle (dist-standalone/)
+npm run build:site     # rebuild storybook-static/ incl. the standalone bundle (commit the result to publish)
 ```
 
-On every push to `main`, the `storybook.yml` workflow builds Storybook and the standalone bundle from that commit and deploys both to GitHub Pages.
+GitHub Pages serves the committed `storybook-static/` folder (the `storybook.yml` workflow only uploads it; it does not build). After changing components or stories, run `npm run build:site` and commit `storybook-static/`: it rebuilds Storybook and the standalone bundle (`storybook-static/standalone/ips.js` and `ips.css`) from the current code.

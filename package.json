@@ -22,7 +22,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
     "figmagic:sync": "figmagic",
-    "build:standalone": "tsc --noEmit && vite build --config vite.standalone.config.ts"
+    "build:standalone": "tsc --noEmit && vite build --config vite.standalone.config.ts",
+    "build:site": "npm run build && STORYBOOK_BASE_URL=/ips-design_system/ STORYBOOK_DISABLE_TELEMETRY=1 storybook build -o storybook-static && npm run build:standalone && mkdir -p storybook-static/standalone && cp dist-standalone/ips.js dist-standalone/ips.css storybook-static/standalone/"
   },
   "dependencies": {
     "classnames": "^2.3.2"
