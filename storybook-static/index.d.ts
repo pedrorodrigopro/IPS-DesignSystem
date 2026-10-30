@@ -733,35 +733,6 @@ export declare type MarketplaceNavItem = {
     label: string;
 };
 
-export declare type MisalignmentItem = {
-    fieldName: string;
-    expected: string;
-    current: string;
-};
-
-export declare type MisalignmentRange = {
-    id: string;
-    dateRange: string;
-    subtitle: string;
-    items: MisalignmentItem[];
-    onShow?: () => void;
-};
-
-export declare function MisalignmentSidePanel({ open, onClose, data, }: MisalignmentSidePanelProps): default_2.JSX.Element;
-
-export declare type MisalignmentSidePanelData = {
-    roleName: string;
-    wmFilterValue?: string;
-    sortValue?: string;
-    ranges: MisalignmentRange[];
-};
-
-export declare type MisalignmentSidePanelProps = {
-    open: boolean;
-    onClose: () => void;
-    data?: MisalignmentSidePanelData;
-};
-
 export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, sectionItems, }: NavbarProps) => JSX.Element;
 
 export declare type NavbarProps = {
@@ -1329,7 +1300,8 @@ export declare const SkillList: ({ items, theme, disableTooltip, className, }: S
 
 export declare type SkillListItem = SkillIconFlags & {
     label: string;
-    proficiency: ProficiencyLevel;
+    /** Omit for a plain skill without proficiency dots. */
+    proficiency?: ProficiencyLevel;
     tags?: string[];
 };
 
@@ -1358,7 +1330,8 @@ export declare const SkillProfile: ({ label, proficiency, showDivider, tags, the
 
 export declare type SkillProfileProps = SkillIconFlags & {
     label: string;
-    proficiency: ProficiencyLevel;
+    /** Omit to render a plain skill — no proficiency dots and no tooltip (e.g. skills listed on an experience). */
+    proficiency?: ProficiencyLevel;
     showDivider?: boolean;
     tags?: string[];
     theme?: SkillTheme;
