@@ -138,6 +138,21 @@ export const SkillListComponent: StoryFn = () => (
   </div>
 );
 
+/** SkillList — proficiency omitted: plain skills separated by dividers (no dots, no tooltip). */
+export const SkillListWithoutProficiency: StoryFn = () => (
+  <div style={{ padding: 24, width: 520 }}>
+    <SkillList
+      items={[
+        { label: "Python" },
+        { label: "PostgreSQL" },
+        { label: "AWS", verified: true },
+        { label: "Apache Kafka" },
+        { label: "System Design", core: true },
+      ]}
+    />
+  </div>
+);
+
 /** SkillList — dark theme, suitable for use on navy/dark backgrounds. */
 export const SkillListDark: StoryFn = () => (
   <div style={{ padding: 24, width: 280, background: "#0D2976", borderRadius: 8 }}>

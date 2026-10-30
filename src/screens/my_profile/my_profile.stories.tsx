@@ -24,6 +24,8 @@ import { Navigation }                from "../../components/navigation/navigatio
 import { Checkbox }                  from "../../components/checkbox/checkbox";
 import { SkillList, SkillProfile }   from "../../components/skill/skill";
 import { InputSearch }               from "../../components/input/input";
+import { Header }                    from "../../components/header/header";
+import { EmptyState }                from "../../components/empty_state/empty_state";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -57,7 +59,18 @@ const ADDITIONAL_ITEMS = [
   "Capability", "Technical Overlay", "FSA Tag Present", "Budget", "Team", "Interested in",
 ];
 
-function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavChange: (id: string) => void }) {
+function ProfileSidebar({
+  activeNav,
+  onNavChange,
+  sections = NAV_SECTIONS,
+  showAdditionalItems = true,
+}: {
+  activeNav: string;
+  onNavChange: (id: string) => void;
+  sections?: { id: string; label: string }[];
+  /** List the Additional sub-items under the nav when Additional is active (default true) */
+  showAdditionalItems?: boolean;
+}) {
   return (
     <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
@@ -112,13 +125,13 @@ function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavCh
       {/* Vertical navigation */}
       <Navigation
         orientation="vertical"
-        tabs={NAV_SECTIONS}
+        tabs={sections}
         activeId={activeNav}
         onChange={onNavChange}
       />
 
       {/* Additional sub-items (shown when Additional is active) */}
-      {activeNav === "additional" && (
+      {showAdditionalItems && activeNav === "additional" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingLeft: 8 }}>
           {ADDITIONAL_ITEMS.map(item => (
             <div key={item} style={{ ...labelCss, padding: "4px 8px", cursor: "pointer" }}>
@@ -629,4 +642,149 @@ export const Narrow: Story = {
     },
   },
   render: () => <MyProfileNarrowScreen />,
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ADDITIONAL — extra profile fields
+// Figma: Education section in Profile, node 56:41690
+//   One Tile highlight per field: Header (content size) + edit icon, then the
+//   values as a SkillList without proficiency (labels separated by dividers).
+//   Languages: nested Tile object-light per language, four label/value columns.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const NAV_WITH_ACADEMIC = [
+  { id: "summary",         label: "Summary"         },
+  { id: "experience",      label: "Experience"      },
+  { id: "accomplishments", label: "Accomplishments" },
+  { id: "academic",        label: "Academic"        },
+  { id: "additional",      label: "Additional"      },
+];
+
+const ADDITIONAL_FIELDS: { title: string; values: string[] }[] = [
+  { title: "Badges",                     values: ["Badge 1", "Badge 2"] },
+  { title: "Driving Licenses",           values: ["Car (B)", "Car (BE)", "Motorbike (A)"] },
+];
+
+const ADDITIONAL_LANGUAGES = [
+  { name: "English", knowledge: "Advanced", reading: "Advanced", writing: "Advanced", speaking: "Advanced" },
+  { name: "Spanish", knowledge: "Advanced", reading: "Advanced", writing: "Advanced", speaking: "Advanced" },
+];
+
+const ADDITIONAL_FIELDS_AFTER_LANGUAGES: string[] = [
+  "Licenses and Certifications", "Representative clients", "Industry knowledge", "Clients", "Department",
+  "Projects", "Job function", "Qualifications", "Custom field sorted", "Internal work experience",
+  "Cost Centre", "Previous client experience", "Interested in",
+];
+
+function EditButton() {
+  return (
+    <Button kind="iconTertiary" size="regular" title="Edit">
+      <Icon name="edit" size={16} />
+    </Button>
+  );
+}
+
+function AdditionalField({ title, values }: { title: string; values: string[] }) {
+  return (
+    <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <Header size="content" title={title} rightContent={<EditButton />} />
+      <SkillList items={values.map(label => ({ label }))} disableTooltip />
+    </Tile>
+  );
+}
+
+function LanguageCard({ lang }: { lang: typeof ADDITIONAL_LANGUAGES[number] }) {
+  const cols: [string, string][] = [
+    ["Knowledge level",      lang.knowledge],
+    ["Reading proficiency",  lang.reading],
+    ["Writing proficiency",  lang.writing],
+    ["Speaking proficiency", lang.speaking],
+  ];
+  return (
+    <Tile tileStyle="object-light" padding="content" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <SB>
+        <div style={h3}>{lang.name}</div>
+        <EditButton />
+      </SB>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 16 }}>
+        {cols.map(([label, value]) => (
+          <div key={label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={labelCss}>{label}</span>
+            <span style={bodyBold}>{value}</span>
+          </div>
+        ))}
+      </div>
+    </Tile>
+  );
+}
+
+function AdditionalSection() {
+  return (
+    <>
+      {ADDITIONAL_FIELDS.map(f => <AdditionalField key={f.title} {...f} />)}
+      <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <Header size="content" title="Languages" />
+        {ADDITIONAL_LANGUAGES.map(l => <LanguageCard key={l.name} lang={l} />)}
+      </Tile>
+      {ADDITIONAL_FIELDS_AFTER_LANGUAGES.map(title => (
+        <AdditionalField key={title} title={title} values={["Badge 1", "Badge 2"]} />
+      ))}
+    </>
+  );
+}
+
+function MyProfileAdditionalScreen() {
+  const [activeNav, setActiveNav] = useState("additional");
+
+  return (
+    <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
+      <Page
+        navbar={<Navbar activeId="profile" />}
+        variant="profile-regular"
+        sidebar={
+          <ProfileSidebar
+            activeNav={activeNav}
+            onNavChange={setActiveNav}
+            sections={NAV_WITH_ACADEMIC}
+            showAdditionalItems={false}
+          />
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
+          {activeNav === "additional" && <AdditionalSection />}
+          {activeNav === "summary" && (
+            <>
+              <SkillsSection />
+              <SkillGroupsSection />
+              <AccreditationsSection />
+              <OrgDataSection />
+              <AvailabilitySection />
+            </>
+          )}
+          {activeNav !== "additional" && activeNav !== "summary" && (
+            <Tile tileStyle="highlight" padding="content">
+              <EmptyState size="small-vertical" title="This section is not part of this story" />
+            </Tile>
+          )}
+        </div>
+      </Page>
+    </div>
+  );
+}
+
+export const Additional: Story = {
+  name: "Additional (narrow)",
+  parameters: {
+    viewport: { defaultViewport: "screen1440" },
+    docs: {
+      description: {
+        story:
+          "Additional section of the profile, with the new Academic entry in the sidebar nav. " +
+          "One Tile highlight per field: Header (content) + edit icon button (iconTertiary), then the values as a SkillList " +
+          "without proficiency (labels separated by dividers). Languages uses a nested Tile object-light per language. " +
+          "The Additional sub-items are not listed in the nav (showAdditionalItems=false).",
+      },
+    },
+  },
+  render: () => <MyProfileAdditionalScreen />,
 };
