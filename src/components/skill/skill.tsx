@@ -296,7 +296,8 @@ export const SkillRole = ({
 
 export type SkillProfileProps = SkillIconFlags & {
   label: string;
-  proficiency: ProficiencyLevel;
+  /** Omit to render a plain skill — no proficiency dots and no tooltip (e.g. skills listed on an experience). */
+  proficiency?: ProficiencyLevel;
   showDivider?: boolean;
   tags?: string[];
   theme?: SkillTheme;
@@ -315,9 +316,9 @@ export const SkillProfile = ({
       onMouseEnter={disableTooltip ? undefined : () => setHovered(true)}
       onMouseLeave={disableTooltip ? undefined : () => setHovered(false)}
     >
-      {hovered && !disableTooltip && <TooltipProfile proficiency={proficiency} tags={tags} {...icons} />}
+      {hovered && !disableTooltip && proficiency && <TooltipProfile proficiency={proficiency} tags={tags} {...icons} />}
       <span className={classNames(css.skill, css[theme])}>
-        <ProfileDots level={proficiency} theme={theme} />
+        {proficiency && <ProfileDots level={proficiency} theme={theme} />}
         <span className={css.skillLabel}>{label}</span>
         <SkillIcons {...icons} />
         {showDivider && <span className={classNames(css.divider, css[`divider_${theme}`])} aria-hidden="true" />}
@@ -438,7 +439,8 @@ export const SkillMatch = ({
 
 export type SkillListItem = SkillIconFlags & {
   label: string;
-  proficiency: ProficiencyLevel;
+  /** Omit for a plain skill without proficiency dots. */
+  proficiency?: ProficiencyLevel;
   tags?: string[];
 };
 
