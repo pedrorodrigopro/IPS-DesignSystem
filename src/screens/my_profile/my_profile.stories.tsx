@@ -25,6 +25,7 @@ import { Checkbox }                  from "../../components/checkbox/checkbox";
 import { SkillList, SkillProfile }   from "../../components/skill/skill";
 import { InputSearch }               from "../../components/input/input";
 import { Header }                    from "../../components/header/header";
+import { PillSimple }                from "../../components/pill/pill";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -537,6 +538,8 @@ function MyProfileScreen() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
           {activeNav === "additional" ? (
             <AdditionalSection />
+          ) : activeNav === "experience" ? (
+            <ExperienceSection />
           ) : (
             <>
               <SkillsSection />
@@ -597,6 +600,8 @@ function MyProfileNarrowScreen() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
           {activeNav === "additional" ? (
             <AdditionalSection />
+          ) : activeNav === "experience" ? (
+            <ExperienceSection />
           ) : (
             <>
               <SkillsSection />
@@ -706,5 +711,167 @@ function AdditionalSection() {
         <AdditionalField key={title} title={title} values={["Badge 1", "Badge 2"]} />
       ))}
     </>
+  );
+}
+
+// ── Experience ─────────────────────────────────────────────────────────────────
+// Figma: Education section in Profile, node 55:34625
+//   Header (section) + primary "Add experience", then a timeline of position cards
+//   (Tile object-light). Cards collapse: collapsed = title, company line and summary;
+//   expanded adds Skills, a 4-column details grid and "Internal Roles & Projects",
+//   whose rows collapse too.
+
+type InternalRole = { name: string; range: string; duration: string; details: [string, string][] };
+type Position = {
+  title: string; company: string; hours: string; period: string; current?: boolean;
+  summary: string; skills: string[]; details: [string, string][]; internalRoles: InternalRole[];
+};
+
+const EXP_DETAILS: [string, string][] = [
+  ["Industry knowledge", "Banking / Financial Services, Payments"],
+  ["Job title",          "Tech Lead"],
+  ["Company",            "BarclaysX"],
+  ["Previous company",   "Previous company"],
+  ["Languages",          "English, French"],
+  ["Clients",            "BarclaysX"],
+];
+
+const EXP_INTERNAL_ROLE: InternalRole = {
+  name: "Project Atlas · Tech Lead", range: "01-09-2026 – 13-11-2026", duration: "10 weeks",
+  details: EXP_DETAILS.slice(0, 4),
+};
+
+const EXP_POSITION: Position = {
+  title: "Tech Lead", company: "BarclaysX", hours: "1,800h", period: "Sep 2024 - present",
+  summary: "Re-architected payments ingestion (Python · Postgres · AWS). 60% latency reduction; production for 3 Tier-1 banks.",
+  skills: ["Python", "PostgreSQL", "AWS", "Apache Kafka", "System Design", "Team Leadership", "REST API", "Distributed Systems"],
+  details: EXP_DETAILS,
+  internalRoles: [EXP_INTERNAL_ROLE, EXP_INTERNAL_ROLE, EXP_INTERNAL_ROLE],
+};
+
+const EXPERIENCE_POSITIONS: Position[] = [
+  { ...EXP_POSITION, current: true },
+  EXP_POSITION,
+  EXP_POSITION,
+  EXP_POSITION,
+];
+
+function ExpChevron({ open, onClick }: { open: boolean; onClick: () => void }) {
+  return (
+    <Button kind="iconTertiary" size="small" title={open ? "Collapse" : "Expand"} onClick={onClick}>
+      <Icon name={open ? "chevron-down" : "chevron-right"} size={14} />
+    </Button>
+  );
+}
+
+function ExpDetails({ fields }: { fields: [string, string][] }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "16px 24px" }}>
+      {fields.map(([label, value]) => (
+        <div key={label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={labelCss}>{label}</span>
+          <span style={bodyBold}>{value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InternalRoleRow({ role, defaultOpen }: { role: InternalRole; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) auto", alignItems: "center", gap: 8 }}>
+        <Row gap={8}>
+          <ExpChevron open={open} onClick={() => setOpen(o => !o)} />
+          <span style={bodyBold}>Role: {role.name}</span>
+        </Row>
+        <Row gap={8}>
+          <span style={bodyBold}>{role.range}</span>
+          <span style={labelCss}>({role.duration})</span>
+        </Row>
+        <Button kind="iconTertiary" size="small" title="Edit role"><Icon name="edit" size={14} /></Button>
+      </div>
+      {open && <div style={{ paddingLeft: 8, paddingBottom: 4 }}><ExpDetails fields={role.details} /></div>}
+    </div>
+  );
+}
+
+function ExperienceCard({ position, isLast, defaultOpen }: { position: Position; isLast: boolean; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const DOT_TOP = 26;
+  const DOT_GAP = 4;
+  return (
+    <div style={{ display: "flex", gap: 12 }}>
+      {/* timeline rail: dot level with the title, line running to the next dot */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 12, flexShrink: 0 }}>
+        <div style={{
+          width: 10, height: 10, borderRadius: "50%", marginTop: DOT_TOP, flexShrink: 0,
+          background: position.current ? "var(--palette-primary-0)" : "var(--palette-neutral-0)",
+        }} />
+        {!isLast && (
+          <div style={{ width: 2, flex: 1, background: "var(--palette-neutral-0)", marginTop: DOT_GAP, marginBottom: -(DOT_TOP - DOT_GAP) }} />
+        )}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0, marginBottom: 16 }}>
+        <Tile tileStyle="object-light" padding="content" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <SB style={{ alignItems: "flex-start" }}>
+              <Row gap={8}>
+                <ExpChevron open={open} onClick={() => setOpen(o => !o)} />
+                <span style={{ ...h3, fontSize: 16 }}>{position.title}</span>
+                {position.current && <PillSimple label="Current position" size="small" />}
+              </Row>
+              <Button kind="iconTertiary" size="small" title="Edit position"><Icon name="edit" size={14} /></Button>
+            </SB>
+            <div style={{ paddingLeft: 34 }}>
+              <span style={labelCss}>
+                <span style={{ color: "var(--palette-blue-0)", fontWeight: 700 }}>{position.company}</span> · {position.hours} · {position.period}
+              </span>
+            </div>
+          </div>
+          <div style={{ ...body, paddingLeft: 0 }}>{position.summary}</div>
+
+          {open && (
+            <>
+              <Divider orientation="horizontal" style={{ margin: "4px 0" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={bodyBold}>Skills ({position.skills.length})</span>
+                <SkillList items={position.skills.map(label => ({ label }))} disableTooltip />
+              </div>
+              <Divider orientation="horizontal" style={{ margin: "4px 0" }} />
+              <ExpDetails fields={position.details} />
+              <Divider orientation="horizontal" style={{ margin: "4px 0" }} />
+              <SB>
+                <span style={bodyBold}>Internal Roles &amp; Projects ({position.internalRoles.length})</span>
+                <Button kind="iconTertiary" size="small" title="Add role or project"><Icon name="add" size={14} /></Button>
+              </SB>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {position.internalRoles.map((r, i) => (
+                  <div key={i}>
+                    {i > 0 && <Divider orientation="horizontal" />}
+                    <InternalRoleRow role={r} defaultOpen={i === 0} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </Tile>
+      </div>
+    </div>
+  );
+}
+
+function ExperienceSection() {
+  return (
+    <Tile tileStyle="highlight" padding="screen" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <Header size="section" title="Experience" actions={[{ label: "Add experience", variant: "primary" }]} />
+      <div>
+        {EXPERIENCE_POSITIONS.map((p, i) => (
+          <ExperienceCard key={i} position={p} isLast={i === EXPERIENCE_POSITIONS.length - 1} defaultOpen={i === 0} />
+        ))}
+      </div>
+    </Tile>
   );
 }
