@@ -10,7 +10,7 @@
 //   Navigation (vertical), Checkbox, SkillProfile, InputSearch
 
 import type { Meta, StoryObj } from "@storybook/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Navbar }                    from "../../components/navbar/navbar";
 import { Page }                      from "../../components/layout/layout";
@@ -23,9 +23,12 @@ import { ProgressLinear }            from "../../components/progress_bar/progres
 import { Navigation }                from "../../components/navigation/navigation";
 import { Checkbox }                  from "../../components/checkbox/checkbox";
 import { SkillList, SkillProfile }   from "../../components/skill/skill";
-import { InputSearch }               from "../../components/input/input";
+import { Input, InputSearch }          from "../../components/input/input";
 import { Header }                    from "../../components/header/header";
 import { PillSimple }                from "../../components/pill/pill";
+import { EmptyState }                from "../../components/empty_state/empty_state";
+import { SidePanel }                 from "../../components/side_panel/side_panel";
+import { Actions }                   from "../../components/actions/actions";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -51,6 +54,7 @@ const NAV_SECTIONS = [
   { id: "summary",        label: "Summary"        },
   { id: "experience",     label: "Experience"     },
   { id: "accomplishments",label: "Accomplishments"},
+  { id: "academic",       label: "Academic"       },
   { id: "additional",     label: "Additional"     },
 ];
 
@@ -540,6 +544,8 @@ function MyProfileScreen() {
             <AdditionalSection />
           ) : activeNav === "experience" ? (
             <ExperienceSection />
+          ) : activeNav === "academic" ? (
+            <AcademicSection />
           ) : (
             <>
               <SkillsSection />
@@ -602,6 +608,8 @@ function MyProfileNarrowScreen() {
             <AdditionalSection />
           ) : activeNav === "experience" ? (
             <ExperienceSection />
+          ) : activeNav === "academic" ? (
+            <AcademicSection />
           ) : (
             <>
               <SkillsSection />
@@ -873,5 +881,167 @@ function ExperienceSection() {
         ))}
       </div>
     </Tile>
+  );
+}
+
+// ── Academic ───────────────────────────────────────────────────────────────────
+// Figma: Education section in Profile, node 76:11187 (six screens)
+//   Tile highlight with Header "Academic" and a horizontal Navigation with count badges
+//   (Education, Courses, Lecture experience, Professional associations, Publications,
+//   Honors & Awards). Each tab: section title + primary Add, then two-column cards
+//   (Tile object-light, iconTertiary edit) or an EmptyState when there are no items.
+//   Add / Edit open a SidePanel with Inputs and sticky Cancel / Save actions.
+
+type AcademicKey = "education" | "courses" | "lecture" | "associations" | "publications" | "honors";
+type AcademicItem = { title: string; sub?: string; start?: string; end?: string; desc?: string };
+type AcademicField = [keyof AcademicItem, string, boolean?];   // key, label, required
+
+const ACADEMIC_LOREM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pretium sem et vestibulum auctor. Nunc euismod lacus eget justo interdum, vitae venenat…";
+const ACADEMIC_STUDY = "This comprehensive study explores innovative methodologies in computer science, focusing on algorithm optimization and system architecture improvements.";
+
+const ACADEMIC: Record<AcademicKey, { tab: string; add: string; fields: AcademicField[]; items: AcademicItem[] }> = {
+  education: {
+    tab: "Education", add: "Add education",
+    fields: [["title", "Degree", true], ["sub", "Institution"], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Computer Science", sub: "Imperial College London", start: "01 Sep 2012", end: "30 May 2016", desc: ACADEMIC_LOREM },
+      { title: "Mathematics", sub: "University of Warwick", start: "01 Sep 2010", end: "30 May 2012", desc: ACADEMIC_LOREM },
+    ],
+  },
+  courses: {
+    tab: "Courses", add: "Add course",
+    fields: [["title", "Course", true], ["start", "Start date"], ["end", "End date"]],
+    items: [
+      { title: "Machine Learning",     start: "01 Sep 2012", end: "30 May 2016" },
+      { title: "Distributed Systems",  start: "01 Sep 2012", end: "30 May 2016" },
+      { title: "Databases",            start: "01 Sep 2013", end: "30 May 2014" },
+      { title: "Computer Networks",    start: "01 Sep 2014", end: "30 May 2015" },
+    ],
+  },
+  lecture: {
+    tab: "Lecture experience", add: "Add lecture experience",
+    fields: [["title", "Subject", true], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Advanced Data Structures", start: "15 Jan 2015", end: "20 Dec 2018",
+        desc: "Developed and delivered comprehensive lectures on algorithms and data structures, guiding students through complex problem-solving techniques and practical applications." },
+    ],
+  },
+  associations: {
+    tab: "Professional associations", add: "Add association",
+    fields: [["title", "Association", true], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [],
+  },
+  publications: {
+    tab: "Publications", add: "Add publication",
+    fields: [["title", "Title", true], ["sub", "Author(s)"], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Advances in Computer Science", sub: "Sancho Pansa",              start: "September 2012", end: "May 2016", desc: ACADEMIC_STUDY },
+      { title: "Advances in Computer Science", sub: "Sancho Pansa and Mike Lee", start: "September 2012", end: "May 2016", desc: ACADEMIC_STUDY },
+      { title: "Advances in Computer Science", sub: "Sancho Pansa and Mike Lee", start: "September 2012", end: "May 2016", desc: ACADEMIC_STUDY },
+    ],
+  },
+  honors: {
+    tab: "Honors & Awards", add: "Add honor or award",
+    fields: [["title", "Title", true], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Bachelor of Science in Computer Science", start: "September 2012", end: "May 2016",
+        desc: "Awarded for outstanding academic achievement and contribution to the Computer Science department." },
+    ],
+  },
+};
+
+const ACADEMIC_ORDER: AcademicKey[] = ["education", "courses", "lecture", "associations", "publications", "honors"];
+
+function AcademicCard({ section, item, onEdit }: { section: AcademicKey; item: AcademicItem; onEdit: () => void }) {
+  const mutedBody: React.CSSProperties = { ...body, color: "var(--palette-blue-2)" };
+  const isPublication = section === "publications";
+  return (
+    <Tile tileStyle="object-light" padding="content">
+      <SB style={{ alignItems: "flex-start", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <span style={h3}>{item.title}</span>
+          {item.sub && <span style={mutedBody}>{isPublication ? "Author(s): " : ""}{item.sub}</span>}
+          <span style={body}>{[item.start, item.end].filter(Boolean).join(" - ")}</span>
+        </div>
+        <Button kind="iconTertiary" size="regular" title="Edit" onClick={onEdit}><Icon name="edit" size={16} /></Button>
+      </SB>
+      {item.desc && <div style={{ ...body, marginTop: 16 }}>{isPublication ? "Description: " : ""}{item.desc}</div>}
+    </Tile>
+  );
+}
+
+type AcademicPanelState = { section: AcademicKey; index: number | null; initial: AcademicItem } | null;
+
+function AcademicPanel({ panel, onClose, onSave }: { panel: AcademicPanelState; onClose: () => void; onSave: (item: AcademicItem) => void }) {
+  const [draft, setDraft] = useState<AcademicItem>({ title: "" });
+  useEffect(() => { if (panel) setDraft(panel.initial); }, [panel]);
+  const sec = ACADEMIC[panel ? panel.section : "education"];
+  const missing = sec.fields.some(([key, , required]) => required && !(draft[key] ?? "").trim());
+  return (
+    <SidePanel open={!!panel} onClose={onClose} width={480}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+        <div style={{ padding: "24px 24px 0", display: "flex", flexDirection: "column", gap: 16, flex: 1, overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <Header size="content" title={panel && panel.index !== null ? `Edit ${sec.tab.toLowerCase()}` : sec.add} />
+            <Button kind="iconTertiary" size="regular" title="Close" onClick={onClose}><Icon name="cross" size={16} /></Button>
+          </div>
+          {sec.fields.map(([key, label, required]) => (
+            <Input
+              key={key}
+              label={label}
+              mandatory={!!required}
+              value={draft[key] ?? ""}
+              onChange={e => setDraft({ ...draft, [key]: e.target.value })}
+            />
+          ))}
+        </div>
+        <Actions
+          variant="sticky-panel"
+          leftActions={[{ label: "Cancel", variant: "secondary", onClick: onClose }]}
+          rightActions={[{ label: "Save", variant: "primary", disabled: missing, onClick: () => onSave(draft) }]}
+        />
+      </div>
+    </SidePanel>
+  );
+}
+
+function AcademicSection() {
+  const [tab, setTab] = useState<AcademicKey>("education");
+  const [data, setData] = useState<Record<AcademicKey, AcademicItem[]>>(
+    () => Object.fromEntries(ACADEMIC_ORDER.map(k => [k, ACADEMIC[k].items])) as Record<AcademicKey, AcademicItem[]>,
+  );
+  const [panel, setPanel] = useState<AcademicPanelState>(null);
+
+  const open = (section: AcademicKey, index: number | null) =>
+    setPanel({ section, index, initial: index === null ? { title: "" } : { ...data[section][index] } });
+  const save = (item: AcademicItem) => {
+    if (!panel) return;
+    const list = [...data[panel.section]];
+    if (panel.index === null) list.push(item); else list[panel.index] = item;
+    setData({ ...data, [panel.section]: list });
+    setPanel(null);
+  };
+
+  const tabs = ACADEMIC_ORDER.map(id => ({ id, label: ACADEMIC[id].tab, badge: data[id].length }));
+  const items = data[tab];
+  return (
+    <>
+      <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Header size="content" title="Academic" />
+        <Navigation orientation="horizontal" tabs={tabs} activeId={tab} onChange={id => setTab(id as AcademicKey)} />
+        <SB>
+          <span style={{ ...h3, fontSize: 16 }}>{ACADEMIC[tab].tab}</span>
+          <Button kind="primary" size="regular" onClick={() => open(tab, null)}>Add</Button>
+        </SB>
+        {items.length === 0 ? (
+          <EmptyState size="small-vertical" title="No items to show" />
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16, alignItems: "start" }}>
+            {items.map((item, i) => <AcademicCard key={`${tab}-${i}`} section={tab} item={item} onEdit={() => open(tab, i)} />)}
+          </div>
+        )}
+      </Tile>
+      <AcademicPanel panel={panel} onClose={() => setPanel(null)} onSave={save} />
+    </>
   );
 }
