@@ -25,7 +25,6 @@ import { Checkbox }                  from "../../components/checkbox/checkbox";
 import { SkillList, SkillProfile }   from "../../components/skill/skill";
 import { InputSearch }               from "../../components/input/input";
 import { Header }                    from "../../components/header/header";
-import { EmptyState }                from "../../components/empty_state/empty_state";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -54,23 +53,7 @@ const NAV_SECTIONS = [
   { id: "additional",     label: "Additional"     },
 ];
 
-const ADDITIONAL_ITEMS = [
-  "Birthday", "Languages", "Industry knowledge", "Qualifications",
-  "Capability", "Technical Overlay", "FSA Tag Present", "Budget", "Team", "Interested in",
-];
-
-function ProfileSidebar({
-  activeNav,
-  onNavChange,
-  sections = NAV_SECTIONS,
-  showAdditionalItems = true,
-}: {
-  activeNav: string;
-  onNavChange: (id: string) => void;
-  sections?: { id: string; label: string }[];
-  /** List the Additional sub-items under the nav when Additional is active (default true) */
-  showAdditionalItems?: boolean;
-}) {
+function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavChange: (id: string) => void }) {
   return (
     <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
@@ -125,21 +108,10 @@ function ProfileSidebar({
       {/* Vertical navigation */}
       <Navigation
         orientation="vertical"
-        tabs={sections}
+        tabs={NAV_SECTIONS}
         activeId={activeNav}
         onChange={onNavChange}
       />
-
-      {/* Additional sub-items (shown when Additional is active) */}
-      {showAdditionalItems && activeNav === "additional" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingLeft: 8 }}>
-          {ADDITIONAL_ITEMS.map(item => (
-            <div key={item} style={{ ...labelCss, padding: "4px 8px", cursor: "pointer" }}>
-              — {item}
-            </div>
-          ))}
-        </div>
-      )}
 
     </Tile>
   );
@@ -563,9 +535,15 @@ function MyProfileScreen() {
       >
         {/* CENTRE — main content */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
-          <SkillsSection />
-          <SkillGroupsSection />
-          <AccreditationsSection />
+          {activeNav === "additional" ? (
+            <AdditionalSection />
+          ) : (
+            <>
+              <SkillsSection />
+              <SkillGroupsSection />
+              <AccreditationsSection />
+            </>
+          )}
         </div>
       </Page>
     </div>
@@ -585,7 +563,7 @@ const meta: Meta = {
       description: {
         component:
           "My Profile screen — three-column layout. " +
-          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation, Additional sub-items). " +
+          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation). Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
           "Centre: Tile highlight content blocks — Skills with expandable framework groups (SkillProfile + Checkbox), Skills Groups carousel (Tile object-light cards), Accreditations. " +
           "Right: Tile highlight content — Organisation Data key-value grid + Availability mini-calendar with booking bars.",
       },
@@ -617,11 +595,17 @@ function MyProfileNarrowScreen() {
         sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} />}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
-          <SkillsSection />
-          <SkillGroupsSection />
-          <AccreditationsSection />
-          <OrgDataSection />
-          <AvailabilitySection />
+          {activeNav === "additional" ? (
+            <AdditionalSection />
+          ) : (
+            <>
+              <SkillsSection />
+              <SkillGroupsSection />
+              <AccreditationsSection />
+              <OrgDataSection />
+              <AvailabilitySection />
+            </>
+          )}
         </div>
       </Page>
     </div>
@@ -651,14 +635,6 @@ export const Narrow: Story = {
 //   values as a SkillList without proficiency (labels separated by dividers).
 //   Languages: nested Tile object-light per language, four label/value columns.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-const NAV_WITH_ACADEMIC = [
-  { id: "summary",         label: "Summary"         },
-  { id: "experience",      label: "Experience"      },
-  { id: "accomplishments", label: "Accomplishments" },
-  { id: "academic",        label: "Academic"        },
-  { id: "additional",      label: "Additional"      },
-];
 
 const ADDITIONAL_FIELDS: { title: string; values: string[] }[] = [
   { title: "Badges",                     values: ["Badge 1", "Badge 2"] },
@@ -732,59 +708,3 @@ function AdditionalSection() {
     </>
   );
 }
-
-function MyProfileAdditionalScreen() {
-  const [activeNav, setActiveNav] = useState("additional");
-
-  return (
-    <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
-      <Page
-        navbar={<Navbar activeId="profile" />}
-        variant="profile-regular"
-        sidebar={
-          <ProfileSidebar
-            activeNav={activeNav}
-            onNavChange={setActiveNav}
-            sections={NAV_WITH_ACADEMIC}
-            showAdditionalItems={false}
-          />
-        }
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
-          {activeNav === "additional" && <AdditionalSection />}
-          {activeNav === "summary" && (
-            <>
-              <SkillsSection />
-              <SkillGroupsSection />
-              <AccreditationsSection />
-              <OrgDataSection />
-              <AvailabilitySection />
-            </>
-          )}
-          {activeNav !== "additional" && activeNav !== "summary" && (
-            <Tile tileStyle="highlight" padding="content">
-              <EmptyState size="small-vertical" title="This section is not part of this story" />
-            </Tile>
-          )}
-        </div>
-      </Page>
-    </div>
-  );
-}
-
-export const Additional: Story = {
-  name: "Additional (narrow)",
-  parameters: {
-    viewport: { defaultViewport: "screen1440" },
-    docs: {
-      description: {
-        story:
-          "Additional section of the profile, with the new Academic entry in the sidebar nav. " +
-          "One Tile highlight per field: Header (content) + edit icon button (iconTertiary), then the values as a SkillList " +
-          "without proficiency (labels separated by dividers). Languages uses a nested Tile object-light per language. " +
-          "The Additional sub-items are not listed in the nav (showAdditionalItems=false).",
-      },
-    },
-  },
-  render: () => <MyProfileAdditionalScreen />,
-};
