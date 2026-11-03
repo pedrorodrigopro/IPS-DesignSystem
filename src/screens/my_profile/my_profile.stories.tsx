@@ -25,6 +25,8 @@ import { Checkbox }                  from "../../components/checkbox/checkbox";
 import { SkillList, SkillProfile }   from "../../components/skill/skill";
 import { Input, InputSearch }          from "../../components/input/input";
 import { Header }                    from "../../components/header/header";
+import { CVStudioScreen, ZARA }      from "../cv_studio/cv_studio";
+import { CVVersionsScreen }          from "../cv_versions/cv_versions";
 import { PillSimple }                from "../../components/pill/pill";
 import { EmptyState }                from "../../components/empty_state/empty_state";
 import { SidePanel }                 from "../../components/side_panel/side_panel";
@@ -50,6 +52,39 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 // LEFT SIDEBAR — Tile selected content
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// Profile ⇄ CV Studio ⇄ CV Versions (Figma: Export CV revamp)
+//   "Open main CV"      → CV Studio            (Close → profile)
+//   "See all versions"  → CV Versions          (breadcrumb → profile)
+//   CV Versions: "Create CV version" / edit icon → CV Studio   (Close → CV Versions)
+type CVView = "profile" | "studio" | "versions";
+
+function useCVFlow() {
+  const [view, setView] = useState<CVView>("profile");
+  const [studioFrom, setStudioFrom] = useState<"profile" | "versions">("profile");
+  return {
+    view,
+    openStudio: (from: "profile" | "versions") => { setStudioFrom(from); setView("studio"); },
+    openVersions: () => setView("versions"),
+    toProfile: () => setView("profile"),
+    closeStudio: () => setView(studioFrom),
+  };
+}
+
+/** The CV Studio / CV Versions screens, for the person shown on this profile. */
+function CVFlowView({ flow, personName }: { flow: ReturnType<typeof useCVFlow>; personName: string }) {
+  const cv = { ...ZARA, name: personName, email: `${personName.toLowerCase().replace(/ /g, ".")}@pf.com` };
+  if (flow.view === "studio") return <CVStudioScreen cvs={[cv]} onClose={flow.closeStudio} />;
+  return (
+    <CVVersionsScreen
+      personName={personName}
+      cv={cv}
+      onBack={flow.toProfile}
+      onCreate={() => flow.openStudio("versions")}
+      onEdit={() => flow.openStudio("versions")}
+    />
+  );
+}
+
 const NAV_SECTIONS = [
   { id: "summary",        label: "Summary"        },
   { id: "experience",     label: "Experience"     },
@@ -58,7 +93,15 @@ const NAV_SECTIONS = [
   { id: "additional",     label: "Additional"     },
 ];
 
-function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavChange: (id: string) => void }) {
+function ProfileSidebar({
+  activeNav, onNavChange, onOpenMainCV, onSeeAllVersions, cvVersionCount = 3,
+}: {
+  activeNav: string;
+  onNavChange: (id: string) => void;
+  onOpenMainCV?: () => void;
+  onSeeAllVersions?: () => void;
+  cvVersionCount?: number;
+}) {
   return (
     <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
@@ -95,6 +138,17 @@ function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavCh
       <div style={labelCss}>Last updated: 28-09-2026</div>
 
       <Divider orientation="horizontal" style={{ margin: "0 -16px" }} />
+
+      {/* CV Versions — Figma Export CV revamp, 132:53016 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span style={{ fontFamily: "var(--font-family)", fontSize: "var(--font-size-h5)", fontWeight: 600, color: "var(--palette-blue-0)", lineHeight: "125%" }}>
+          CV Versions ({cvVersionCount})
+        </span>
+        <Row gap={8} style={{ flexWrap: "wrap" }}>
+          <Button kind="primary" size="small" onClick={onOpenMainCV}>Open main CV</Button>
+          <Button kind="secondary" size="small" onClick={onSeeAllVersions}>See all versions</Button>
+        </Row>
+      </div>
 
       {/* Contact */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -524,13 +578,15 @@ function AvailabilitySection() {
 
 function MyProfileScreen() {
   const [activeNav, setActiveNav] = useState("summary");
+  const flow = useCVFlow();
+  if (flow.view !== "profile") return <CVFlowView flow={flow} personName="Spencer Harmon" />;
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
         navbar={<Navbar activeId="profile" />}
         variant="profile-summary"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} />}
+        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} />}
         rightPanel={
           <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
             <OrgDataSection />
@@ -572,7 +628,7 @@ const meta: Meta = {
       description: {
         component:
           "My Profile screen — three-column layout. " +
-          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation). Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
+          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation); a CV Versions block above Contact opens CV Studio (“Open main CV”) or CV Versions (“See all versions”). Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
           "Centre: Tile highlight content blocks — Skills with expandable framework groups (SkillProfile + Checkbox), Skills Groups carousel (Tile object-light cards), Accreditations. " +
           "Right: Tile highlight content — Organisation Data key-value grid + Availability mini-calendar with booking bars.",
       },
@@ -595,13 +651,15 @@ export const Default: Story = {
 
 function MyProfileNarrowScreen() {
   const [activeNav, setActiveNav] = useState("summary");
+  const flow = useCVFlow();
+  if (flow.view !== "profile") return <CVFlowView flow={flow} personName="Spencer Harmon" />;
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
         navbar={<Navbar activeId="profile" />}
         variant="profile-regular"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} />}
+        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} />}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
           {activeNav === "additional" ? (
