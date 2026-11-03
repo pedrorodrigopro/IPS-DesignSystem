@@ -41,7 +41,7 @@ export declare type ActionsProps = {
 
 export declare type ActionsVariant = "content" | "sticky-screen" | "sticky-panel";
 
-export declare const Alert: ({ type, layout, message, body, actions, className, }: AlertProps) => JSX.Element;
+export declare const Alert: ({ type, layout, message, body, actions, onDismiss, className, }: AlertProps) => JSX.Element;
 
 export declare type AlertAction = {
     label: string;
@@ -59,6 +59,8 @@ export declare type AlertProps = {
     body?: string;
     /** Up to 2 action buttons (Ghost style). Optional in both layouts. */
     actions?: [AlertAction?, AlertAction?];
+    /** Turns the leading icon into a dismiss button (e.g. the cross of a bulk-banner) */
+    onDismiss?: () => void;
     className?: string;
 };
 
@@ -745,6 +747,19 @@ export declare type MarketplaceNavItem = {
     id: string;
     icon: IconName;
     label: string;
+};
+
+export declare function Modal({ open, onClose, title, width, children, leftActions, rightActions }: ModalProps): default_2.ReactPortal | null;
+
+export declare type ModalProps = {
+    open: boolean;
+    onClose: () => void;
+    title: string;
+    /** Dialog width in px (default 640) */
+    width?: number;
+    children?: default_2.ReactNode;
+    leftActions?: ActionItem[];
+    rightActions?: ActionItem[];
 };
 
 export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, sectionItems, }: NavbarProps) => JSX.Element;
