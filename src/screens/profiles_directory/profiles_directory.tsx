@@ -584,11 +584,11 @@ export function ProfilesDirectoryScreen({
       <div style={{ flex: 1, padding: "24px 24px 32px", display: "flex", flexDirection: "column" }}>
         <div style={{ maxWidth: 1600, margin: "0 auto", width: "100%", flex: 1, display: "flex", flexDirection: "column" }}>
 
-          {/* Page header — the bulk banner appears in this row (600px); the row keeps its height so nothing shifts */}
-          <div style={{ display: "flex", alignItems: "center", gap: 24, height: 48, marginBottom: 20 }}>
+          {/* Page header — the bulk banner appears horizontally centred in this row (600px); the row keeps its height so nothing shifts */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 600px 1fr", alignItems: "center", columnGap: 24, height: 48, marginBottom: 20 }}>
             <span style={{ fontFamily: "var(--font-family)", fontSize: 32, fontWeight: 600, color: "var(--palette-blue-0)" }}>Profiles</span>
-            {viewMode === "table" && selected.length > 0 && (
-              <div style={{ width: 600, flexShrink: 0 }}>
+            <div>
+              {viewMode === "table" && selected.length > 0 && (
                 <Alert
                   type="bulk-banner"
                   layout="inline"
@@ -596,9 +596,9 @@ export function ProfilesDirectoryScreen({
                   actions={[{ label: `Export CV (${selected.length})`, onClick: () => setExporting(true) }]}
                   onDismiss={() => setSelectedIds([])}
                 />
-              </div>
-            )}
-            <div style={{ marginLeft: "auto" }}>
+              )}
+            </div>
+            <div style={{ justifySelf: "end" }}>
               <Button kind="secondary" size="regular">Import</Button>
             </div>
           </div>
