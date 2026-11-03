@@ -965,7 +965,7 @@ export declare type PPBubbleProps = {
 
 export declare type PPBubbleVariant = "dark" | "light";
 
-export declare function PPChatInput({ value, placeholder, onChange, onSend, onDictate, onVoice, className, }: PPChatInputProps): default_2.JSX.Element;
+export declare function PPChatInput({ value, placeholder, onChange, onSend, className, }: PPChatInputProps): default_2.JSX.Element;
 
 export declare type PPChatInputProps = {
     value?: string;
@@ -973,10 +973,6 @@ export declare type PPChatInputProps = {
     onChange?: (value: string) => void;
     /** Called with the text when the send button is clicked or Enter is pressed */
     onSend?: (value: string) => void;
-    /** Called when the mic (dictate) button is clicked */
-    onDictate?: () => void;
-    /** Called when the waveform (voice mode) button is clicked */
-    onVoice?: () => void;
     className?: string;
 };
 
