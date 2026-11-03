@@ -57,6 +57,24 @@
   }
 }
 
+// ── fluid ─────────────────────────────────────────────────────────────────────
+// Column, edge to edge: padding 24px top only, no gap. The content slot fills the
+// remaining height and handles its own paddings / scrolling (overflow hidden here).
+.fluid {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 24px 0 0;
+  gap: 0;
+  overflow: hidden;
+
+  .content {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 // ── 1280 ──────────────────────────────────────────────────────────────────────
 // Column, centered, content capped at 1280px. Padding: 24px top, centered sides.
 // Class name prefixed with 'v' to avoid leading-digit CSS issue.

@@ -106,6 +106,19 @@
   &::-webkit-search-cancel-button { display: none; }
 }
 
+// ── Textarea ──────────────────────────────────────────────────────────────────
+// Multi-line variant of the input shell: content starts at the top and wraps.
+
+.textareaBox {
+  align-items: flex-start;
+}
+
+.textareaEl {
+  resize: vertical;
+  font-family: inherit;
+  line-height: 115%;
+}
+
 // ── Icon (chevron-down, search) ───────────────────────────────────────────────
 
 .icon {

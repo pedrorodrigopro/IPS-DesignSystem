@@ -44,6 +44,10 @@ export type ActionsProps = {
   leftActions?: ActionItem[];
   /** Buttons on the right side (typically save / primary actions) */
   rightActions?: ActionItem[];
+  /** Extra content on the left, after leftActions (e.g. a ButtonGroup) */
+  leftContent?: ReactNode;
+  /** Extra content on the right, after rightActions (e.g. a split ButtonGroup) */
+  rightContent?: ReactNode;
   className?: string;
 };
 
@@ -72,18 +76,22 @@ export function Actions({
   variant = "content",
   leftActions = [],
   rightActions = [],
+  leftContent,
+  rightContent,
   className,
 }: ActionsProps) {
   const buttonRow = (
     <div className={css.buttonRow}>
-      {leftActions.length > 0 && (
+      {(leftActions.length > 0 || leftContent) && (
         <div className={css.left}>
           {leftActions.map((a, i) => <ActionButton key={a.label + i} action={a} />)}
+          {leftContent}
         </div>
       )}
-      {rightActions.length > 0 && (
+      {(rightActions.length > 0 || rightContent) && (
         <div className={css.right}>
           {rightActions.map((a, i) => <ActionButton key={a.label + i} action={a} />)}
+          {rightContent}
         </div>
       )}
     </div>

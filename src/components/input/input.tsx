@@ -90,6 +90,65 @@ export const Input = ({
   </div>
 );
 
+// ── Textarea (multi-line Input) ───────────────────────────────────────────────
+// Same shell as Input (border, radius, states, label, message); content wraps over `rows` lines.
+
+export type InputTextareaProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+  /** Visible lines (default 3) */
+  rows?: number;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
+};
+
+export const InputTextarea = ({
+  label,
+  value,
+  placeholder,
+  message,
+  state = "default",
+  readOnly = false,
+  disabled = false,
+  mandatory = false,
+  rows = 3,
+  onChange,
+  onFocus,
+  onBlur,
+  className,
+  id,
+}: InputTextareaProps) => (
+  <div className={classNames(css.field, { [css.disabled]: disabled }, className)}>
+    {label && (
+      <div className={css.labelRow}>
+        <label className={css.label} htmlFor={id}>{label}</label>
+        {mandatory && <MandatoryIcon />}
+      </div>
+    )}
+    <div className={classNames(css.inputBox, css.textareaBox, css[state], { [css.readOnly]: readOnly })}>
+      <textarea
+        id={id}
+        rows={rows}
+        className={classNames(css.inputEl, css.textareaEl)}
+        value={value}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        disabled={disabled}
+        onChange={onChange}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />
+    </div>
+    {message && (
+      <div className={css.messageRow}>
+        {state === "error" && <Icon name="error" size={16} className={css.msgIconError} />}
+        {state === "warning" && <Icon name="warning" size={16} className={css.msgIconWarning} />}
+        {state === "instructions" && <Icon name="info" size={16} className={css.msgIconInfo} />}
+        <span className={classNames(css.message, css[`msg_${state}`])}>{message}</span>
+      </div>
+    )}
+  </div>
+);
+
 // ── Select (Input new + chevron-down) ─────────────────────────────────────────
 // Same as Input but with chevron-down icon on the right — for dropdown triggers
 
