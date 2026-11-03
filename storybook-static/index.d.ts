@@ -24,7 +24,7 @@ export declare type ActionItem = {
     disabled?: boolean;
 };
 
-export declare function Actions({ variant, leftActions, rightActions, className, }: ActionsProps): default_2.JSX.Element;
+export declare function Actions({ variant, leftActions, rightActions, leftContent, rightContent, className, }: ActionsProps): default_2.JSX.Element;
 
 export declare type ActionsProps = {
     variant?: ActionsVariant;
@@ -32,6 +32,10 @@ export declare type ActionsProps = {
     leftActions?: ActionItem[];
     /** Buttons on the right side (typically save / primary actions) */
     rightActions?: ActionItem[];
+    /** Extra content on the left, after leftActions (e.g. a ButtonGroup) */
+    leftContent?: ReactNode;
+    /** Extra content on the right, after rightActions (e.g. a split ButtonGroup) */
+    rightContent?: ReactNode;
     className?: string;
 };
 
@@ -694,6 +698,16 @@ export declare type InputSelectProps = Omit<InputProps, "type" | "onChange" | "o
 
 export declare type InputState = "default" | "error" | "warning" | "instructions";
 
+export declare const InputTextarea: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, rows, onChange, onFocus, onBlur, className, id, }: InputTextareaProps) => JSX.Element;
+
+export declare type InputTextareaProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+    /** Visible lines (default 3) */
+    rows?: number;
+    onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    onFocus?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
+    onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
+};
+
 export declare type KPIType = "compliant" | "approved" | "exception" | "rejected" | "requested" | "condition-not-met";
 
 export declare function Layout({ variant, children, sidebar, rightPanel, className, }: LayoutProps): default_2.JSX.Element;
@@ -709,7 +723,7 @@ export declare type LayoutProps = {
     className?: string;
 };
 
-export declare type LayoutVariant = "full" | "1280" | "profile-regular" | "profile-summary";
+export declare type LayoutVariant = "full" | "fluid" | "1280" | "profile-regular" | "profile-summary";
 
 export declare const LoadingIcon: ({ className }: LoadingIconProps) => JSX.Element;
 
@@ -950,6 +964,21 @@ export declare type PPBubbleProps = {
 };
 
 export declare type PPBubbleVariant = "dark" | "light";
+
+export declare function PPChatInput({ value, placeholder, onChange, onSend, onDictate, onVoice, className, }: PPChatInputProps): default_2.JSX.Element;
+
+export declare type PPChatInputProps = {
+    value?: string;
+    placeholder?: string;
+    onChange?: (value: string) => void;
+    /** Called with the text when the send button is clicked or Enter is pressed */
+    onSend?: (value: string) => void;
+    /** Called when the mic (dictate) button is clicked */
+    onDictate?: () => void;
+    /** Called when the waveform (voice mode) button is clicked */
+    onVoice?: () => void;
+    className?: string;
+};
 
 export declare function PPConflictBlock({ severity, person, description, variant, children, className, }: PPConflictBlockProps): default_2.JSX.Element;
 
