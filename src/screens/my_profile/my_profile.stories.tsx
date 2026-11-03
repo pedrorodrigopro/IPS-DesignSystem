@@ -27,6 +27,7 @@ import { Input, InputSearch }          from "../../components/input/input";
 import { Header }                    from "../../components/header/header";
 import { CVStudioScreen, ZARA }      from "../cv_studio/cv_studio";
 import { CVVersionsScreen }          from "../cv_versions/cv_versions";
+import { ProfilesDirectoryScreen }   from "../profiles_directory/profiles_directory";
 import { PillSimple }                from "../../components/pill/pill";
 import { EmptyState }                from "../../components/empty_state/empty_state";
 import { SidePanel }                 from "../../components/side_panel/side_panel";
@@ -56,7 +57,9 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 //   "Open main CV"      → CV Studio            (Close → profile)
 //   "See all versions"  → CV Versions          (breadcrumb → profile)
 //   CV Versions: "Create CV version" / edit icon → CV Studio   (Close → CV Versions)
-type CVView = "profile" | "studio" | "versions";
+//   Navbar "Profiles"   → Profiles Directory (table). Tick profiles → bulk banner → "Export CV" → CV Studio
+//                         with every selected CV (Close → directory). Navbar profile item → back to My Profile
+type CVView = "profile" | "studio" | "versions" | "directory";
 
 function useCVFlow() {
   const [view, setView] = useState<CVView>("profile");
@@ -65,6 +68,7 @@ function useCVFlow() {
     view,
     openStudio: (from: "profile" | "versions") => { setStudioFrom(from); setView("studio"); },
     openVersions: () => setView("versions"),
+    openDirectory: () => setView("directory"),
     toProfile: () => setView("profile"),
     closeStudio: () => setView(studioFrom),
   };
@@ -72,6 +76,15 @@ function useCVFlow() {
 
 /** The CV Studio / CV Versions screens, for the person shown on this profile. */
 function CVFlowView({ flow, personName }: { flow: ReturnType<typeof useCVFlow>; personName: string }) {
+  if (flow.view === "directory") {
+    return (
+      <ProfilesDirectoryScreen
+        initialView="table"
+        initialSort="Profile name"
+        onNavigate={id => { if (id === "profile") flow.toProfile(); }}
+      />
+    );
+  }
   const cv = { ...ZARA, name: personName, email: `${personName.toLowerCase().replace(/ /g, ".")}@pf.com` };
   if (flow.view === "studio") return <CVStudioScreen cvs={[cv]} onClose={flow.closeStudio} />;
   return (
@@ -584,7 +597,7 @@ function MyProfileScreen() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
-        navbar={<Navbar activeId="profile" />}
+        navbar={<Navbar activeId="profile" onSelect={id => { if (id === "profiles") flow.openDirectory(); }} />}
         variant="profile-summary"
         sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} />}
         rightPanel={
@@ -657,7 +670,7 @@ function MyProfileNarrowScreen() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
-        navbar={<Navbar activeId="profile" />}
+        navbar={<Navbar activeId="profile" onSelect={id => { if (id === "profiles") flow.openDirectory(); }} />}
         variant="profile-regular"
         sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} />}
       >

@@ -404,7 +404,7 @@ export function CVStudioScreen({ cvs, initialMode = "edit", onClose }: { cvs: CV
 
   const cv = data[index];
   const edit = (k: FieldKey, v: string) => setData(d => d.map((c, i) => (i === index ? { ...c, [k]: v } : c)));
-  const names = multi ? `${cvs.slice(0, 3).map(c => c.name).join(", ")}, +5` : undefined;
+  const names = multi ? cvs.slice(0, 3).map(c => c.name).join(", ") + (cvs.length > 3 ? `, +${cvs.length - 3}` : "") : undefined;
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
