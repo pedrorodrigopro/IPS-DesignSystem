@@ -18,7 +18,8 @@ import { Tile }         from "../../components/tile/tile";
 import { PageHeader }   from "../../components/page_header/page_header";
 import { Button }       from "../../components/button/button";
 import { Icon }         from "../../components/icon/icon";
-import { InputSearch }  from "../../components/input/input";
+import { Input, InputSearch, InputTextarea } from "../../components/input/input";
+import { Modal }        from "../../components/modal/modal";
 import { Switch }       from "../../components/switch/switch";
 
 import { CVPreview, SelectMenu, ZARA } from "../cv_studio/cv_studio";
@@ -39,7 +40,7 @@ export type CVVersion = {
   active: boolean;
 };
 
-const VERSIONS: CVVersion[] = [
+export const INITIAL_CV_VERSIONS: CVVersion[] = [
   { id: "en-banking", name: "English, banking",        description: "English-speaking banking professionals",                   template: "Default", language: "English", editedBy: "John D.", editedAt: "Aug 28, 2026", active: true },
   { id: "es-banking", name: "Spanish, banking",        description: "Spanish-speaking banking professionals",                   template: "Default", language: "Spanish", editedBy: "John D.", editedAt: "Aug 28, 2026", active: false },
   { id: "es-pm",      name: "Spanish, project manager", description: "Spanish-speaking tailored for project manager roles",      template: "Default", language: "Spanish", editedBy: "John D.", editedAt: "Aug 28, 2026", active: false },
@@ -109,7 +110,7 @@ function VersionCard({
       <div style={{ display: "flex", gap: 12 }}>
         <Thumbnail cv={cv} />
         <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-          <span style={{ ...value, lineHeight: "150%" }}>{version.description}</span>
+          {version.description && <span style={{ ...value, lineHeight: "150%" }}>{version.description}</span>}
           <Meta title="Template">{version.template}</Meta>
           <Meta title="Language">{version.language}</Meta>
           <Meta title="Last edited by">{version.editedBy} · {version.editedAt}</Meta>
@@ -126,23 +127,57 @@ function VersionCard({
 export function CVVersionsScreen({
   personName = "Zara Bond",
   cv = ZARA,
+  versions: controlledVersions,
+  onVersionsChange,
   onBack,
   onCreate,
   onEdit,
+  onNavigate,
 }: {
   personName?: string;
   /** The CV shown in every thumbnail */
   cv?: CV;
+  /** Controlled list (keeps it when the screen is left and re-opened); uncontrolled when omitted */
+  versions?: CVVersion[];
+  onVersionsChange?: (versions: CVVersion[]) => void;
   /** Breadcrumb "Profile: <name>" */
   onBack?: () => void;
-  /** "Create CV version" */
-  onCreate?: () => void;
+  /** A version was created in the "Create CV version" modal (it is already added to the list) */
+  onCreate?: (version: CVVersion) => void;
   /** Edit icon on a card */
   onEdit?: (version: CVVersion) => void;
+  /** Navbar item clicked (e.g. "profiles") */
+  onNavigate?: (navbarId: string) => void;
 }) {
-  const [versions, setVersions] = useState(VERSIONS);
+  const [internalVersions, setInternalVersions] = useState(INITIAL_CV_VERSIONS);
+  const versions = controlledVersions ?? internalVersions;
+  const setVersions = (update: (vs: CVVersion[]) => CVVersion[]) => {
+    const next = update(versions);
+    if (onVersionsChange) onVersionsChange(next); else setInternalVersions(next);
+  };
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("name");
+
+  // "Create CV version" modal
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const closeModal = () => { setCreating(false); setNewName(""); setNewDescription(""); };
+  const create = () => {
+    const version: CVVersion = {
+      id: `v-${Date.now()}`,
+      name: newName.trim(),
+      description: newDescription.trim(),
+      template: "Default",
+      language: "English",
+      editedBy: "John D.",
+      editedAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      active: false,
+    };
+    setVersions(vs => [...vs, version]);
+    closeModal();
+    onCreate?.(version);
+  };
 
   const q = query.trim().toLowerCase();
   const shown = versions
@@ -151,12 +186,12 @@ export function CVVersionsScreen({
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
-      <Page navbar={<Navbar activeId="profile" />} variant="full">
+      <Page navbar={<Navbar activeId="profile" onSelect={onNavigate} />} variant="full">
         <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 24 }}>
           <PageHeader
             breadcrumbs={[{ label: `Profile: ${personName}`, onClick: onBack }, { label: "CV Versions" }]}
             title="CV Versions"
-            actions={[{ label: "Create CV version", variant: "primary", onClick: onCreate }]}
+            actions={[{ label: "Create CV version", variant: "primary", onClick: () => setCreating(true) }]}
           />
 
           {/* Search, sort, count, filter */}
@@ -192,6 +227,19 @@ export function CVVersionsScreen({
           </div>
         </div>
       </Page>
+
+      {/* Create CV version — Figma Export CV revamp, "Create CV version" modal */}
+      <Modal
+        open={creating}
+        onClose={closeModal}
+        title="Create CV version"
+        width={512}
+        leftActions={[{ label: "Cancel", variant: "secondary", onClick: closeModal }]}
+        rightActions={[{ label: "Create", variant: "primary", disabled: !newName.trim(), onClick: create }]}
+      >
+        <Input label="Name" value={newName} onChange={e => setNewName(e.target.value)} />
+        <InputTextarea label="Description" rows={4} value={newDescription} onChange={e => setNewDescription(e.target.value)} />
+      </Modal>
     </div>
   );
 }

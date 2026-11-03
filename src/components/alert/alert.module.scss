@@ -124,3 +124,11 @@
     box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
   }
 }
+
+// Leading icon as a dismiss button (onDismiss)
+.dismissBtn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}

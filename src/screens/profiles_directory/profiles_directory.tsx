@@ -15,7 +15,7 @@
 //   Navbar, Tile, Divider, Icon, Button, Avatar, Checkbox, SkillProfile,
 //   InputSearch, PillSimple, WorkforceMember
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Navbar }           from "../../components/navbar/navbar";
 import { Tile }             from "../../components/tile/tile";
@@ -34,7 +34,7 @@ import { InputSearch }      from "../../components/input/input";
 const bodyBold: React.CSSProperties = { fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, color: "var(--palette-blue-0)", lineHeight: "115%" };
 const body:     React.CSSProperties = { fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 400, color: "var(--palette-blue-0)", lineHeight: "150%" };
 const labelCss: React.CSSProperties = { fontFamily: "var(--font-family)", fontSize: 12, fontWeight: 400, color: "var(--palette-blue-2)", lineHeight: "150%" };
-const linkCss:  React.CSSProperties = { fontFamily: "var(--font-family)", fontSize: 16, fontWeight: 700, color: "var(--palette-primary-0)", lineHeight: "115%" };
+const linkCss:  React.CSSProperties = { fontFamily: "var(--font-family)", fontSize: 16, fontWeight: 700, color: "var(--palette-blue-0)", lineHeight: "115%" };
 
 function Row({ children, gap = 8, style }: { children: React.ReactNode; gap?: number; style?: React.CSSProperties }) {
   return <div style={{ display: "flex", alignItems: "center", gap, ...style }}>{children}</div>;
@@ -557,6 +557,14 @@ export function ProfilesDirectoryScreen({
     (p.skillsHighlightText ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
+  // ESC closes the bulk selection
+  useEffect(() => {
+    if (selectedIds.length === 0 || exporting) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSelectedIds([]); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedIds.length, exporting]);
+
   // Bulk selection (table view) → "Export CV" opens CV Studio for the selected profiles; Close comes back here
   const selected = filtered.filter(p => selectedIds.includes(p.id));
   if (exporting && selected.length > 0) {
@@ -566,7 +574,7 @@ export function ProfilesDirectoryScreen({
       jobTitle: p.subtitle.split(",")[0],
       email: `${p.name.toLowerCase().replace(/[^a-z ]/g, "").trim().replace(/ +/g, ".")}@pf.com`,
     }));
-    return <CVStudioScreen cvs={cvs} onClose={() => setExporting(false)} />;
+    return <CVStudioScreen cvs={cvs} onClose={() => setExporting(false)} onNavigate={id => { if (id === "profiles") setExporting(false); else onNavigate?.(id); }} />;
   }
 
   return (
@@ -576,26 +584,24 @@ export function ProfilesDirectoryScreen({
       <div style={{ flex: 1, padding: "24px 24px 32px", display: "flex", flexDirection: "column" }}>
         <div style={{ maxWidth: 1600, margin: "0 auto", width: "100%", flex: 1, display: "flex", flexDirection: "column" }}>
 
-          {/* Page header */}
-          <SB style={{ marginBottom: 20 }}>
+          {/* Page header — the bulk banner appears in this row (600px); the row keeps its height so nothing shifts */}
+          <div style={{ display: "flex", alignItems: "center", gap: 24, height: 48, marginBottom: 20 }}>
             <span style={{ fontFamily: "var(--font-family)", fontSize: 32, fontWeight: 600, color: "var(--palette-blue-0)" }}>Profiles</span>
-            <Button kind="secondary" size="regular">Import</Button>
-          </SB>
-
-          {/* Bulk actions — shown while profiles are selected (table view) */}
-          {viewMode === "table" && selected.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <Alert
-                type="bulk-banner"
-                layout="inline"
-                message={`${selected.length} ${selected.length === 1 ? "profile" : "profiles"} selected`}
-                actions={[
-                  { label: "Export CV", onClick: () => setExporting(true) },
-                  { label: "Clear selection", onClick: () => setSelectedIds([]) },
-                ]}
-              />
+            {viewMode === "table" && selected.length > 0 && (
+              <div style={{ width: 600, flexShrink: 0 }}>
+                <Alert
+                  type="bulk-banner"
+                  layout="inline"
+                  message={`${selected.length} ${selected.length === 1 ? "profile" : "profiles"} selected`}
+                  actions={[{ label: `Export CV (${selected.length})`, onClick: () => setExporting(true) }]}
+                  onDismiss={() => setSelectedIds([])}
+                />
+              </div>
+            )}
+            <div style={{ marginLeft: "auto" }}>
+              <Button kind="secondary" size="regular">Import</Button>
             </div>
-          )}
+          </div>
 
           {/* Toolbar */}
           <Toolbar

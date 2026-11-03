@@ -1,0 +1,58 @@
+// Modal — overlay 60%, dialog slides in from the top
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.overlayVisible { opacity: 1; }
+
+.dialog {
+  position: relative;
+  max-width: calc(100vw - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: var(--palette-white-0);
+  border-radius: var(--radius-md);
+  box-shadow: 0 24px 64px rgba(12, 20, 87, 0.22);
+  opacity: 0;
+  transform: translateY(-32px);
+  transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dialogVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-medium);
+  color: var(--palette-blue-0);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

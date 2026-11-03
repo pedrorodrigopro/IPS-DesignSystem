@@ -26,7 +26,8 @@ import { SkillList, SkillProfile }   from "../../components/skill/skill";
 import { Input, InputSearch }          from "../../components/input/input";
 import { Header }                    from "../../components/header/header";
 import { CVStudioScreen, ZARA }      from "../cv_studio/cv_studio";
-import { CVVersionsScreen }          from "../cv_versions/cv_versions";
+import { CVVersionsScreen, INITIAL_CV_VERSIONS } from "../cv_versions/cv_versions";
+import type { CVVersion }        from "../cv_versions/cv_versions";
 import { ProfilesDirectoryScreen }   from "../profiles_directory/profiles_directory";
 import { PillSimple }                from "../../components/pill/pill";
 import { EmptyState }                from "../../components/empty_state/empty_state";
@@ -57,20 +58,32 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 //   "Open main CV"      → CV Studio            (Close → profile)
 //   "See all versions"  → CV Versions          (breadcrumb → profile)
 //   CV Versions: "Create CV version" / edit icon → CV Studio   (Close → CV Versions)
-//   Navbar "Profiles"   → Profiles Directory (table). Tick profiles → bulk banner → "Export CV" → CV Studio
+//   Create CV version  → modal (name, description) → adds the version → CV Studio
+//   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Studio
 //                         with every selected CV (Close → directory). Navbar profile item → back to My Profile
 type CVView = "profile" | "studio" | "versions" | "directory";
 
 function useCVFlow() {
   const [view, setView] = useState<CVView>("profile");
   const [studioFrom, setStudioFrom] = useState<"profile" | "versions">("profile");
+  const [versions, setVersions] = useState<CVVersion[]>(INITIAL_CV_VERSIONS);
   return {
     view,
+    versions,
+    setVersions,
     openStudio: (from: "profile" | "versions") => { setStudioFrom(from); setView("studio"); },
     openVersions: () => setView("versions"),
     openDirectory: () => setView("directory"),
     toProfile: () => setView("profile"),
     closeStudio: () => setView(studioFrom),
+  };
+}
+
+/** Navbar clicks from any screen of the flow: "Profiles" → Profiles Directory, the avatar → My Profile. */
+function navbarHandler(flow: ReturnType<typeof useCVFlow>) {
+  return (id: string) => {
+    if (id === "profiles") flow.openDirectory();
+    else if (id === "profile") flow.toProfile();
   };
 }
 
@@ -81,19 +94,22 @@ function CVFlowView({ flow, personName }: { flow: ReturnType<typeof useCVFlow>; 
       <ProfilesDirectoryScreen
         initialView="table"
         initialSort="Profile name"
-        onNavigate={id => { if (id === "profile") flow.toProfile(); }}
+        onNavigate={navbarHandler(flow)}
       />
     );
   }
   const cv = { ...ZARA, name: personName, email: `${personName.toLowerCase().replace(/ /g, ".")}@pf.com` };
-  if (flow.view === "studio") return <CVStudioScreen cvs={[cv]} onClose={flow.closeStudio} />;
+  if (flow.view === "studio") return <CVStudioScreen cvs={[cv]} onClose={flow.closeStudio} onNavigate={navbarHandler(flow)} />;
   return (
     <CVVersionsScreen
       personName={personName}
       cv={cv}
+      versions={flow.versions}
+      onVersionsChange={flow.setVersions}
       onBack={flow.toProfile}
       onCreate={() => flow.openStudio("versions")}
       onEdit={() => flow.openStudio("versions")}
+      onNavigate={navbarHandler(flow)}
     />
   );
 }
@@ -597,9 +613,9 @@ function MyProfileScreen() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
-        navbar={<Navbar activeId="profile" onSelect={id => { if (id === "profiles") flow.openDirectory(); }} />}
+        navbar={<Navbar activeId="profile" onSelect={navbarHandler(flow)} />}
         variant="profile-summary"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} />}
+        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
         rightPanel={
           <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
             <OrgDataSection />
@@ -670,9 +686,9 @@ function MyProfileNarrowScreen() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
-        navbar={<Navbar activeId="profile" onSelect={id => { if (id === "profiles") flow.openDirectory(); }} />}
+        navbar={<Navbar activeId="profile" onSelect={navbarHandler(flow)} />}
         variant="profile-regular"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} />}
+        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
           {activeNav === "additional" ? (

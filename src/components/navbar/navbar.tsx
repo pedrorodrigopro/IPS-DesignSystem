@@ -43,7 +43,7 @@ const SECTION_ITEMS: NavItem[] = [
   { id: "insights",      icon: "insights",       label: "Insights"      },
   { id: "reports",       icon: "reports",        label: "Reports"       },
   { id: "activity-feed", icon: "activity-feed",  label: "Activity Feed" },
-  { id: "profiles",      icon: "profile",        label: "Profiles"      },
+  { id: "profiles",      icon: "profiles",       label: "Profiles"      },
   { id: "booking",       icon: "booking",        label: "Booking"       },
 ];
 

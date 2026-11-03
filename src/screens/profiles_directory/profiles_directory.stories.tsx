@@ -17,7 +17,7 @@ const meta: Meta = {
           "Profiles Directory — 4 variants. " +
           "Cards: Tile interactive content per profile row, Avatar + name link + skill dots (SkillProfile) + highlighted skill/bio text. " +
           "Table: Tile highlight content, custom expandable rows — collapsed shows name/counts/Shortlist, expanded shows Skills/Bio/Positions/skill dots on neutral-2 bg. " +
-          "Table: tick profiles (or the header checkbox) and the bulk banner appears — “Export CV” opens CV Studio for the selection, Close returns here. Search highlights query matches in yellow. Toolbar has cards/table toggle using primary/icon Button kinds.",
+          "Table: tick profiles (or the header checkbox) and a 600px bulk banner appears in the title row (the row keeps its height) — “Export CV (N)” opens CV Studio for the N selected profiles, Close returns here; ESC or the banner’s cross clears the selection. Profile names use blue-0. Search highlights query matches in yellow. Toolbar has cards/table toggle using primary/icon Button kinds.",
       },
     },
   },

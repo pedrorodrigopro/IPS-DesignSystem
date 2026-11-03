@@ -391,7 +391,9 @@ function LeftModule({
 // Screen
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-export function CVStudioScreen({ cvs, initialMode = "edit", onClose }: { cvs: CV[]; initialMode?: Mode; onClose?: () => void }) {
+export function CVStudioScreen({
+  cvs, initialMode = "edit", onClose, onNavigate,
+}: { cvs: CV[]; initialMode?: Mode; onClose?: () => void; onNavigate?: (navbarId: string) => void }) {
   const multi = cvs.length > 1;
   const [data, setData] = useState(cvs);
   const [index, setIndex] = useState(0);
@@ -408,7 +410,7 @@ export function CVStudioScreen({ cvs, initialMode = "edit", onClose }: { cvs: CV
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
-      <Page navbar={<Navbar activeId={multi ? "profiles" : undefined} />} variant="fluid">
+      <Page navbar={<Navbar activeId={multi ? "profiles" : undefined} onSelect={onNavigate} />} variant="fluid">
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
 
           {/* Header row */}

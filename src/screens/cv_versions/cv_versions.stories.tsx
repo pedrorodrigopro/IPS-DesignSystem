@@ -17,7 +17,7 @@ const meta: Meta = {
       description: {
         component:
           "CV Versions — every saved version of a person's CV, as cards with a live thumbnail, template, language and last editor. " +
-          "Breadcrumbs lead back to the profile; “Create CV version” and the edit icons open CV Studio (in Screens/MyProfile). " +
+          "Breadcrumbs lead back to the profile; “Create CV version” opens a modal (name, description) and adds the new card; in Screens/MyProfile it then opens CV Studio, as do the edit icons. " +
           "Search and sort work, the switch toggles a version on or off, and the bin removes a card. " +
           "The three versions are the ones in the Figma; all use the same placeholder CV.",
       },
