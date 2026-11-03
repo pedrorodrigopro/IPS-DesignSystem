@@ -4,13 +4,14 @@
 //
 // Layout (Page variant="fluid" — edge to edge, 24px top inset):
 //   Header row      Header (page) — CV name, or "3 CVs" + names — and File type / Template selectors (InputInline)
-//   Content row     LEFT module (413px, or 389px for ProPilot) | RIGHT CV preview card
-//                   Left module is one of two modes, switched with the Navigation tabs (and "Edit content"):
-//                     Edit fields — "Translate to" Tile + Tile with Navigation (ProPilot | Edit fields) and the CV fields
-//                     ProPilot    — Tile with Header "ProPilot", conversation, PPChatInput
-//                   Right: Tile highlight — toolbar (pager for multi, Version selector, "Edit content" in ProPilot mode),
-//                          then the scrolling CV preview (photo, logo, label/value rows)
-//   Footer          Actions sticky-panel — Close | Save, Export (single) / split ButtonGroups "Save (3)", "Export (3)" (multi)
+//   Content row     LEFT module (413px) | RIGHT CV preview card
+//                   Left: "Translate to" tile (4 states) + a tile with Navigation tabs (ProPilot | Edit fields):
+//                     Edit fields — the CV fields (Input / InputTextarea)
+//                     ProPilot    — conversation + PPChatInput
+//                   Right: Tile highlight — toolbar (pager for multi, Version selector), then the scrolling
+//                          CV preview (photo, logo, label/value rows)
+//   Footer          Actions sticky-panel — Close | Save, Export (single)
+//                   multi: split buttons "Save (3)" / "Export (3)"; their chevrons open "Save current" / "Export current"
 //
 // Both columns are taller than the visible area by 24px so the footer clips them, as in Figma.
 
@@ -28,7 +29,9 @@ import { Actions }         from "../../components/actions/actions";
 import { Divider }         from "../../components/divider/divider";
 import { Icon }            from "../../components/icon/icon";
 import { Input, InputInline, InputSelect, InputTextarea } from "../../components/input/input";
-import { DropdownSelection } from "../../components/dropdown/dropdown";
+import { LoadingIcon }    from "../../components/loading/loading";
+import { DropdownActions, DropdownSelection } from "../../components/dropdown/dropdown";
+import type { DropdownItem } from "../../components/dropdown/dropdown";
 import { PPBubble }        from "../../components/pp_bubble/pp_bubble";
 import { PPChatInput }     from "../../components/pp_chat_input/pp_chat_input";
 
@@ -116,7 +119,13 @@ const MARY: CV = {
 };
 
 const FILE_TYPES  = [{ id: ".pdf", label: ".pdf" }, { id: ".docx", label: ".docx" }];
-const TEMPLATES   = [{ id: "PF_template_1", label: "PF_template_1" }, { id: "PF_template_2", label: "PF_template_2" }];
+// Each template shows the language it is written in as a second line (Dropdown subLabel)
+const TEMPLATES: DropdownItem[] = [
+  { id: "PF_template_1", label: "PF_template_1", subLabel: "English" },
+  { id: "PF_template_2", label: "PF_template_2", subLabel: "Polish" },
+  { id: "PF_template_3", label: "PF_template_3", subLabel: "English" },
+  { id: "PF_template_4", label: "PF_template_4", subLabel: "Spanish" },
+];
 const VERSIONS    = [{ id: "V1, English Banking", label: "V1, English Banking" }, { id: "V2, English Consulting", label: "V2, English Consulting" }];
 const TRANSLATE   = ["Dutch", "English", "Finnish", "French", "German", "Spanish"].map(l => ({ id: l, label: l }));
 
@@ -133,7 +142,7 @@ const bodyBold: React.CSSProperties = { ...body, fontWeight: 700 };
 function SelectMenu({
   items, selectedId, onSelect, align = "left", children,
 }: {
-  items: { id: string; label: string }[];
+  items: DropdownItem[];
   selectedId: string;
   onSelect: (id: string) => void;
   align?: "left" | "right";
@@ -146,8 +155,28 @@ function SelectMenu({
       {open && (
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 20 }} onClick={() => setOpen(false)} />
-          <div style={{ position: "absolute", top: "100%", [align]: 0, zIndex: 21, marginTop: 4 }}>
+          <div style={{ position: "absolute", top: "100%", [align]: 0, zIndex: 21, marginTop: 4, minWidth: "100%" }}>
             <DropdownSelection items={items} selectedId={selectedId} onSelect={id => { onSelect(id); setOpen(false); }} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Split button (ButtonGroup) whose chevron opens an actions menu above it (the footer is at the bottom of the screen). */
+function SplitButton({
+  label, variant, items,
+}: { label: string; variant: "primary" | "secondary"; items: DropdownItem[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <ButtonGroup label={label} variant={variant} onDropdownClick={() => setOpen(o => !o)} />
+      {open && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 100 }} onClick={() => setOpen(false)} />
+          <div style={{ position: "absolute", bottom: "100%", right: 0, zIndex: 101, marginBottom: 4, minWidth: "100%" }}>
+            <DropdownActions items={items} onSelect={() => setOpen(false)} />
           </div>
         </>
       )}
@@ -201,7 +230,7 @@ function CVPreview({ cv }: { cv: CV }) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Left module — Edit fields | ProPilot
+// Left module — Translate tile + tabs (ProPilot | Edit fields)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 type Mode = "edit" | "propilot";
@@ -211,75 +240,150 @@ const MODE_TABS = [
   { id: "edit",     label: "Edit fields" },
 ];
 
-function EditFieldsModule({
-  cv, onChange, count, mode, onModeChange,
-}: { cv: CV; onChange: (k: FieldKey, v: string) => void; count: number; mode: Mode; onModeChange: (m: Mode) => void }) {
-  const [language, setLanguage] = useState("");
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, width: 413, flexShrink: 0, height: "calc(100% + 24px)" }}>
-      {/* Translate to */}
-      <Tile tileStyle="highlight" padding="panel">
-        <div style={{ padding: 4 }}>
-        <SelectMenu items={TRANSLATE} selectedId={language} onSelect={setLanguage}>
+// ── Translate to — four states (Figma "Export translation") ───────────────────
+//   idle        label + empty select
+//   selected    select shows the language; "Review before translating" + primary "Translate now"
+//   translating centred loader + "N% translated"
+//   done        "Translated to" + language; "Review translation before export" + link "Reset"
+
+type TranslateState =
+  | { status: "idle" }
+  | { status: "selected"; language: string }
+  | { status: "translating"; language: string; progress: number }
+  | { status: "done"; language: string };
+
+const labelText: React.CSSProperties = {
+  fontFamily: "var(--font-family)", fontSize: "var(--font-size-label)", fontWeight: 400, color: "var(--palette-blue-0)", lineHeight: "150%",
+};
+
+function TranslateTile({ count }: { count: number }) {
+  const [state, setState] = useState<TranslateState>({ status: "idle" });
+  const many = count > 1;
+
+  // Simulated progress: 25 → 50 → 75 → 100 %, then done
+  useEffect(() => {
+    if (state.status !== "translating") return;
+    const t = setTimeout(() => {
+      setState(s => s.status !== "translating" ? s
+        : s.progress >= 100 ? { status: "done", language: s.language }
+        : { ...s, progress: s.progress + 25 });
+    }, 700);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  const note = (icon: "warning" | "check", color: string, text: string) => (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 4, minHeight: 18 }}>
+      <Icon name={icon} size={16} style={{ color, flexShrink: 0 }} />
+      <span style={labelText}>{text}</span>
+    </div>
+  );
+
+  let content: React.ReactNode;
+  if (state.status === "translating") {
+    content = (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 58 }}>
+        <LoadingIcon />
+        <span style={{ ...labelText, fontSize: "var(--font-size-body)" }}>{state.progress}% translated</span>
+      </div>
+    );
+  } else if (state.status === "done") {
+    content = (
+      <div style={{ display: "flex", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 110, flexShrink: 0 }}>
+          <span style={labelText}>{many ? `Translated ${count} CVs to` : "Translated to"}</span>
+          <span style={{ ...bodyBold, lineHeight: "32px" }}>{state.language}</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+          {note("check", "var(--palette-green-0)", "Review translation before export")}
+          <div style={{ display: "flex", alignItems: "center", height: 32 }}>
+            <Button kind="link" size="regular" onClick={() => setState({ status: "idle" })}>
+              <Icon name="history" size={16} />Reset
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  } else {
+    const language = state.status === "selected" ? state.language : "";
+    content = (
+      <div style={{ display: "flex", gap: 16 }}>
+        <SelectMenu items={TRANSLATE} selectedId={language} onSelect={l => setState({ status: "selected", language: l })}>
           {toggle => (
             <div style={{ width: 190 }}>
-              <InputSelect
-                label={count > 1 ? `Translate ${count} CVs to` : "Translate to"}
-                value={language}
-                onClick={toggle}
-              />
+              <InputSelect label={many ? `Translate ${count} CVs to` : "Translate to"} value={language} onClick={toggle} />
             </div>
           )}
         </SelectMenu>
-        </div>
-      </Tile>
+        {state.status === "selected" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+            {note("warning", "var(--palette-orange-1)", "Review before translating")}
+            <div>
+              <Button kind="primary" size="regular" onClick={() => setState({ status: "translating", language: state.language, progress: 25 })}>
+                Translate now
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
-      {/* Tabs + fields */}
+  return (
+    <Tile tileStyle="highlight" padding="panel">
+      <div style={{ padding: 4 }}>{content}</div>
+    </Tile>
+  );
+}
+
+function LeftModule({
+  cv, onChange, count, mode, onModeChange,
+}: { cv: CV; onChange: (k: FieldKey, v: string) => void; count: number; mode: Mode; onModeChange: (m: Mode) => void }) {
+  const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState<string[]>([]);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, width: 413, flexShrink: 0, height: "calc(100% + 24px)" }}>
+      <TranslateTile count={count} />
+
+      {/* Tabs + content */}
       <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, minHeight: 0 }}>
         <div style={{ padding: "0 8px" }}>
           <Navigation orientation="horizontal" tabs={MODE_TABS} activeId={mode} onChange={id => onModeChange(id as Mode)} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", flex: 1, minHeight: 0, padding: "0 8px 24px" }}>
-          {FIELDS.map(f =>
-            f.multiline ? (
-              <InputTextarea key={f.key} label={f.label} rows={7} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />
-            ) : (
-              <Input key={f.key} label={f.label} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />
-            )
-          )}
-        </div>
+
+        {mode === "edit" ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", flex: 1, minHeight: 0, padding: "0 8px 24px" }}>
+            {FIELDS.map(f =>
+              f.multiline ? (
+                <InputTextarea key={f.key} label={f.label} rows={7} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />
+              ) : (
+                <Input key={f.key} label={f.label} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />
+              )
+            )}
+          </div>
+        ) : (
+          <>
+            <div style={{ padding: "0 8px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+              <Tile
+                tileStyle="object-light"
+                padding="content"
+                style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 8 }}
+              >
+                {messages.map((m, i) => (
+                  <div key={i} style={{ alignSelf: "flex-end", maxWidth: "100%" }}><PPBubble variant="light">{m}</PPBubble></div>
+                ))}
+              </Tile>
+            </div>
+            <div style={{ padding: "0 8px 24px" }}>
+              <PPChatInput
+                value={draft}
+                onChange={setDraft}
+                onSend={text => { setMessages(ms => [...ms, text]); setDraft(""); }}
+              />
+            </div>
+          </>
+        )}
       </Tile>
     </div>
-  );
-}
-
-function ProPilotModule() {
-  const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState<string[]>([]);
-  return (
-    <Tile
-      tileStyle="highlight"
-      padding="content"
-      style={{ display: "flex", flexDirection: "column", gap: 16, width: 389, flexShrink: 0, height: "calc(100% + 24px)" }}
-    >
-      <div style={{ padding: "0 8px" }}><Header size="content" title="ProPilot" /></div>
-      <Tile
-        tileStyle="object-light"
-        padding="content"
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 8 }}
-      >
-        {messages.map((m, i) => (
-          <div key={i} style={{ alignSelf: "flex-end", maxWidth: "100%" }}><PPBubble variant="light">{m}</PPBubble></div>
-        ))}
-      </Tile>
-      <div style={{ padding: "0 8px 24px" }}>
-        <PPChatInput
-          value={draft}
-          onChange={setDraft}
-          onSend={text => { setMessages(ms => [...ms, text]); setDraft(""); }}
-        />
-      </div>
-    </Tile>
   );
 }
 
@@ -328,11 +432,7 @@ function CVStudioScreen({ cvs, initialMode }: { cvs: CV[]; initialMode: Mode }) 
 
           {/* Content row */}
           <div style={{ display: "flex", gap: 16, padding: "16px 24px 0", flex: 1, minHeight: 0, overflow: "hidden", alignItems: "flex-start" }}>
-            {mode === "edit" ? (
-              <EditFieldsModule cv={cv} onChange={edit} count={cvs.length} mode={mode} onModeChange={setMode} />
-            ) : (
-              <ProPilotModule />
-            )}
+            <LeftModule cv={cv} onChange={edit} count={cvs.length} mode={mode} onModeChange={setMode} />
 
             {/* CV preview card */}
             <Tile
@@ -358,11 +458,6 @@ function CVStudioScreen({ cvs, initialMode }: { cvs: CV[]; initialMode: Mode }) 
                   <SelectMenu items={VERSIONS} selectedId={version} onSelect={setVersion} align="right">
                     {toggle => <InputInline inlineLabel="Version" value={version} onClick={toggle} />}
                   </SelectMenu>
-                  {mode === "propilot" && (
-                    <Button kind="secondary" size="regular" onClick={() => setMode("edit")}>
-                      <Icon name="edit" size={16} />Edit content
-                    </Button>
-                  )}
                 </div>
               </div>
               <Divider orientation="horizontal" style={{ margin: "0 -16px" }} />
@@ -380,8 +475,8 @@ function CVStudioScreen({ cvs, initialMode }: { cvs: CV[]; initialMode: Mode }) 
             rightContent={
               multi ? (
                 <>
-                  <ButtonGroup label={`Save (${cvs.length})`} variant="secondary" />
-                  <ButtonGroup label={`Export (${cvs.length})`} variant="primary" />
+                  <SplitButton label={`Save (${cvs.length})`} variant="secondary" items={[{ id: "save-current", label: "Save current" }]} />
+                  <SplitButton label={`Export (${cvs.length})`} variant="primary" items={[{ id: "export-current", label: "Export current" }]} />
                 </>
               ) : undefined
             }
@@ -408,8 +503,8 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          "CV Studio — preview, edit and export CVs. Two export variants (single CV, multiple CVs) and two modes for the left module " +
-          "(Edit fields, ProPilot), switched with the tabs or the “Edit content” button. " +
+          "CV Studio — preview, edit and export CVs. Two export variants (single CV, multiple CVs); the left module has two tabs " +
+          "(ProPilot, Edit fields) under a Translate tile that goes through four states (pick a language, Translate now, progress, Reset). " +
           "Uses Page variant=\"fluid\", Header, InputInline selectors, Tile, Navigation, Input / InputTextarea, PPChatInput, " +
           "ButtonGroup and Actions sticky-panel. Edits in the fields update the preview live. " +
           "Names, bio and details of John Smith and Mary Lee are placeholders.",
@@ -429,18 +524,18 @@ export const SingleExport: Story = {
 
 export const SingleExportProPilot: Story = {
   name: "Single export — ProPilot",
-  parameters: { docs: { description: { story: "One CV, left module in ProPilot mode. “Edit content” returns to Edit fields." } } },
+  parameters: { docs: { description: { story: "One CV, ProPilot tab active." } } },
   render: () => <CVStudioScreen cvs={[ZARA]} initialMode="propilot" />,
 };
 
 export const MultiExport: Story = {
   name: "Multi export",
-  parameters: { docs: { description: { story: "Three CVs (Figma 653:37833): “3 CVs” title with names, pager, “Translate 3 CVs to”, split Save (3) / Export (3)." } } },
+  parameters: { docs: { description: { story: "Three CVs (Figma 653:37833): “3 CVs” title with names, pager, “Translate 3 CVs to”, split Save (3) / Export (3) with “Save current” / “Export current” menus." } } },
   render: () => <CVStudioScreen cvs={[ZARA, JOHN, MARY]} initialMode="edit" />,
 };
 
 export const MultiExportProPilot: Story = {
   name: "Multi export — ProPilot",
-  parameters: { docs: { description: { story: "Three CVs, left module in ProPilot mode (Figma 1440:36072)." } } },
+  parameters: { docs: { description: { story: "Three CVs, ProPilot tab active (Figma 1440:36072)." } } },
   render: () => <CVStudioScreen cvs={[ZARA, JOHN, MARY]} initialMode="propilot" />,
 };

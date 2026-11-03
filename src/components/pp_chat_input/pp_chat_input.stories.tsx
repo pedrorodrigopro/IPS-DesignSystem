@@ -1,4 +1,4 @@
-// PPChatInput stories — ProPilot chat input row (avatar + input with mic, waveform, send)
+// PPChatInput stories — ProPilot chat input row (avatar + input + send)
 
 import { useState } from "react";
 import type { Meta, StoryFn } from "@storybook/react";

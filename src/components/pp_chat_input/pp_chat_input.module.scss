@@ -76,7 +76,6 @@
   }
 }
 
-.iconBtn,
 .sendBtn {
   flex-shrink: 0;
   display: flex;
@@ -87,13 +86,6 @@
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-}
-
-.iconBtn {
-  background: transparent;
-  color: var(--palette-blue-0);
-
-  &:hover { background-color: var(--palette-trans-0); }
 }
 
 .sendBtn {

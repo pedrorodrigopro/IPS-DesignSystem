@@ -1,10 +1,10 @@
 // PPChatInput — ProPilot chat input row
-// Figma: Export CV revamp, node 1440:36113 (row) — ProPilot avatar button + .PP-input
+// Figma: Export CV revamp, node 1440:36113 (row; mic and waveform were removed in 1440:36072) — ProPilot avatar button + .PP-input
 //
 // Layout: row, gap 16px, align center
 //   Avatar  — 50px circle, dark gradient (#0D2976 → #000), white ProPilot icon, soft cyan glow
 //   Input   — row, gap 8px, padding 8px, 1px #CFDAF7, radius 8px, white
-//             [text input "Ask ProPilot"] [mic] [waveform] [send — 30px primary square]
+//             [text input "Ask ProPilot"] [send — 30px primary square]
 //   Glow    — blurred cyan ellipses behind the input (static; motion is up to the consumer)
 
 import React from "react";
@@ -18,10 +18,6 @@ export type PPChatInputProps = {
   onChange?: (value: string) => void;
   /** Called with the text when the send button is clicked or Enter is pressed */
   onSend?: (value: string) => void;
-  /** Called when the mic (dictate) button is clicked */
-  onDictate?: () => void;
-  /** Called when the waveform (voice mode) button is clicked */
-  onVoice?: () => void;
   className?: string;
 };
 
@@ -35,26 +31,11 @@ const ProPilotMark = () => (
   </svg>
 );
 
-const MicIcon = () => (
-  <svg width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" fill="currentColor" />
-    <path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-const WaveformIcon = () => (
-  <svg width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M2 6.5v3M5 4v8M8 1.5v13M11 4v8M14 6.5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
 export function PPChatInput({
   value = "",
   placeholder = "Ask ProPilot",
   onChange,
   onSend,
-  onDictate,
-  onVoice,
   className,
 }: PPChatInputProps) {
   const send = () => { if (value.trim()) onSend?.(value); };
@@ -74,8 +55,6 @@ export function PPChatInput({
             onChange={e => onChange?.(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") send(); }}
           />
-          <button type="button" className={css.iconBtn} title="Dictate" onClick={onDictate}><MicIcon /></button>
-          <button type="button" className={css.iconBtn} title="Voice mode" onClick={onVoice}><WaveformIcon /></button>
           <button type="button" className={css.sendBtn} title="Send" onClick={send}>
             <Icon name="paper-plane" size={16} />
           </button>
