@@ -28,6 +28,7 @@ import { Alert }            from "../../components/alert/alert";
 import { CVStudioScreen, ZARA } from "../cv_studio/cv_studio";
 import { SkillProfile }     from "../../components/skill/skill";
 import { InputSearch }      from "../../components/input/input";
+import { Pagination }       from "../../components/pagination/pagination";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -190,17 +191,38 @@ const PROFILES_SEARCH: ProfileEntry[] = [
   },
 ];
 
+// 30 fictional people (first + last name), alphabetical like the "Profile name" sort; shown 10 per page
 const PROFILES_BROWSE: ProfileEntry[] = [
-  { id: "b1",  name: "A. I Poane",                    initials: "AI", avatarBg: "var(--palette-primary-0)",   subtitle: "Accounting, QA, 02-09-1970, English, French, Italian, Spanish, Central and Eastern Europe, Mid", coreSkills: 1,  otherSkills: 165, skills: [{ label: "Ruby (Programming Language)", proficiency: "intermediate" }] },
-  { id: "b2",  name: "AAAa Poane",                    initials: "AP",                                          subtitle: "Finance, English, Spanish, Lead",                                          coreSkills: 5,  otherSkills: 120, skills: [{ label: "Assets Recovery", proficiency: "intermediate" }] },
-  { id: "b3",  name: "Aalex (New) Poane",             initials: "AP", avatarBg: "#9A60B4",                    subtitle: "QA Lead, President",                                                       coreSkills: 0,  otherSkills: 6,   skills: [{ label: "Java", proficiency: "basic" }] },
-  { id: "b4",  name: "Adrian Stoica",                 initials: "AS", avatarBg: "#40798C",                    subtitle: "Software Engineer, Analyst",                                               coreSkills: 0,  otherSkills: 2,   skills: [{ label: "Ruby (Programming Language)", proficiency: "intermediate" }] },
-  { id: "b5",  name: "Aide Lowe test",                initials: "AL",                                          subtitle: "High Net Worth (HNW) Compliance Return Preparer, Consultant",               coreSkills: 0,  otherSkills: 19,  skills: [{ label: "A Level", proficiency: "intermediate" }] },
-  { id: "b6",  name: "Alessandro",                    initials: "A",  avatarBg: "var(--palette-primary-0)",   subtitle: "QA Engineer, English",                                                     coreSkills: 0,  otherSkills: 127, skills: [{ label: "AWS Certification", proficiency: "intermediate" }] },
-  { id: "b7",  name: "Alessandro Clayton",            initials: "AC", avatarBg: "var(--palette-blue-3)",      subtitle: "QA, English",                                                              coreSkills: 0,  otherSkills: 127, skills: [{ label: "AWS Certification", proficiency: "intermediate" }] },
-  { id: "b8",  name: "Alex (empty PG) Poane",         initials: "AP", avatarBg: "#9A60B4",                    subtitle: "Senior Implementation Consultant",                                         coreSkills: 0,  otherSkills: 0,   skills: [] },
-  { id: "b9",  name: "Alex Jane Doe",                 initials: "AD", avatarBg: "var(--palette-blue-3)",      subtitle: "QA Engineer",                                                              coreSkills: 0,  otherSkills: 146, skills: [{ label: "Accounting", proficiency: "intermediate" }] },
-  { id: "b10", name: "Alexandra Danish",              initials: "AD", avatarBg: "var(--palette-blue-3)",      subtitle: "Sales Intern",                                                             coreSkills: 0,  otherSkills: 54,  skills: [] },
+  { id: "b1", name: "Aisha Rahman", initials: "AR", subtitle: "Senior Accountant, English, Urdu, Senior", coreSkills: 0, otherSkills: 40, skills: [{ label: "Financial Reporting", proficiency: "basic", core: true }, { label: "Budgeting and Forecasting", proficiency: "intermediate" }, { label: "IFRS", proficiency: "advanced" }] },
+  { id: "b2", name: "Amelie Dubois", initials: "AD", subtitle: "UX Designer, English, French, Mid", coreSkills: 0, otherSkills: 77, skills: [{ label: "Interaction Design", proficiency: "advanced" }, { label: "Figma", proficiency: "basic" }, { label: "Design Systems", proficiency: "intermediate" }] },
+  { id: "b3", name: "Chloe Nakamura", initials: "CN", subtitle: "QA Engineer, English, Japanese, Mid", coreSkills: 0, otherSkills: 114, skills: [{ label: "Cypress", proficiency: "intermediate" }, { label: "Test Planning", proficiency: "advanced" }, { label: "Bug Triage", proficiency: "basic" }] },
+  { id: "b4", name: "Daniel Kowalski", initials: "DK", subtitle: "Software Engineer, English, Polish, Senior", coreSkills: 3, otherSkills: 151, skills: [{ label: "AWS", proficiency: "basic", core: true }, { label: "System Design", proficiency: "intermediate" }, { label: "Kubernetes", proficiency: "advanced" }] },
+  { id: "b5", name: "Elena Popescu", initials: "EP", subtitle: "Project Manager, English, Romanian, Lead", coreSkills: 0, otherSkills: 188, skills: [{ label: "Roadmapping", proficiency: "advanced" }, { label: "Project Management", proficiency: "basic" }, { label: "Agile Practices", proficiency: "intermediate" }] },
+  { id: "b6", name: "Emma Fischer", initials: "EF", subtitle: "Data Analyst, English, German, Mid", coreSkills: 0, otherSkills: 55, skills: [{ label: "SQL", proficiency: "intermediate" }, { label: "Python", proficiency: "advanced" }, { label: "Data Modelling", proficiency: "basic" }] },
+  { id: "b7", name: "Ethan Walsh", initials: "EW", subtitle: "Sales Manager, English, Lead", coreSkills: 0, otherSkills: 92, skills: [{ label: "Negotiation", proficiency: "basic", core: true }, { label: "Pipeline Management", proficiency: "intermediate" }, { label: "CRM", proficiency: "advanced" }] },
+  { id: "b8", name: "Fatima Zahra", initials: "FZ", subtitle: "Compliance Officer, English, Arabic, French, Senior", coreSkills: 0, otherSkills: 129, skills: [{ label: "Data Protection", proficiency: "advanced" }, { label: "Policy Drafting", proficiency: "basic" }, { label: "Risk Management", proficiency: "intermediate" }] },
+  { id: "b9", name: "Grace Thompson", initials: "GT", subtitle: "HR Business Partner, English, Senior", coreSkills: 0, otherSkills: 166, skills: [{ label: "Onboarding", proficiency: "intermediate" }, { label: "Performance Management", proficiency: "advanced" }, { label: "Talent Acquisition", proficiency: "basic" }] },
+  { id: "b10", name: "Hannah Lindqvist", initials: "HL", subtitle: "Financial Analyst, English, Swedish, Junior", coreSkills: 3, otherSkills: 203, skills: [{ label: "Risk Management", proficiency: "basic", core: true }, { label: "Financial Reporting", proficiency: "intermediate" }, { label: "Budgeting and Forecasting", proficiency: "advanced" }] },
+  { id: "b11", name: "Hugo Santos", initials: "HS", subtitle: "DevOps Engineer, English, Portuguese, Senior", coreSkills: 0, otherSkills: 70, skills: [{ label: "AWS", proficiency: "advanced" }, { label: "System Design", proficiency: "basic" }, { label: "Kubernetes", proficiency: "intermediate" }] },
+  { id: "b12", name: "Isabella Rossi", initials: "IR", subtitle: "Business Analyst, English, Italian, Mid", coreSkills: 0, otherSkills: 107, skills: [{ label: "Agile Practices", proficiency: "intermediate" }, { label: "Stakeholder Management", proficiency: "advanced" }, { label: "PRINCE2", proficiency: "basic" }] },
+  { id: "b13", name: "Jonas Berg", initials: "JB", subtitle: "Solutions Architect, English, Norwegian, German, Principal", coreSkills: 0, otherSkills: 144, skills: [{ label: "Kubernetes", proficiency: "basic", core: true }, { label: "PostgreSQL", proficiency: "intermediate" }, { label: "TypeScript", proficiency: "advanced" }] },
+  { id: "b14", name: "Kofi Mensah", initials: "KM", subtitle: "Consultant, English, Twi, Mid", coreSkills: 0, otherSkills: 181, skills: [{ label: "Business Cases", proficiency: "advanced" }, { label: "Change Management", proficiency: "basic" }, { label: "Stakeholder Management", proficiency: "intermediate" }] },
+  { id: "b15", name: "Layla Haddad", initials: "LH", subtitle: "Product Designer, English, Arabic, Senior", coreSkills: 0, otherSkills: 48, skills: [{ label: "Prototyping", proficiency: "intermediate" }, { label: "User Research", proficiency: "advanced" }, { label: "Interaction Design", proficiency: "basic" }] },
+  { id: "b16", name: "Liam Brennan", initials: "LB", subtitle: "Account Executive, English, Mid", coreSkills: 3, otherSkills: 85, skills: [{ label: "Account Management", proficiency: "basic", core: true }, { label: "Negotiation", proficiency: "intermediate" }, { label: "Pipeline Management", proficiency: "advanced" }] },
+  { id: "b17", name: "Lucas Moreau", initials: "LM", subtitle: "Data Engineer, English, French, Senior", coreSkills: 0, otherSkills: 122, skills: [{ label: "Python", proficiency: "advanced" }, { label: "Data Modelling", proficiency: "basic" }, { label: "Dashboards", proficiency: "intermediate" }] },
+  { id: "b18", name: "Mateo Alvarez", initials: "MA", subtitle: "QA Lead, English, Spanish, Lead", coreSkills: 0, otherSkills: 159, skills: [{ label: "Cypress", proficiency: "intermediate" }, { label: "Test Planning", proficiency: "advanced" }, { label: "Bug Triage", proficiency: "basic" }] },
+  { id: "b19", name: "Maya Okonkwo", initials: "MO", subtitle: "Engagement Manager, English, Igbo, Lead", coreSkills: 0, otherSkills: 196, skills: [{ label: "Business Cases", proficiency: "basic", core: true }, { label: "Change Management", proficiency: "intermediate" }, { label: "Stakeholder Management", proficiency: "advanced" }] },
+  { id: "b20", name: "Mikhail Petrov", initials: "MP", subtitle: "Backend Developer, English, Russian, Mid", coreSkills: 0, otherSkills: 63, skills: [{ label: "Kubernetes", proficiency: "advanced" }, { label: "PostgreSQL", proficiency: "basic" }, { label: "TypeScript", proficiency: "intermediate" }] },
+  { id: "b21", name: "Noah Ivanov", initials: "NI", subtitle: "Risk Analyst, English, Bulgarian, Mid", coreSkills: 0, otherSkills: 100, skills: [{ label: "Financial Reporting", proficiency: "intermediate" }, { label: "Budgeting and Forecasting", proficiency: "advanced" }, { label: "IFRS", proficiency: "basic" }] },
+  { id: "b22", name: "Nora Johansson", initials: "NJ", subtitle: "Legal Counsel, English, Swedish, Senior", coreSkills: 3, otherSkills: 137, skills: [{ label: "Contract Review", proficiency: "basic", core: true }, { label: "Data Protection", proficiency: "intermediate" }, { label: "Policy Drafting", proficiency: "advanced" }] },
+  { id: "b23", name: "Oscar Andersson", initials: "OA", subtitle: "Scrum Master, English, Swedish, Mid", coreSkills: 0, otherSkills: 174, skills: [{ label: "Stakeholder Management", proficiency: "advanced" }, { label: "PRINCE2", proficiency: "basic" }, { label: "Roadmapping", proficiency: "intermediate" }] },
+  { id: "b24", name: "Priya Nair", initials: "PN", subtitle: "Data Scientist, English, Hindi, Malayalam, Senior", coreSkills: 0, otherSkills: 41, skills: [{ label: "Dashboards", proficiency: "intermediate" }, { label: "Machine Learning", proficiency: "advanced" }, { label: "SQL", proficiency: "basic" }] },
+  { id: "b25", name: "Ravi Patel", initials: "RP", subtitle: "Frontend Developer, English, Gujarati, Mid", coreSkills: 0, otherSkills: 78, skills: [{ label: "AWS", proficiency: "basic", core: true }, { label: "System Design", proficiency: "intermediate" }, { label: "Kubernetes", proficiency: "advanced" }] },
+  { id: "b26", name: "Samuel Adeyemi", initials: "SA", subtitle: "Sales Intern, English, Yoruba, Intern", coreSkills: 0, otherSkills: 115, skills: [{ label: "Account Management", proficiency: "advanced" }, { label: "Negotiation", proficiency: "basic" }, { label: "Pipeline Management", proficiency: "intermediate" }] },
+  { id: "b27", name: "Sofia Marchetti", initials: "SM", subtitle: "Talent Acquisition Lead, English, Italian, Lead", coreSkills: 0, otherSkills: 152, skills: [{ label: "Employee Relations", proficiency: "intermediate" }, { label: "Workforce Planning", proficiency: "advanced" }, { label: "Onboarding", proficiency: "basic" }] },
+  { id: "b28", name: "Tomas Novak", initials: "TN", subtitle: "Test Automation Engineer, English, Czech, Senior", coreSkills: 3, otherSkills: 189, skills: [{ label: "Cypress", proficiency: "basic", core: true }, { label: "Test Planning", proficiency: "intermediate" }, { label: "Bug Triage", proficiency: "advanced" }] },
+  { id: "b29", name: "Yuki Tanaka", initials: "YT", subtitle: "Management Consultant, English, Japanese, Senior", coreSkills: 0, otherSkills: 56, skills: [{ label: "Business Cases", proficiency: "advanced" }, { label: "Change Management", proficiency: "basic" }, { label: "Stakeholder Management", proficiency: "intermediate" }] },
+  { id: "b30", name: "Zainab Hussein", initials: "ZH", subtitle: "Finance Manager, English, Somali, Arabic, Lead", coreSkills: 0, otherSkills: 93, skills: [{ label: "Risk Management", proficiency: "intermediate" }, { label: "Financial Reporting", proficiency: "advanced" }, { label: "Budgeting and Forecasting", proficiency: "basic" }] },
 ];
 
 // ── Toolbar ───────────────────────────────────────────────────────────────────
@@ -526,6 +548,8 @@ function ProfileTable({
   );
 }
 
+const PAGE_SIZE = 10;
+
 // ── Full screens ──────────────────────────────────────────────────────────────
 
 export function ProfilesDirectoryScreen({
@@ -544,10 +568,11 @@ export function ProfilesDirectoryScreen({
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [page, setPage]     = useState(1);
   const sort = initialSort;
 
   const profiles = search.trim() ? PROFILES_SEARCH : PROFILES_BROWSE;
-  const count    = search.trim() ? 145 : 274;
+  const count    = search.trim() ? 145 : PROFILES_BROWSE.length;
   const unit     = search.trim() ? "profiles" : "profiles";
 
   const filtered = profiles.filter(p =>
@@ -556,6 +581,11 @@ export function ProfilesDirectoryScreen({
     p.subtitle.toLowerCase().includes(search.toLowerCase()) ||
     (p.skillsHighlightText ?? "").toLowerCase().includes(search.toLowerCase())
   );
+
+  // Pagination — PAGE_SIZE rows per page; the bulk selection survives page changes
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const current   = Math.min(page, pageCount);
+  const pageItems = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
   // ESC closes the bulk selection
   useEffect(() => {
@@ -606,7 +636,7 @@ export function ProfilesDirectoryScreen({
           {/* Toolbar */}
           <Toolbar
             search={search}
-            onSearch={setSearch}
+            onSearch={v => { setSearch(v); setPage(1); }}
             sort={sort}
             count={count}
             unit={unit}
@@ -617,19 +647,26 @@ export function ProfilesDirectoryScreen({
           {/* Results */}
           {viewMode === "cards" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filtered.map(p => (
+              {pageItems.map(p => (
                 <ProfileCard key={p.id} profile={p} query={search} />
               ))}
             </div>
           ) : (
             <ProfileTable
-              profiles={filtered}
+              profiles={pageItems}
               query={search}
               defaultExpanded={!!search.trim()}
               selectedIds={selectedIds}
               onToggle={(id, checked) => setSelectedIds(ids => (checked ? [...ids, id] : ids.filter(x => x !== id)))}
-              onToggleAll={checked => setSelectedIds(checked ? filtered.map(p => p.id) : [])}
+              onToggleAll={checked => setSelectedIds(ids => { const rest = ids.filter(id => !pageItems.some(p => p.id === id)); return checked ? [...rest, ...pageItems.map(p => p.id)] : rest; })}
             />
+          )}
+
+          {/* Pagination — only when there is more than one page */}
+          {pageCount > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+              <Pagination total={pageCount} current={current} onChange={setPage} />
+            </div>
           )}
 
         </div>
