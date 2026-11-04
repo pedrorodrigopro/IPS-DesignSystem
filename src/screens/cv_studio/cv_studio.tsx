@@ -15,7 +15,7 @@
 //
 // Both columns are taller than the visible area by 24px so the footer clips them, as in Figma.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Navbar }          from "../../components/navbar/navbar";
 import { Page }            from "../../components/layout/layout";
@@ -33,6 +33,11 @@ import { DropdownActions, DropdownSelection } from "../../components/dropdown/dr
 import type { DropdownItem } from "../../components/dropdown/dropdown";
 import { PPBubble }        from "../../components/pp_bubble/pp_bubble";
 import { PPChatInput }     from "../../components/pp_chat_input/pp_chat_input";
+import { PPSuggestionCard } from "../../components/pp_suggestion_card/pp_suggestion_card";
+import type { PPSuggestionCardState } from "../../components/pp_suggestion_card/pp_suggestion_card";
+import { PPPreviewBanner } from "../../components/pp_preview_banner/pp_preview_banner";
+import { adaptCV, industryName, isIndustryMessage } from "./propilot_industry";
+import type { IndustryFields } from "./propilot_industry";
 
 import cvPhoto  from "./assets/cv-photo.jpg";
 import PFLogo   from "./assets/profinda-logo.svg";
@@ -187,25 +192,38 @@ function SplitButton({
 // CV preview (right) — label / value rows. Values come from the edited CV.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-function PreviewRow({ label, children }: { label: string; children: React.ReactNode }) {
+// ProPilot preview stroke: white fill + 2px banner-gradient border (same technique as booking_pill "preview").
+// Highlighted rows use 6px padding + 2px border = 8px, so nothing shifts when the stroke appears.
+const PP_STROKE: React.CSSProperties = {
+  backgroundColor: "transparent",
+  backgroundImage:
+    "linear-gradient(white, white), linear-gradient(138deg, rgba(10, 16, 72, 1) 0%, rgba(64, 58, 157, 1) 28%, rgba(13, 75, 176, 1) 61%, rgba(24, 39, 174, 1) 96%)",
+  backgroundOrigin: "padding-box, border-box",
+  backgroundClip: "padding-box, border-box",
+  border: "2px solid transparent",
+  borderRadius: 8,
+};
+
+function PreviewRow({ label, children, highlight }: { label: string; children: React.ReactNode; highlight?: boolean }) {
   return (
-    <div style={{ display: "flex", gap: 10, padding: 8, flex: 1, minWidth: 0 }}>
+    <div style={{ display: "flex", gap: 10, padding: highlight ? 6 : 8, flex: 1, minWidth: 0, ...(highlight ? PP_STROKE : null) }}>
       <span style={{ ...body, width: 93, flexShrink: 0, lineHeight: "32px" }}>{label}</span>
       <span style={{ ...bodyBold, minWidth: 0, overflowWrap: "anywhere", padding: "5.5px 0" }}>{children}</span>
     </div>
   );
 }
 
-function PreviewPair({ left, right, cv }: { left: [string, FieldKey]; right: [string, FieldKey]; cv: CV }) {
+function PreviewPair({ left, right, cv, highlight }: { left: [string, FieldKey]; right: [string, FieldKey]; cv: CV; highlight?: FieldKey[] }) {
   return (
     <div style={{ display: "flex", gap: 8, padding: "0 4px" }}>
-      <PreviewRow label={left[0]}>{cv[left[1]]}</PreviewRow>
-      <PreviewRow label={right[0]}>{cv[right[1]]}</PreviewRow>
+      <PreviewRow label={left[0]} highlight={highlight?.includes(left[1])}>{cv[left[1]]}</PreviewRow>
+      <PreviewRow label={right[0]} highlight={highlight?.includes(right[1])}>{cv[right[1]]}</PreviewRow>
     </div>
   );
 }
 
-export function CVPreview({ cv }: { cv: CV }) {
+/** `highlight` = fields drawn with the ProPilot gradient stroke (suggestion preview). */
+export function CVPreview({ cv, highlight }: { cv: CV; highlight?: FieldKey[] }) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <Tile tileStyle="default" padding="panel" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -213,20 +231,33 @@ export function CVPreview({ cv }: { cv: CV }) {
           <img src={cvPhoto} alt={cv.name} width={100} height={100} style={{ borderRadius: "50%", objectFit: "cover" }} />
           <PFLogo width={250} height={66} style={{ margin: "-4px 0" }} />
         </div>
-        <PreviewRow label="Name">{cv.name}</PreviewRow>
-        <PreviewRow label="Job title">{cv.jobTitle}</PreviewRow>
-        <PreviewRow label="Bio">{cv.bio}</PreviewRow>
-        <PreviewPair cv={cv} left={["Email", "email"]}               right={["Phone", "phone"]} />
-        <PreviewPair cv={cv} left={["Location", "location"]}         right={["Talent Pool", "talentPool"]} />
-        <PreviewPair cv={cv} left={["Business Line", "businessLine"]} right={["Department", "department"]} />
-        <PreviewPair cv={cv} left={["Cost Centre", "costCentre"]}    right={["Team", "team"]} />
+        <PreviewRow label="Name" highlight={highlight?.includes("name")}>{cv.name}</PreviewRow>
+        <PreviewRow label="Job title" highlight={highlight?.includes("jobTitle")}>{cv.jobTitle}</PreviewRow>
+        <PreviewRow label="Bio" highlight={highlight?.includes("bio")}>{cv.bio}</PreviewRow>
+        <PreviewPair cv={cv} highlight={highlight} left={["Email", "email"]}               right={["Phone", "phone"]} />
+        <PreviewPair cv={cv} highlight={highlight} left={["Location", "location"]}         right={["Talent Pool", "talentPool"]} />
+        <PreviewPair cv={cv} highlight={highlight} left={["Business Line", "businessLine"]} right={["Department", "department"]} />
+        <PreviewPair cv={cv} highlight={highlight} left={["Cost Centre", "costCentre"]}    right={["Team", "team"]} />
       </Tile>
-      <PreviewRow label="Languages">{cv.languages}</PreviewRow>
-      <PreviewRow label="Skills">{cv.skills}</PreviewRow>
-      <PreviewRow label="Accreditations">{cv.accreditations}</PreviewRow>
+      <PreviewRow label="Languages" highlight={highlight?.includes("languages")}>{cv.languages}</PreviewRow>
+      <PreviewRow label="Skills" highlight={highlight?.includes("skills")}>{cv.skills}</PreviewRow>
+      <PreviewRow label="Accreditations" highlight={highlight?.includes("accreditations")}>{cv.accreditations}</PreviewRow>
     </div>
   );
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ProPilot chat items (state lives in CVStudioScreen so the CV preview can react to suggestion hover)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+type ChatItem =
+  | { id: number; kind: "user"; text: string }
+  | { id: number; kind: "pp-text"; text: string }
+  | { id: number; kind: "pp-loading" }
+  | { id: number; kind: "suggestion"; industry: string; state: PPSuggestionCardState };
+
+const INDUSTRY_FIELDS: FieldKey[] = ["jobTitle", "bio", "skills"];
+const SUGGESTION_DELAY = 2000;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Left module — Translate tile + tabs (ProPilot | Edit fields)
@@ -336,10 +367,13 @@ function TranslateTile({ count }: { count: number }) {
 }
 
 function LeftModule({
-  cv, onChange, count, mode, onModeChange,
-}: { cv: CV; onChange: (k: FieldKey, v: string) => void; count: number; mode: Mode; onModeChange: (m: Mode) => void }) {
+  cv, onChange, count, mode, onModeChange, items, onSend, onApply, onDismissSuggestion, onPreview,
+}: {
+  cv: CV; onChange: (k: FieldKey, v: string) => void; count: number; mode: Mode; onModeChange: (m: Mode) => void;
+  items: ChatItem[]; onSend: (text: string) => void; onApply: (id: number) => void; onDismissSuggestion: (id: number) => void;
+  onPreview: (id: number | null) => void;
+}) {
   const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState<string[]>([]);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, width: 413, flexShrink: 0, height: "calc(100% + 24px)" }}>
       <TranslateTile count={count} />
@@ -368,16 +402,38 @@ function LeftModule({
                 padding="content"
                 style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 8 }}
               >
-                {messages.map((m, i) => (
-                  <div key={i} style={{ alignSelf: "flex-end", maxWidth: "100%" }}><PPBubble variant="light">{m}</PPBubble></div>
-                ))}
+                {items.map(it => {
+                  switch (it.kind) {
+                    case "user":
+                      return <div key={it.id} style={{ alignSelf: "flex-end", maxWidth: "100%" }}><PPBubble variant="light">{it.text}</PPBubble></div>;
+                    case "pp-text":
+                      return <div key={it.id} style={{ ...body, alignSelf: "flex-start", maxWidth: "100%" }}>{it.text}</div>;
+                    case "pp-loading":
+                      return <div key={it.id} style={{ alignSelf: "flex-start" }}><LoadingIcon /></div>;
+                    case "suggestion":
+                      return (
+                        <PPSuggestionCard
+                          key={it.id}
+                          variant="light"
+                          state={it.state}
+                          action={`Adapt CV to ${it.industry}`}
+                          detail="Updates Job title, Bio and Skills."
+                          previewHint="Hover to preview result"
+                          onMouseEnter={() => onPreview(it.id)}
+                          onMouseLeave={() => onPreview(null)}
+                          onAccept={() => onApply(it.id)}
+                          onDismiss={() => onDismissSuggestion(it.id)}
+                        />
+                      );
+                  }
+                })}
               </Tile>
             </div>
             <div style={{ padding: "0 8px 24px" }}>
               <PPChatInput
                 value={draft}
                 onChange={setDraft}
-                onSend={text => { setMessages(ms => [...ms, text]); setDraft(""); }}
+                onSend={text => { onSend(text); setDraft(""); }}
               />
             </div>
           </>
@@ -404,8 +460,51 @@ export function CVStudioScreen({
 
   useEffect(() => { setMode(initialMode); }, [initialMode]);
 
+  // ProPilot chat: typing "industry" -> loading -> suggestion card; hovering the card previews it on the CV
+  const [items, setItems] = useState<ChatItem[]>([]);
+  const [previewing, setPreviewing] = useState<number | null>(null);
+  const nextId = useRef(1);
+  const timers = useRef<number[]>([]);
+  useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
+
   const cv = data[index];
   const edit = (k: FieldKey, v: string) => setData(d => d.map((c, i) => (i === index ? { ...c, [k]: v } : c)));
+
+  const send = (text: string) => {
+    const userId = nextId.current++;
+    const replyId = nextId.current++;
+    if (!isIndustryMessage(text)) {
+      setItems(it => [...it, { id: userId, kind: "user", text }, { id: replyId, kind: "pp-text", text: "I can adapt this CV to an industry. Try: Please adapt this CV to the banking industry." }]);
+      return;
+    }
+    const industry = industryName(text);
+    setItems(it => [...it, { id: userId, kind: "user", text }, { id: replyId, kind: "pp-loading" }]);
+    timers.current.push(window.setTimeout(() => {
+      const textId = nextId.current++;
+      const sugId = nextId.current++;
+      setItems(it => it.flatMap<ChatItem>(i => i.id === replyId
+        ? [
+            { id: textId, kind: "pp-text", text: `I've adapted this CV to the ${industry.toLowerCase()} industry. Hover the suggestion to preview it.` },
+            { id: sugId, kind: "suggestion", industry, state: "default" },
+          ]
+        : [i]));
+    }, SUGGESTION_DELAY));
+  };
+  const setSuggestionState = (id: number, state: PPSuggestionCardState) =>
+    setItems(it => it.map(i => (i.id === id && i.kind === "suggestion" ? { ...i, state } : i)));
+  const apply = (id: number) => {
+    const sug = items.find(i => i.id === id);
+    if (sug?.kind === "suggestion") {   // proposed text is built from the CV shown right now
+      const fields = adaptCV(cv, sug.industry);
+      (Object.keys(fields) as (keyof IndustryFields)[]).forEach(k => edit(k, fields[k]));
+    }
+    setSuggestionState(id, "accepted");
+    setPreviewing(null);
+  };
+  const dismissSuggestion = (id: number) => { setSuggestionState(id, "dismissed"); setPreviewing(null); };
+
+  const previewItem = mode === "propilot" ? items.find(i => i.kind === "suggestion" && i.id === previewing && i.state === "default") : undefined;
+  const preview = previewItem?.kind === "suggestion" ? { industry: previewItem.industry, fields: adaptCV(cv, previewItem.industry) } : undefined;
   const names = multi ? cvs.slice(0, 3).map(c => c.name).join(", ") + (cvs.length > 3 ? `, +${cvs.length - 3}` : "") : undefined;
 
   return (
@@ -434,14 +533,19 @@ export function CVStudioScreen({
 
           {/* Content row */}
           <div style={{ display: "flex", gap: 16, padding: "16px 24px 0", flex: 1, minHeight: 0, overflow: "hidden", alignItems: "flex-start" }}>
-            <LeftModule cv={cv} onChange={edit} count={cvs.length} mode={mode} onModeChange={setMode} />
+            <LeftModule cv={cv} onChange={edit} count={cvs.length} mode={mode} onModeChange={setMode}
+              items={items} onSend={send} onApply={apply} onDismissSuggestion={dismissSuggestion} onPreview={setPreviewing} />
 
             {/* CV preview card */}
             <Tile
               tileStyle="highlight"
               padding="content"
-              style={{ flex: 1, minWidth: 0, height: "calc(100% + 24px)", display: "flex", flexDirection: "column", gap: 16 }}
+              style={{ position: "relative", flex: 1, minWidth: 0, height: "calc(100% + 24px)", display: "flex", flexDirection: "column", gap: 16 }}
             >
+              {/* Centred in the header row's free space (after the pager, before the Version select) so it never covers either */}
+              <div style={{ position: "absolute", top: 0, left: multi ? 140 : 16, right: 260, height: 0, pointerEvents: "none" }}>
+                <PPPreviewBanner visible={!!preview} label={preview ? `Adapted to ${preview.industry}` : undefined} />
+              </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {multi && (
@@ -464,7 +568,7 @@ export function CVStudioScreen({
               </div>
               <Divider orientation="horizontal" style={{ margin: "0 -16px" }} />
               <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 8px 24px" }}>
-                <CVPreview cv={cv} />
+                <CVPreview cv={preview ? { ...cv, ...preview.fields } : cv} highlight={preview ? INDUSTRY_FIELDS : undefined} />
               </div>
             </Tile>
           </div>

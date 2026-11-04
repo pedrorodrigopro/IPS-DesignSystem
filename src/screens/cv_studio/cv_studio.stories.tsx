@@ -41,7 +41,7 @@ export const SingleExport: Story = {
 
 export const SingleExportProPilot: Story = {
   name: "Single export — ProPilot",
-  parameters: { docs: { description: { story: "One CV, ProPilot tab active." } } },
+  parameters: { docs: { description: { story: "One CV, ProPilot tab active. Try typing “Please adapt this CV to the banking industry”: ProPilot loads, then offers a suggestion card; hovering it previews the result on the CV (PPPreviewBanner + the affected rows outlined with the ProPilot gradient), Apply commits it, Dismiss mutes it. Placeholder content, no real AI." } } },
   render: () => <CVStudioScreen cvs={[ZARA]} initialMode="propilot" />,
 };
 
@@ -53,6 +53,6 @@ export const MultiExport: Story = {
 
 export const MultiExportProPilot: Story = {
   name: "Multi export — ProPilot",
-  parameters: { docs: { description: { story: "Three CVs, ProPilot tab active (Figma 1440:36072)." } } },
+  parameters: { docs: { description: { story: "Three CVs, ProPilot tab active (Figma 1440:36072). The industry flow applies to the CV currently shown." } } },
   render: () => <CVStudioScreen cvs={[ZARA, JOHN, MARY]} initialMode="propilot" />,
 };
