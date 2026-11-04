@@ -4,7 +4,7 @@
 .row {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-end; // stays on the last line when the field grows
   gap: var(--spacing-lg); // 16px
   width: 100%;
 }
@@ -46,7 +46,7 @@
 .input {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-end; // the send button stays on the last line when the field grows
   gap: var(--spacing-md); // 8px
   padding: var(--spacing-md);
   border: 1px solid var(--palette-neutral-0);
@@ -61,8 +61,12 @@
 .field {
   flex: 1 1 0;
   min-width: 0;
+  align-self: center; // one line: vertically centred against the 30px send button
   border: none;
   outline: none;
+  resize: none;
+  overflow-y: hidden; // the component switches to auto at the 5-line cap
+  max-height: calc(5 * 1.15em); // 5 lines at line-height 115%, then scroll
   background: transparent;
   font-family: var(--font-family);
   font-size: var(--font-size-body);

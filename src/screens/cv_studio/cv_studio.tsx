@@ -256,7 +256,7 @@ type ChatItem =
   | { id: number; kind: "pp-loading" }
   | { id: number; kind: "suggestion"; industry: string; state: PPSuggestionCardState };
 
-const INDUSTRY_FIELDS: FieldKey[] = ["jobTitle", "bio", "skills"];
+const INDUSTRY_FIELDS: FieldKey[] = ["bio", "skills"];
 const SUGGESTION_DELAY = 2000;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -417,7 +417,7 @@ function LeftModule({
                           variant="light"
                           state={it.state}
                           action={`Adapt CV to ${it.industry}`}
-                          detail="Updates Job title, Bio and Skills."
+                          detail="Updates Bio and Skills."
                           previewHint="Hover to preview result"
                           onMouseEnter={() => onPreview(it.id)}
                           onMouseLeave={() => onPreview(null)}

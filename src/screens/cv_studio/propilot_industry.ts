@@ -1,6 +1,6 @@
 // ProPilot "industry" flow — pure logic (no React). Placeholder content, no real AI.
 
-export type IndustryFields = { jobTitle: string; bio: string; skills: string };
+export type IndustryFields = { bio: string; skills: string };
 
 export const isIndustryMessage = (text: string) => /\bindustry\b/i.test(text);
 
@@ -21,7 +21,6 @@ const EXTRA_SKILLS: Record<string, string[]> = {
 export function adaptCV(cv: IndustryFields, industry: string): IndustryFields {
   const extra = EXTRA_SKILLS[industry.toLowerCase()] ?? [`${industry} regulation`, `${industry} analytics`, "Client advisory"];
   return {
-    jobTitle: `${cv.jobTitle}, ${industry} sector`,
     bio: `Experienced in the ${industry.toLowerCase()} industry, translating financial rigour into reliable results for clients and regulators. ${cv.bio}`,
     skills: `${cv.skills}, ${extra.join(", ")}`,
   };

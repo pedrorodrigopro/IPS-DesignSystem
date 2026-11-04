@@ -4,10 +4,12 @@
 // Layout: row, gap 16px, align center
 //   Avatar  — 50px circle, dark gradient (#0D2976 → #000), white ProPilot icon, soft cyan glow
 //   Input   — row, gap 8px, padding 8px, 1px #CFDAF7, radius 8px, white
-//             [text input "Ask ProPilot"] [send — 30px primary square]
+//             [text field "Ask ProPilot"] [send — 30px primary square]
+//             The field wraps and grows with the text (up to 5 lines, then scrolls): Enter sends, Shift+Enter adds a line.
+//             The avatar and the send button stay aligned to the bottom line.
 //   Glow    — blurred cyan ellipses behind the input (static; motion is up to the consumer)
 
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import classNames from "classnames";
 import { Icon } from "../icon/icon";
 import css from "./pp_chat_input.module.scss";
@@ -39,6 +41,17 @@ export function PPChatInput({
   className,
 }: PPChatInputProps) {
   const send = () => { if (value.trim()) onSend?.(value); };
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  // Grow with the content (the CSS max-height caps it at 5 lines, then it scrolls)
+  useLayoutEffect(() => {
+    const el = fieldRef.current;
+    if (!el) return;
+    const max = parseFloat(getComputedStyle(el).maxHeight) || Infinity;
+    el.style.height = "auto";
+    const h = el.scrollHeight;
+    el.style.height = `${Math.min(h, max)}px`;
+    el.style.overflowY = h > max + 1 ? "auto" : "hidden"; // scrollbar only once the cap is reached
+  }, [value]);
   return (
     <div className={classNames(css.row, className)}>
       <div className={css.avatar} aria-hidden="true">
@@ -47,13 +60,15 @@ export function PPChatInput({
       <div className={css.inputWrap}>
         <span className={css.glow} aria-hidden="true" />
         <div className={css.input}>
-          <input
+          <textarea
+            ref={fieldRef}
             className={css.field}
+            rows={1}
             value={value}
             placeholder={placeholder}
             aria-label={placeholder}
             onChange={e => onChange?.(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") send(); }}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
           />
           <button type="button" className={css.sendBtn} title="Send" onClick={send}>
             <Icon name="paper-plane" size={16} />
