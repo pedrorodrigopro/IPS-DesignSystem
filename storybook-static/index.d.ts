@@ -61,8 +61,8 @@ export declare type AlertProps = {
     message: string;
     /** Body paragraph — only rendered when layout="with-header" */
     body?: string;
-    /** Up to 2 action buttons (Ghost style). Optional in both layouts. */
-    actions?: [AlertAction?, AlertAction?];
+    /** Up to 3 action buttons (Ghost style). Optional in both layouts. */
+    actions?: [AlertAction?, AlertAction?, AlertAction?];
     /** Turns the leading icon into a dismiss button (e.g. the cross of a bulk-banner) */
     onDismiss?: () => void;
     /** @deprecated alias of onDismiss */
