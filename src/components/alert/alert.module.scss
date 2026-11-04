@@ -127,12 +127,10 @@
   }
 }
 
-// ── Bulk banner close (cross) button ─────────────────────────────────────────
-.closeBtn {
-  background: none;
+// Leading icon as a dismiss button (onDismiss)
+.dismissBtn {
   border: none;
-  padding: 0 8px 0 0;
-  margin: 0;
+  background: transparent;
+  padding: 0;
   cursor: pointer;
-  font: inherit;
 }

@@ -10,7 +10,7 @@
 //   Navigation (vertical), Checkbox, SkillProfile, InputSearch
 
 import type { Meta, StoryObj } from "@storybook/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Navbar }                    from "../../components/navbar/navbar";
 import { Page }                      from "../../components/layout/layout";
@@ -23,7 +23,16 @@ import { ProgressLinear }            from "../../components/progress_bar/progres
 import { Navigation }                from "../../components/navigation/navigation";
 import { Checkbox }                  from "../../components/checkbox/checkbox";
 import { SkillList, SkillProfile }   from "../../components/skill/skill";
-import { InputSearch }               from "../../components/input/input";
+import { Input, InputSearch }          from "../../components/input/input";
+import { Header }                    from "../../components/header/header";
+import { CVStudioScreen, ZARA }      from "../cv_studio/cv_studio";
+import { CVVersionsScreen, INITIAL_CV_VERSIONS } from "../cv_versions/cv_versions";
+import type { CVVersion }        from "../cv_versions/cv_versions";
+import { ProfilesDirectoryScreen }   from "../profiles_directory/profiles_directory";
+import { PillSimple }                from "../../components/pill/pill";
+import { EmptyState }                from "../../components/empty_state/empty_state";
+import { SidePanel }                 from "../../components/side_panel/side_panel";
+import { Actions }                   from "../../components/actions/actions";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -45,19 +54,83 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 // LEFT SIDEBAR — Tile selected content
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// Profile ⇄ CV Studio ⇄ CV Versions (Figma: Export CV revamp)
+//   "Open main CV"      → CV Studio            (Close → profile)
+//   "See all versions"  → CV Versions          (breadcrumb → profile)
+//   CV Versions: "Create CV version" / edit icon → CV Studio   (Close → CV Versions)
+//   Create CV version  → modal (name, description) → adds the version → CV Studio
+//   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Studio
+//                         with every selected CV (Close → directory). Navbar profile item → back to My Profile
+type CVView = "profile" | "studio" | "versions" | "directory";
+
+function useCVFlow() {
+  const [view, setView] = useState<CVView>("profile");
+  const [studioFrom, setStudioFrom] = useState<"profile" | "versions">("profile");
+  const [versions, setVersions] = useState<CVVersion[]>(INITIAL_CV_VERSIONS);
+  return {
+    view,
+    versions,
+    setVersions,
+    openStudio: (from: "profile" | "versions") => { setStudioFrom(from); setView("studio"); },
+    openVersions: () => setView("versions"),
+    openDirectory: () => setView("directory"),
+    toProfile: () => setView("profile"),
+    closeStudio: () => setView(studioFrom),
+  };
+}
+
+/** Navbar clicks from any screen of the flow: "Profiles" → Profiles Directory, the avatar → My Profile. */
+function navbarHandler(flow: ReturnType<typeof useCVFlow>) {
+  return (id: string) => {
+    if (id === "profiles") flow.openDirectory();
+    else if (id === "profile") flow.toProfile();
+  };
+}
+
+/** The CV Studio / CV Versions screens, for the person shown on this profile. */
+function CVFlowView({ flow, personName }: { flow: ReturnType<typeof useCVFlow>; personName: string }) {
+  if (flow.view === "directory") {
+    return (
+      <ProfilesDirectoryScreen
+        initialView="table"
+        initialSort="Profile name"
+        onNavigate={navbarHandler(flow)}
+      />
+    );
+  }
+  const cv = { ...ZARA, name: personName, email: `${personName.toLowerCase().replace(/ /g, ".")}@pf.com` };
+  if (flow.view === "studio") return <CVStudioScreen cvs={[cv]} onClose={flow.closeStudio} onNavigate={navbarHandler(flow)} />;
+  return (
+    <CVVersionsScreen
+      personName={personName}
+      cv={cv}
+      versions={flow.versions}
+      onVersionsChange={flow.setVersions}
+      onBack={flow.toProfile}
+      onCreate={() => flow.openStudio("versions")}
+      onEdit={() => flow.openStudio("versions")}
+      onNavigate={navbarHandler(flow)}
+    />
+  );
+}
+
 const NAV_SECTIONS = [
   { id: "summary",        label: "Summary"        },
   { id: "experience",     label: "Experience"     },
   { id: "accomplishments",label: "Accomplishments"},
+  { id: "academic",       label: "Academic"       },
   { id: "additional",     label: "Additional"     },
 ];
 
-const ADDITIONAL_ITEMS = [
-  "Birthday", "Languages", "Industry knowledge", "Qualifications",
-  "Capability", "Technical Overlay", "FSA Tag Present", "Budget", "Team", "Interested in",
-];
-
-function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavChange: (id: string) => void }) {
+function ProfileSidebar({
+  activeNav, onNavChange, onOpenMainCV, onSeeAllVersions, cvVersionCount = 3,
+}: {
+  activeNav: string;
+  onNavChange: (id: string) => void;
+  onOpenMainCV?: () => void;
+  onSeeAllVersions?: () => void;
+  cvVersionCount?: number;
+}) {
   return (
     <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
@@ -95,6 +168,17 @@ function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavCh
 
       <Divider orientation="horizontal" style={{ margin: "0 -16px" }} />
 
+      {/* CV Versions — Figma Export CV revamp, 132:53016 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span style={{ fontFamily: "var(--font-family)", fontSize: "var(--font-size-h5)", fontWeight: 600, color: "var(--palette-blue-0)", lineHeight: "125%" }}>
+          CV Versions ({cvVersionCount})
+        </span>
+        <Row gap={8} style={{ flexWrap: "wrap" }}>
+          <Button kind="primary" size="small" onClick={onOpenMainCV}>Open main CV</Button>
+          <Button kind="secondary" size="small" onClick={onSeeAllVersions}>See all versions</Button>
+        </Row>
+      </div>
+
       {/* Contact */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={labelCss}>Contact Spencer</div>
@@ -116,17 +200,6 @@ function ProfileSidebar({ activeNav, onNavChange }: { activeNav: string; onNavCh
         activeId={activeNav}
         onChange={onNavChange}
       />
-
-      {/* Additional sub-items (shown when Additional is active) */}
-      {activeNav === "additional" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingLeft: 8 }}>
-          {ADDITIONAL_ITEMS.map(item => (
-            <div key={item} style={{ ...labelCss, padding: "4px 8px", cursor: "pointer" }}>
-              — {item}
-            </div>
-          ))}
-        </div>
-      )}
 
     </Tile>
   );
@@ -534,13 +607,15 @@ function AvailabilitySection() {
 
 function MyProfileScreen() {
   const [activeNav, setActiveNav] = useState("summary");
+  const flow = useCVFlow();
+  if (flow.view !== "profile") return <CVFlowView flow={flow} personName="Spencer Harmon" />;
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
-        navbar={<Navbar activeId="profile" />}
+        navbar={<Navbar activeId="profile" onSelect={navbarHandler(flow)} />}
         variant="profile-summary"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} />}
+        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
         rightPanel={
           <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
             <OrgDataSection />
@@ -550,9 +625,19 @@ function MyProfileScreen() {
       >
         {/* CENTRE — main content */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
-          <SkillsSection />
-          <SkillGroupsSection />
-          <AccreditationsSection />
+          {activeNav === "additional" ? (
+            <AdditionalSection />
+          ) : activeNav === "experience" ? (
+            <ExperienceSection />
+          ) : activeNav === "academic" ? (
+            <AcademicSection />
+          ) : (
+            <>
+              <SkillsSection />
+              <SkillGroupsSection />
+              <AccreditationsSection />
+            </>
+          )}
         </div>
       </Page>
     </div>
@@ -572,7 +657,7 @@ const meta: Meta = {
       description: {
         component:
           "My Profile screen — three-column layout. " +
-          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation, Additional sub-items). " +
+          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation); a CV Versions block above Contact opens CV Studio (“Open main CV”) or CV Versions (“See all versions”). Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
           "Centre: Tile highlight content blocks — Skills with expandable framework groups (SkillProfile + Checkbox), Skills Groups carousel (Tile object-light cards), Accreditations. " +
           "Right: Tile highlight content — Organisation Data key-value grid + Availability mini-calendar with booking bars.",
       },
@@ -595,20 +680,32 @@ export const Default: Story = {
 
 function MyProfileNarrowScreen() {
   const [activeNav, setActiveNav] = useState("summary");
+  const flow = useCVFlow();
+  if (flow.view !== "profile") return <CVFlowView flow={flow} personName="Spencer Harmon" />;
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
-        navbar={<Navbar activeId="profile" />}
+        navbar={<Navbar activeId="profile" onSelect={navbarHandler(flow)} />}
         variant="profile-regular"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} />}
+        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
-          <SkillsSection />
-          <SkillGroupsSection />
-          <AccreditationsSection />
-          <OrgDataSection />
-          <AvailabilitySection />
+          {activeNav === "additional" ? (
+            <AdditionalSection />
+          ) : activeNav === "experience" ? (
+            <ExperienceSection />
+          ) : activeNav === "academic" ? (
+            <AcademicSection />
+          ) : (
+            <>
+              <SkillsSection />
+              <SkillGroupsSection />
+              <AccreditationsSection />
+              <OrgDataSection />
+              <AvailabilitySection />
+            </>
+          )}
         </div>
       </Page>
     </div>
@@ -630,3 +727,408 @@ export const Narrow: Story = {
   },
   render: () => <MyProfileNarrowScreen />,
 };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ADDITIONAL — extra profile fields
+// Figma: Education section in Profile, node 56:41690
+//   One Tile highlight per field: Header (content size) + edit icon, then the
+//   values as a SkillList without proficiency (labels separated by dividers).
+//   Languages: nested Tile object-light per language, four label/value columns.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const ADDITIONAL_FIELDS: { title: string; values: string[] }[] = [
+  { title: "Badges",                     values: ["Badge 1", "Badge 2"] },
+  { title: "Driving Licenses",           values: ["Car (B)", "Car (BE)", "Motorbike (A)"] },
+];
+
+const ADDITIONAL_LANGUAGES = [
+  { name: "English", knowledge: "Advanced", reading: "Advanced", writing: "Advanced", speaking: "Advanced" },
+  { name: "Spanish", knowledge: "Advanced", reading: "Advanced", writing: "Advanced", speaking: "Advanced" },
+];
+
+const ADDITIONAL_FIELDS_AFTER_LANGUAGES: string[] = [
+  "Licenses and Certifications", "Representative clients", "Industry knowledge", "Clients", "Department",
+  "Projects", "Job function", "Qualifications", "Custom field sorted", "Internal work experience",
+  "Cost Centre", "Previous client experience", "Interested in",
+];
+
+function EditButton() {
+  return (
+    <Button kind="iconTertiary" size="regular" title="Edit">
+      <Icon name="edit" size={16} />
+    </Button>
+  );
+}
+
+function AdditionalField({ title, values }: { title: string; values: string[] }) {
+  return (
+    <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <Header size="content" title={title} rightContent={<EditButton />} />
+      <SkillList items={values.map(label => ({ label }))} disableTooltip />
+    </Tile>
+  );
+}
+
+function LanguageCard({ lang }: { lang: typeof ADDITIONAL_LANGUAGES[number] }) {
+  const cols: [string, string][] = [
+    ["Knowledge level",      lang.knowledge],
+    ["Reading proficiency",  lang.reading],
+    ["Writing proficiency",  lang.writing],
+    ["Speaking proficiency", lang.speaking],
+  ];
+  return (
+    <Tile tileStyle="object-light" padding="content" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <SB>
+        <div style={h3}>{lang.name}</div>
+        <EditButton />
+      </SB>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 16 }}>
+        {cols.map(([label, value]) => (
+          <div key={label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={labelCss}>{label}</span>
+            <span style={bodyBold}>{value}</span>
+          </div>
+        ))}
+      </div>
+    </Tile>
+  );
+}
+
+function AdditionalSection() {
+  return (
+    <>
+      {ADDITIONAL_FIELDS.map(f => <AdditionalField key={f.title} {...f} />)}
+      <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <Header size="content" title="Languages" />
+        {ADDITIONAL_LANGUAGES.map(l => <LanguageCard key={l.name} lang={l} />)}
+      </Tile>
+      {ADDITIONAL_FIELDS_AFTER_LANGUAGES.map(title => (
+        <AdditionalField key={title} title={title} values={["Badge 1", "Badge 2"]} />
+      ))}
+    </>
+  );
+}
+
+// ── Experience ─────────────────────────────────────────────────────────────────
+// Figma: Education section in Profile, node 55:34625
+//   Header (section) + primary "Add experience", then a timeline of position cards
+//   (Tile object-light). Cards collapse: collapsed = title, company line and summary;
+//   expanded adds Skills, a 4-column details grid and "Internal Roles & Projects",
+//   whose rows collapse too.
+
+type InternalRole = { name: string; range: string; duration: string; details: [string, string][] };
+type Position = {
+  title: string; company: string; hours: string; period: string; current?: boolean;
+  summary: string; skills: string[]; details: [string, string][]; internalRoles: InternalRole[];
+};
+
+const EXP_DETAILS: [string, string][] = [
+  ["Industry knowledge", "Banking / Financial Services, Payments"],
+  ["Job title",          "Tech Lead"],
+  ["Company",            "BarclaysX"],
+  ["Previous company",   "Previous company"],
+  ["Languages",          "English, French"],
+  ["Clients",            "BarclaysX"],
+];
+
+const EXP_INTERNAL_ROLE: InternalRole = {
+  name: "Project Atlas · Tech Lead", range: "01-09-2026 – 13-11-2026", duration: "10 weeks",
+  details: EXP_DETAILS.slice(0, 4),
+};
+
+const EXP_POSITION: Position = {
+  title: "Tech Lead", company: "BarclaysX", hours: "1,800h", period: "Sep 2024 - present",
+  summary: "Re-architected payments ingestion (Python · Postgres · AWS). 60% latency reduction; production for 3 Tier-1 banks.",
+  skills: ["Python", "PostgreSQL", "AWS", "Apache Kafka", "System Design", "Team Leadership", "REST API", "Distributed Systems"],
+  details: EXP_DETAILS,
+  internalRoles: [EXP_INTERNAL_ROLE, EXP_INTERNAL_ROLE, EXP_INTERNAL_ROLE],
+};
+
+const EXPERIENCE_POSITIONS: Position[] = [
+  { ...EXP_POSITION, current: true },
+  EXP_POSITION,
+  EXP_POSITION,
+  EXP_POSITION,
+];
+
+function ExpChevron({ open, onClick }: { open: boolean; onClick: () => void }) {
+  return (
+    <Button kind="iconTertiary" size="small" title={open ? "Collapse" : "Expand"} onClick={onClick}>
+      <Icon name={open ? "chevron-down" : "chevron-right"} size={14} />
+    </Button>
+  );
+}
+
+function ExpDetails({ fields }: { fields: [string, string][] }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "16px 24px" }}>
+      {fields.map(([label, value]) => (
+        <div key={label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={labelCss}>{label}</span>
+          <span style={bodyBold}>{value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InternalRoleRow({ role, defaultOpen }: { role: InternalRole; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) auto", alignItems: "center", gap: 8 }}>
+        <Row gap={8}>
+          <ExpChevron open={open} onClick={() => setOpen(o => !o)} />
+          <span style={bodyBold}>Role: {role.name}</span>
+        </Row>
+        <Row gap={8}>
+          <span style={bodyBold}>{role.range}</span>
+          <span style={labelCss}>({role.duration})</span>
+        </Row>
+        <Button kind="iconTertiary" size="small" title="Edit role"><Icon name="edit" size={14} /></Button>
+      </div>
+      {open && <div style={{ paddingLeft: 8, paddingBottom: 4 }}><ExpDetails fields={role.details} /></div>}
+    </div>
+  );
+}
+
+function ExperienceCard({ position, isLast, defaultOpen }: { position: Position; isLast: boolean; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const DOT_TOP = 26;
+  const DOT_GAP = 4;
+  return (
+    <div style={{ display: "flex", gap: 12 }}>
+      {/* timeline rail: dot level with the title, line running to the next dot */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 12, flexShrink: 0 }}>
+        <div style={{
+          width: 10, height: 10, borderRadius: "50%", marginTop: DOT_TOP, flexShrink: 0,
+          background: position.current ? "var(--palette-primary-0)" : "var(--palette-neutral-0)",
+        }} />
+        {!isLast && (
+          <div style={{ width: 2, flex: 1, background: "var(--palette-neutral-0)", marginTop: DOT_GAP, marginBottom: -(DOT_TOP - DOT_GAP) }} />
+        )}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0, marginBottom: 16 }}>
+        <Tile tileStyle="object-light" padding="content" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <SB style={{ alignItems: "flex-start" }}>
+              <Row gap={8}>
+                <ExpChevron open={open} onClick={() => setOpen(o => !o)} />
+                <span style={{ ...h3, fontSize: 16 }}>{position.title}</span>
+                {position.current && <PillSimple label="Current position" size="small" />}
+              </Row>
+              <Button kind="iconTertiary" size="small" title="Edit position"><Icon name="edit" size={14} /></Button>
+            </SB>
+            <div style={{ paddingLeft: 34 }}>
+              <span style={labelCss}>
+                <span style={{ color: "var(--palette-blue-0)", fontWeight: 700 }}>{position.company}</span> · {position.hours} · {position.period}
+              </span>
+            </div>
+          </div>
+          <div style={{ ...body, paddingLeft: 0 }}>{position.summary}</div>
+
+          {open && (
+            <>
+              <Divider orientation="horizontal" style={{ margin: "4px 0" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <span style={bodyBold}>Skills ({position.skills.length})</span>
+                <SkillList items={position.skills.map(label => ({ label }))} disableTooltip />
+              </div>
+              <Divider orientation="horizontal" style={{ margin: "4px 0" }} />
+              <ExpDetails fields={position.details} />
+              <Divider orientation="horizontal" style={{ margin: "4px 0" }} />
+              <SB>
+                <span style={bodyBold}>Internal Roles &amp; Projects ({position.internalRoles.length})</span>
+                <Button kind="iconTertiary" size="small" title="Add role or project"><Icon name="add" size={14} /></Button>
+              </SB>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {position.internalRoles.map((r, i) => (
+                  <div key={i}>
+                    {i > 0 && <Divider orientation="horizontal" />}
+                    <InternalRoleRow role={r} defaultOpen={i === 0} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </Tile>
+      </div>
+    </div>
+  );
+}
+
+function ExperienceSection() {
+  return (
+    <Tile tileStyle="highlight" padding="screen" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <Header size="section" title="Experience" actions={[{ label: "Add experience", variant: "primary" }]} />
+      <div>
+        {EXPERIENCE_POSITIONS.map((p, i) => (
+          <ExperienceCard key={i} position={p} isLast={i === EXPERIENCE_POSITIONS.length - 1} defaultOpen={i === 0} />
+        ))}
+      </div>
+    </Tile>
+  );
+}
+
+// ── Academic ───────────────────────────────────────────────────────────────────
+// Figma: Education section in Profile, node 76:11187 (six screens)
+//   Tile highlight with Header "Academic" and a horizontal Navigation with count badges
+//   (Education, Courses, Lecture experience, Professional associations, Publications,
+//   Honors & Awards). Each tab: section title + primary Add, then two-column cards
+//   (Tile object-light, iconTertiary edit) or an EmptyState when there are no items.
+//   Add / Edit open a SidePanel with Inputs and sticky Cancel / Save actions.
+
+type AcademicKey = "education" | "courses" | "lecture" | "associations" | "publications" | "honors";
+type AcademicItem = { title: string; sub?: string; start?: string; end?: string; desc?: string };
+type AcademicField = [keyof AcademicItem, string, boolean?];   // key, label, required
+
+const ACADEMIC_LOREM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pretium sem et vestibulum auctor. Nunc euismod lacus eget justo interdum, vitae venenat…";
+const ACADEMIC_STUDY = "This comprehensive study explores innovative methodologies in computer science, focusing on algorithm optimization and system architecture improvements.";
+
+const ACADEMIC: Record<AcademicKey, { tab: string; add: string; fields: AcademicField[]; items: AcademicItem[] }> = {
+  education: {
+    tab: "Education", add: "Add education",
+    fields: [["title", "Degree", true], ["sub", "Institution"], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Computer Science", sub: "Imperial College London", start: "01 Sep 2012", end: "30 May 2016", desc: ACADEMIC_LOREM },
+      { title: "Mathematics", sub: "University of Warwick", start: "01 Sep 2010", end: "30 May 2012", desc: ACADEMIC_LOREM },
+    ],
+  },
+  courses: {
+    tab: "Courses", add: "Add course",
+    fields: [["title", "Course", true], ["start", "Start date"], ["end", "End date"]],
+    items: [
+      { title: "Machine Learning",     start: "01 Sep 2012", end: "30 May 2016" },
+      { title: "Distributed Systems",  start: "01 Sep 2012", end: "30 May 2016" },
+      { title: "Databases",            start: "01 Sep 2013", end: "30 May 2014" },
+      { title: "Computer Networks",    start: "01 Sep 2014", end: "30 May 2015" },
+    ],
+  },
+  lecture: {
+    tab: "Lecture experience", add: "Add lecture experience",
+    fields: [["title", "Subject", true], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Advanced Data Structures", start: "15 Jan 2015", end: "20 Dec 2018",
+        desc: "Developed and delivered comprehensive lectures on algorithms and data structures, guiding students through complex problem-solving techniques and practical applications." },
+    ],
+  },
+  associations: {
+    tab: "Professional associations", add: "Add association",
+    fields: [["title", "Association", true], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [],
+  },
+  publications: {
+    tab: "Publications", add: "Add publication",
+    fields: [["title", "Title", true], ["sub", "Author(s)"], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Advances in Computer Science", sub: "Sancho Pansa",              start: "September 2012", end: "May 2016", desc: ACADEMIC_STUDY },
+      { title: "Advances in Computer Science", sub: "Sancho Pansa and Mike Lee", start: "September 2012", end: "May 2016", desc: ACADEMIC_STUDY },
+      { title: "Advances in Computer Science", sub: "Sancho Pansa and Mike Lee", start: "September 2012", end: "May 2016", desc: ACADEMIC_STUDY },
+    ],
+  },
+  honors: {
+    tab: "Honors & Awards", add: "Add honor or award",
+    fields: [["title", "Title", true], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
+    items: [
+      { title: "Bachelor of Science in Computer Science", start: "September 2012", end: "May 2016",
+        desc: "Awarded for outstanding academic achievement and contribution to the Computer Science department." },
+    ],
+  },
+};
+
+const ACADEMIC_ORDER: AcademicKey[] = ["education", "courses", "lecture", "associations", "publications", "honors"];
+
+function AcademicCard({ section, item, onEdit }: { section: AcademicKey; item: AcademicItem; onEdit: () => void }) {
+  const mutedBody: React.CSSProperties = { ...body, color: "var(--palette-blue-2)" };
+  const isPublication = section === "publications";
+  return (
+    <Tile tileStyle="object-light" padding="content">
+      <SB style={{ alignItems: "flex-start", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <span style={h3}>{item.title}</span>
+          {item.sub && <span style={mutedBody}>{isPublication ? "Author(s): " : ""}{item.sub}</span>}
+          <span style={body}>{[item.start, item.end].filter(Boolean).join(" - ")}</span>
+        </div>
+        <Button kind="iconTertiary" size="regular" title="Edit" onClick={onEdit}><Icon name="edit" size={16} /></Button>
+      </SB>
+      {item.desc && <div style={{ ...body, marginTop: 16 }}>{isPublication ? "Description: " : ""}{item.desc}</div>}
+    </Tile>
+  );
+}
+
+type AcademicPanelState = { section: AcademicKey; index: number | null; initial: AcademicItem } | null;
+
+function AcademicPanel({ panel, onClose, onSave }: { panel: AcademicPanelState; onClose: () => void; onSave: (item: AcademicItem) => void }) {
+  const [draft, setDraft] = useState<AcademicItem>({ title: "" });
+  useEffect(() => { if (panel) setDraft(panel.initial); }, [panel]);
+  const sec = ACADEMIC[panel ? panel.section : "education"];
+  const missing = sec.fields.some(([key, , required]) => required && !(draft[key] ?? "").trim());
+  return (
+    <SidePanel open={!!panel} onClose={onClose} width={480}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+        <div style={{ padding: "24px 24px 0", display: "flex", flexDirection: "column", gap: 16, flex: 1, overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <Header size="content" title={panel && panel.index !== null ? `Edit ${sec.tab.toLowerCase()}` : sec.add} />
+            <Button kind="iconTertiary" size="regular" title="Close" onClick={onClose}><Icon name="cross" size={16} /></Button>
+          </div>
+          {sec.fields.map(([key, label, required]) => (
+            <Input
+              key={key}
+              label={label}
+              mandatory={!!required}
+              value={draft[key] ?? ""}
+              onChange={e => setDraft({ ...draft, [key]: e.target.value })}
+            />
+          ))}
+        </div>
+        <Actions
+          variant="sticky-panel"
+          leftActions={[{ label: "Cancel", variant: "secondary", onClick: onClose }]}
+          rightActions={[{ label: "Save", variant: "primary", disabled: missing, onClick: () => onSave(draft) }]}
+        />
+      </div>
+    </SidePanel>
+  );
+}
+
+function AcademicSection() {
+  const [tab, setTab] = useState<AcademicKey>("education");
+  const [data, setData] = useState<Record<AcademicKey, AcademicItem[]>>(
+    () => Object.fromEntries(ACADEMIC_ORDER.map(k => [k, ACADEMIC[k].items])) as Record<AcademicKey, AcademicItem[]>,
+  );
+  const [panel, setPanel] = useState<AcademicPanelState>(null);
+
+  const open = (section: AcademicKey, index: number | null) =>
+    setPanel({ section, index, initial: index === null ? { title: "" } : { ...data[section][index] } });
+  const save = (item: AcademicItem) => {
+    if (!panel) return;
+    const list = [...data[panel.section]];
+    if (panel.index === null) list.push(item); else list[panel.index] = item;
+    setData({ ...data, [panel.section]: list });
+    setPanel(null);
+  };
+
+  const tabs = ACADEMIC_ORDER.map(id => ({ id, label: ACADEMIC[id].tab, badge: data[id].length }));
+  const items = data[tab];
+  return (
+    <>
+      <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Header size="content" title="Academic" />
+        <Navigation orientation="horizontal" tabs={tabs} activeId={tab} onChange={id => setTab(id as AcademicKey)} />
+        <SB>
+          <span style={{ ...h3, fontSize: 16 }}>{ACADEMIC[tab].tab}</span>
+          <Button kind="primary" size="regular" onClick={() => open(tab, null)}>Add</Button>
+        </SB>
+        {items.length === 0 ? (
+          <EmptyState size="small-vertical" title="No items to show" />
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16, alignItems: "start" }}>
+            {items.map((item, i) => <AcademicCard key={`${tab}-${i}`} section={tab} item={item} onEdit={() => open(tab, i)} />)}
+          </div>
+        )}
+      </Tile>
+      <AcademicPanel panel={panel} onClose={() => setPanel(null)} onSave={save} />
+    </>
+  );
+}

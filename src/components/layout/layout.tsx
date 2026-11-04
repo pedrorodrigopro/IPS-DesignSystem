@@ -8,6 +8,10 @@
 //                     padding: 24px (sides), bg #F8F9FD
 //                     Slot: fill × fill
 //
+//   fluid           — edge-to-edge content (no side padding), 24px top inset;
+//                     the content slot manages its own paddings and scrolling
+//                     (e.g. CV Studio: header row, two columns, full-width footer)
+//
 //   1280            — centered content, max 1280px wide
 //                     padding: 24px top, centering via alignItems:center
 //                     Slot: 1280px fixed width
@@ -31,7 +35,7 @@ import css from "./layout.module.scss";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type LayoutVariant = "full" | "1280" | "profile-regular" | "profile-summary";
+export type LayoutVariant = "full" | "fluid" | "1280" | "profile-regular" | "profile-summary";
 
 // ── Layout (content area only) ────────────────────────────────────────────────
 
@@ -49,6 +53,7 @@ export type LayoutProps = {
 // CSS class map — "1280" can't start a CSS class name so we alias it
 const VARIANT_CLASS: Record<LayoutVariant, string> = {
   "full":            css.full,
+  "fluid":           css.fluid,
   "1280":            css.v1280,
   "profile-regular": css["profile-regular"],
   "profile-summary": css["profile-summary"],

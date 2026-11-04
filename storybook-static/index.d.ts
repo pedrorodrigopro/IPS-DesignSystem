@@ -22,9 +22,11 @@ export declare type ActionItem = {
     variant?: "primary" | "secondary";
     onClick?: () => void;
     disabled?: boolean;
+    /** Optional leading icon */
+    icon?: IconName;
 };
 
-export declare function Actions({ variant, leftActions, rightActions, className, }: ActionsProps): default_2.JSX.Element;
+export declare function Actions({ variant, leftActions, rightActions, insetX, leftContent, rightContent, className, }: ActionsProps): default_2.JSX.Element;
 
 export declare type ActionsProps = {
     variant?: ActionsVariant;
@@ -32,12 +34,18 @@ export declare type ActionsProps = {
     leftActions?: ActionItem[];
     /** Buttons on the right side (typically save / primary actions) */
     rightActions?: ActionItem[];
+    /** sticky-screen only: drop the 1280px max width and use this horizontal padding (px) — aligns the bar with the page padding */
+    insetX?: number;
+    /** Extra content on the left, after leftActions (e.g. a ButtonGroup) */
+    leftContent?: ReactNode;
+    /** Extra content on the right, after rightActions (e.g. a split ButtonGroup) */
+    rightContent?: ReactNode;
     className?: string;
 };
 
 export declare type ActionsVariant = "content" | "sticky-screen" | "sticky-panel";
 
-export declare const Alert: ({ type, layout, message, body, actions, className, }: AlertProps) => JSX.Element;
+export declare const Alert: ({ type, layout, message, body, actions, onDismiss, onClose, rightContent, className, }: AlertProps) => JSX.Element;
 
 export declare type AlertAction = {
     label: string;
@@ -55,10 +63,16 @@ export declare type AlertProps = {
     body?: string;
     /** Up to 2 action buttons (Ghost style). Optional in both layouts. */
     actions?: [AlertAction?, AlertAction?];
+    /** Turns the leading icon into a dismiss button (e.g. the cross of a bulk-banner) */
+    onDismiss?: () => void;
+    /** @deprecated alias of onDismiss */
+    onClose?: () => void;
+    /** Inline layout only: custom content on the right (e.g. icon buttons for bulk actions) */
+    rightContent?: ReactNode;
     className?: string;
 };
 
-export declare type AlertType = "error" | "warning" | "success" | "general" | "ai" | "bulk-banner";
+export declare type AlertType = "error" | "warning" | "success" | "general" | "ai" | "bulk-banner" | "misalignment";
 
 export declare type AppliedFilter = {
     id: string;
@@ -292,7 +306,7 @@ export declare type BreadcrumbsProps = {
 
 export declare const Button: ForwardRefExoticComponent<ButtonProps & RefAttributes<HTMLButtonElement>>;
 
-export declare function ButtonGroup({ label, variant, onClick, onDropdownClick, disabled, fill, className, }: ButtonGroupProps): default_2.JSX.Element;
+export declare function ButtonGroup({ label, variant, onClick, onDropdownClick, disabled, info, fill, className, }: ButtonGroupProps): default_2.JSX.Element;
 
 export declare type ButtonGroupProps = {
     /** Main button label */
@@ -303,6 +317,8 @@ export declare type ButtonGroupProps = {
     /** Chevron/dropdown button click handler */
     onDropdownClick?: () => void;
     disabled?: boolean;
+    /** Optional info text: shows an info icon after the label that reveals a tooltip on hover */
+    info?: string;
     /**
      * Fill mode — the group stretches to parent width, main button is flex:1,
      * padding reduced to fit narrow containers (e.g. 120px card action column).
@@ -359,6 +375,13 @@ export declare type CardActions = {
     onShortlist?: () => void;
     onFillBook?: () => void;
     onFillBookDropdown?: () => void;
+    /** Items of the Fill & Book split-button menu (e.g. "no overbookings" / "Custom"). When set, the chevron opens this menu. */
+    fillBookMenu?: DropdownItem[];
+    /** Info tooltip shown on an info icon inside the Fill & Book button */
+    fillBookInfo?: string;
+    /** Disable all action buttons (rendered at 50% opacity) */
+    disabled?: boolean;
+    onFillBookSelect?: (id: string) => void;
     onInvite?: () => void;
     onFill?: () => void;
     onApprove?: () => void;
@@ -533,6 +556,17 @@ export declare type EmptyStateProps = {
 
 export declare type EmptyStateSize = "big" | "small-vertical" | "small-horizontal";
 
+export declare type EmptyVacancy = {
+    type: "empty";
+    id: string;
+};
+
+export declare type EngagementGroup = {
+    id: string;
+    name: string;
+    roles: RoleCard[];
+};
+
 export declare function EngagementSidePanel({ open, onClose, data }: EngagementSidePanelProps): default_2.JSX.Element;
 
 export declare type EngagementSidePanelData = {
@@ -557,6 +591,10 @@ export declare type EngagementSidePanelData = {
     requestedBy?: string;
     creatorName?: string;
     creatorInitials?: string;
+    /** Header "open" button — navigates to the engagement screen */
+    onOpenEngagement?: () => void;
+    /** Header manage-roles button */
+    onManageRoles?: () => void;
     onCreateBooking?: () => void;
 };
 
@@ -694,6 +732,23 @@ export declare type InputSelectProps = Omit<InputProps, "type" | "onChange" | "o
 
 export declare type InputState = "default" | "error" | "warning" | "instructions";
 
+export declare const InputTextarea: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, rows, onChange, onFocus, onBlur, className, id, }: InputTextareaProps) => JSX.Element;
+
+export declare type InputTextareaProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+    /** Visible lines (default 3) */
+    rows?: number;
+    onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    onFocus?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
+    onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
+};
+
+/** `potential` (default true) = suggested WM would cause it ("Potential concession"); false = it actually exists ("Concession") */
+export declare function IssueIndicator({ issues, kind, potential }: {
+    issues: VacancyIssue[];
+    kind: "concession" | "exception";
+    potential?: boolean;
+}): default_2.JSX.Element;
+
 export declare type KPIType = "compliant" | "approved" | "exception" | "rejected" | "requested" | "condition-not-met";
 
 export declare function Layout({ variant, children, sidebar, rightPanel, className, }: LayoutProps): default_2.JSX.Element;
@@ -709,7 +764,7 @@ export declare type LayoutProps = {
     className?: string;
 };
 
-export declare type LayoutVariant = "full" | "1280" | "profile-regular" | "profile-summary";
+export declare type LayoutVariant = "full" | "fluid" | "1280" | "profile-regular" | "profile-summary";
 
 export declare const LoadingIcon: ({ className }: LoadingIconProps) => JSX.Element;
 
@@ -747,10 +802,15 @@ export declare type MisalignmentRange = {
     onShow?: () => void;
 };
 
-export declare function MisalignmentSidePanel({ open, onClose, data, }: MisalignmentSidePanelProps): default_2.JSX.Element;
+export declare function MisalignmentSidePanel({ open, onClose, data, onFix, }: MisalignmentSidePanelProps): default_2.JSX.Element;
 
 export declare type MisalignmentSidePanelData = {
     roleName: string;
+    /** Show the booked WM as read-only text (label + bold name) instead of the select field; also hides the sort row */
+    wmName?: string;
+    /** Labels for the two values of each item (default "Expected" / "Current") */
+    expectedLabel?: string;
+    currentLabel?: string;
     wmFilterValue?: string;
     sortValue?: string;
     ranges: MisalignmentRange[];
@@ -760,6 +820,21 @@ export declare type MisalignmentSidePanelProps = {
     open: boolean;
     onClose: () => void;
     data?: MisalignmentSidePanelData;
+    /** Sticky footer: Close (secondary, left) + Fix (primary, right). Footer hidden when omitted. */
+    onFix?: () => void;
+};
+
+export declare function Modal({ open, onClose, title, width, children, leftActions, rightActions }: ModalProps): default_2.ReactPortal | null;
+
+export declare type ModalProps = {
+    open: boolean;
+    onClose: () => void;
+    title: string;
+    /** Dialog width in px (default 640) */
+    width?: number;
+    children?: default_2.ReactNode;
+    leftActions?: ActionItem[];
+    rightActions?: ActionItem[];
 };
 
 export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, sectionItems, }: NavbarProps) => JSX.Element;
@@ -812,6 +887,10 @@ export declare type NavigationTab = {
     subtitle?: string;
     /** Show check icon to the left of label */
     showIcon?: boolean;
+    /** Custom leading icon (replaces the check icon) */
+    icon?: IconName;
+    /** Colour of the custom icon while the tab is active (inactive = --palette-blue-2) */
+    iconColor?: string;
     /** Badge count — shown to the right of label */
     badge?: number;
     disabled?: boolean;
@@ -821,6 +900,69 @@ export declare type NavItem = {
     id: string;
     icon: IconName;
     label: string;
+};
+
+export declare type NotificationChange = {
+    /** Layout: hours grid (date range + M/T/W/T/F/S/S hours) */
+    type: "hours";
+    beforeDate: string;
+    afterDate: string;
+    beforeHours?: NotificationHourChange[];
+    afterHours?: NotificationHourChange[];
+} | {
+    /** Layout: two columns (Before | After) with date values */
+    type: "dates";
+    beforeDate: string;
+    afterDate: string;
+    beforeChanged?: boolean;
+    afterChanged?: boolean;
+};
+
+export declare type NotificationFilters = {
+    engagement?: string;
+    role?: string;
+    notificationType?: string;
+    groupBy?: string;
+    filterCount?: number;
+};
+
+export declare type NotificationHourChange = {
+    day: string;
+    value: string;
+    changed: boolean;
+};
+
+export declare type NotificationItem = {
+    id: string;
+    unseen: boolean;
+    urgent?: boolean;
+    title: string;
+    body: string;
+    changes?: NotificationChange;
+    engagement?: string;
+    role?: string;
+    date: string;
+    onOptions?: () => void;
+    onOpenHistory?: () => void;
+    /** When set, replaces the "Options + Open history" row with a single primary button */
+    primaryLabel?: string;
+    onPrimary?: () => void;
+};
+
+export declare function NotificationsSidePanel({ open, onClose, data, }: NotificationsSidePanelProps): default_2.JSX.Element;
+
+export declare type NotificationsSidePanelData = {
+    notifications: NotificationItem[];
+    filters?: NotificationFilters;
+    unreadCount?: number;
+    onClearFilters?: () => void;
+    onRefresh?: () => void;
+};
+
+export declare type NotificationsSidePanelProps = {
+    open: boolean;
+    onClose: () => void;
+    data?: NotificationsSidePanelData;
 };
 
 export declare function Page({ navbar, variant, children, sidebar, rightPanel, className, }: PageProps): default_2.JSX.Element;
@@ -980,6 +1122,17 @@ export declare type PPBubbleProps = {
 
 export declare type PPBubbleVariant = "dark" | "light";
 
+export declare function PPChatInput({ value, placeholder, onChange, onSend, className, }: PPChatInputProps): default_2.JSX.Element;
+
+export declare type PPChatInputProps = {
+    value?: string;
+    placeholder?: string;
+    onChange?: (value: string) => void;
+    /** Called with the text when the send button is clicked or Enter is pressed */
+    onSend?: (value: string) => void;
+    className?: string;
+};
+
 export declare function PPConflictBlock({ severity, person, description, variant, children, className, }: PPConflictBlockProps): default_2.JSX.Element;
 
 export declare type PPConflictBlockProps = {
@@ -1047,7 +1200,7 @@ export declare type PPSuggestionCardProps = {
     className?: string;
 };
 
-export declare type PPSuggestionCardState = "default" | "accepted" | "dismissed";
+export declare type PPSuggestionCardState = "default" | "accepted" | "dismissed" | "expired";
 
 export declare type PPSuggestionCardVariant = "dark" | "light";
 
@@ -1124,7 +1277,7 @@ export declare type ProfileSidePanelSkill = {
     development?: boolean;
 };
 
-export declare const ProgressLinear: ({ value, showLabel, semantic, className, }: ProgressLinearProps) => JSX.Element;
+export declare const ProgressLinear: ({ value, showLabel, semantic, color, duration, className, }: ProgressLinearProps) => JSX.Element;
 
 export declare type ProgressLinearProps = {
     /** 0–100 */
@@ -1133,6 +1286,10 @@ export declare type ProgressLinearProps = {
     showLabel?: boolean;
     /** Use semantic colours based on value */
     semantic?: boolean;
+    /** Custom fill colour (overrides default / semantic) */
+    color?: string;
+    /** Fill width transition in ms (default 300) — the fill is always mounted so value changes animate, incl. 0 → n */
+    duration?: number;
     className?: string;
 };
 
@@ -1191,6 +1348,15 @@ export declare type ReportStatusType = "ready" | "no-data" | "failed" | "pending
 
 export declare type ResourcingStep = "not-shortlisted" | "shortlisted" | "shortlisted-reviewer" | "accepted-invite" | "invited" | "accepted-fillbook" | "booked" | "filled" | "declined";
 
+export declare type RoleCard = {
+    id: string;
+    roleName: string;
+    wfState: SmartAllocateWFState;
+    lastUpdated: string;
+    lastUpdatedWarning?: boolean;
+    vacancies: Vacancy[];
+};
+
 /** Key/value pair shown in the expanded left column */
 declare type RoleField = {
     label: string;
@@ -1219,6 +1385,13 @@ export declare type RoleSidePanelData = {
     engagementName?: string;
     engagementLabel?: string;
     onOpenEngagement?: () => void;
+    /** Header "open" button — navigates to the role screen */
+    onOpenRole?: () => void;
+    /** Header manage-roles button */
+    onManageRoles?: () => void;
+    /** Misalignment alert shown under the header (e.g. "Vacancy #1 has hours misalignment: 40h") */
+    misalignmentAlert?: string;
+    onFixMisalignment?: () => void;
     owners?: {
         name: string;
         initials: string;
@@ -1284,7 +1457,7 @@ export declare type SavedFiltersProps = {
     className?: string;
 };
 
-export declare function SidePanel({ open, onClose, children, width, className }: SidePanelProps): default_2.JSX.Element | null;
+export declare function SidePanel({ open, onClose, children, width, className, placement }: SidePanelProps): default_2.JSX.Element | null;
 
 export declare type SidePanelProps = {
     /** Whether the panel is visible */
@@ -1296,6 +1469,8 @@ export declare type SidePanelProps = {
     /** Width override — defaults to 600px */
     width?: number;
     className?: string;
+    /** Which edge to attach to — defaults to "right" */
+    placement?: "left" | "right";
 };
 
 export declare type SkillGroup = {
@@ -1329,7 +1504,8 @@ export declare const SkillList: ({ items, theme, disableTooltip, className, }: S
 
 export declare type SkillListItem = SkillIconFlags & {
     label: string;
-    proficiency: ProficiencyLevel;
+    /** Omit for a plain skill without proficiency dots. */
+    proficiency?: ProficiencyLevel;
     tags?: string[];
 };
 
@@ -1358,7 +1534,8 @@ export declare const SkillProfile: ({ label, proficiency, showDivider, tags, the
 
 export declare type SkillProfileProps = SkillIconFlags & {
     label: string;
-    proficiency: ProficiencyLevel;
+    /** Omit to render a plain skill — no proficiency dots and no tooltip (e.g. skills listed on an experience). */
+    proficiency?: ProficiencyLevel;
     showDivider?: boolean;
     tags?: string[];
     theme?: SkillTheme;
@@ -1424,7 +1601,53 @@ export declare type SliderRangeProps = {
 
 export declare type SliderType = "number" | "range" | "percentage";
 
+export declare function SmartAllocateSidePanel({ open, onClose, data, onCreateScenario, onFillBook, title, tuning, onOpenTuning, }: SmartAllocateSidePanelProps): default_2.JSX.Element;
+
+export declare type SmartAllocateSidePanelData = {
+    roleCount: number;
+    vacancyCount: number;
+    engagementCount: number;
+    engagements: EngagementGroup[];
+    showAlert?: boolean;
+    onCancel?: () => void;
+    onFillBook?: () => void;
+};
+
+export declare type SmartAllocateSidePanelProps = {
+    open: boolean;
+    onClose: () => void;
+    data?: SmartAllocateSidePanelData;
+    onCreateScenario?: () => void;
+    /** Called when Fill & Book is clicked, with the number of checked staffed rows */
+    onFillBook?: (count: number) => void;
+    /** Override the panel title (default "Smart allocate") */
+    title?: string;
+    /** Read-only AI Tuning summary (e.g. "Cost > Staffing Mix > Utilization"). Row hidden when omitted. */
+    tuning?: string;
+    /** Opens the AI Tuning panel */
+    onOpenTuning?: () => void;
+};
+
+export declare type SmartAllocateWFState = "new" | "shortlisting" | "in-review" | "invited" | "pending" | "partially-filled" | "filled" | "partially-booked" | "booked" | "partially-confirmed" | "confirmed" | "not-filled";
+
 export declare type SortDirection = "asc" | "desc" | "none";
+
+export declare type StaffedVacancy = {
+    type: "staffed";
+    id: string;
+    wmName: string;
+    wmInitials: string;
+    grade: string;
+    gradeMatch: boolean;
+    cost?: string;
+    matchPct: number;
+    availPct: number;
+    wfState: SmartAllocateWFState;
+    /** Soft mismatches — shown as an orange exclamation circle next to the WM */
+    concessions?: VacancyIssue[];
+    /** Hard mismatches (need approval) — shown as a red error icon next to the WM */
+    exceptions?: VacancyIssue[];
+};
 
 export declare function Switch({ checked, defaultChecked, onChange, label, showLabel, layout, disabled, id: providedId, className, }: SwitchProps): default_2.JSX.Element;
 
@@ -1442,7 +1665,7 @@ export declare type SwitchProps = {
     className?: string;
 };
 
-export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, className, }: TableProps<T>): default_2.JSX.Element;
+export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, onRowClick, className, }: TableProps<T>): default_2.JSX.Element;
 
 export declare type TableCellType = "text-primary" | "text-regular" | "pill" | "wm" | "number" | "percentage" | "button" | "icon" | "checkbox" | "custom";
 
@@ -1494,6 +1717,8 @@ export declare type TableProps<T extends TableRow = TableRow> = {
     sortKey?: string;
     sortDirection?: SortDirection;
     onSort?: (key: string, direction: SortDirection) => void;
+    /** Makes body rows clickable (pointer cursor) */
+    onRowClick?: (row: T) => void;
     className?: string;
 };
 
@@ -1604,6 +1829,15 @@ export declare type TypeaheadResult = {
 export declare type TypeaheadResultType = "profile" | "engagement" | "role" | "search";
 
 export declare function useToast(): ToastContextValue;
+
+export declare type Vacancy = StaffedVacancy | EmptyVacancy;
+
+/** A mismatch between what the role asked for and what the suggested WM has */
+export declare type VacancyIssue = {
+    field: string;
+    requested: string;
+    actual: string;
+};
 
 export declare type WFState = "new" | "shortlisting" | "in-review" | "invited" | "partially-filled" | "filled" | "partially-booked" | "booked" | "partially-confirmed" | "confirmed" | "not-filled" | "exceptions" | "pending" | "technical-overlay" | "accreditations";
 

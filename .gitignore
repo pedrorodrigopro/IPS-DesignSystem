@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-standalone/
 # storybook-static/ — committed for GitHub Pages deployment
 .DS_Store
 *.log

@@ -32,7 +32,9 @@ export type AlertProps = {
   body?: string;
   /** Up to 2 action buttons (Ghost style). Optional in both layouts. */
   actions?: [AlertAction?, AlertAction?];
-  /** bulk-banner only: makes the leading cross a clickable close button (e.g. clears the selection) */
+  /** Turns the leading icon into a dismiss button (e.g. the cross of a bulk-banner) */
+  onDismiss?: () => void;
+  /** @deprecated alias of onDismiss */
   onClose?: () => void;
   /** Inline layout only: custom content on the right (e.g. icon buttons for bulk actions) */
   rightContent?: ReactNode;
@@ -63,26 +65,37 @@ const Actions = ({ actions, className }: { actions: AlertAction[]; className: st
   </div>
 );
 
+const LeadingIcon = ({ type, tc, onDismiss }: { type: AlertType; tc: string; onDismiss?: () => void }) =>
+  onDismiss ? (
+    <button type="button" className={classNames(css.iconWrap, tc, css.dismissBtn)} aria-label="Dismiss" onClick={onDismiss}>
+      <Icon name={typeIconName[type]} size={20} />
+    </button>
+  ) : (
+    <span className={classNames(css.iconWrap, tc)}>
+      <Icon name={typeIconName[type]} size={20} />
+    </span>
+  );
+
 export const Alert = ({
   type = "general",
   layout = "inline",
   message,
   body,
   actions,
+  onDismiss,
   onClose,
   rightContent,
   className,
 }: AlertProps) => {
   const filteredActions = actions?.filter((a): a is AlertAction => !!a) ?? [];
   const tc = typeClass(type);
+  const dismiss = onDismiss ?? onClose; // onClose is a deprecated alias
 
   if (layout === "with-header") {
     return (
       <div className={classNames(css.alert, tc, css.withHeader, className)} role="alert">
         <div className={css.headerRow}>
-          <span className={classNames(css.iconWrap, tc)}>
-            <Icon name={typeIconName[type]} size={20} />
-          </span>
+          <LeadingIcon type={type} tc={tc} onDismiss={dismiss} />
           <span className={css.headerText}>{message}</span>
         </div>
         {body && <p className={css.body}>{body}</p>}
@@ -96,15 +109,7 @@ export const Alert = ({
   return (
     <div className={classNames(css.alert, tc, css.inline, className)} role="alert">
       <div className={css.left}>
-        {type === "bulk-banner" && onClose ? (
-          <button type="button" className={classNames(css.closeBtn, css.iconWrap, tc)} onClick={onClose} aria-label="Clear selection">
-            <Icon name="cross" size={24} />
-          </button>
-        ) : (
-          <span className={classNames(css.iconWrap, tc)}>
-            <Icon name={typeIconName[type]} size={20} />
-          </span>
-        )}
+        <LeadingIcon type={type} tc={tc} onDismiss={dismiss} />
         <span className={css.message}>{message}</span>
       </div>
       {filteredActions.length > 0 && (

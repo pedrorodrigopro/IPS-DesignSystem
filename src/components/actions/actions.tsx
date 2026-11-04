@@ -50,6 +50,10 @@ export type ActionsProps = {
   rightActions?: ActionItem[];
   /** sticky-screen only: drop the 1280px max width and use this horizontal padding (px) — aligns the bar with the page padding */
   insetX?: number;
+  /** Extra content on the left, after leftActions (e.g. a ButtonGroup) */
+  leftContent?: ReactNode;
+  /** Extra content on the right, after rightActions (e.g. a split ButtonGroup) */
+  rightContent?: ReactNode;
   className?: string;
 };
 
@@ -80,18 +84,22 @@ export function Actions({
   leftActions = [],
   rightActions = [],
   insetX,
+  leftContent,
+  rightContent,
   className,
 }: ActionsProps) {
   const buttonRow = (
     <div className={css.buttonRow}>
-      {leftActions.length > 0 && (
+      {(leftActions.length > 0 || leftContent) && (
         <div className={css.left}>
           {leftActions.map((a, i) => <ActionButton key={a.label + i} action={a} />)}
+          {leftContent}
         </div>
       )}
-      {rightActions.length > 0 && (
+      {(rightActions.length > 0 || rightContent) && (
         <div className={css.right}>
           {rightActions.map((a, i) => <ActionButton key={a.label + i} action={a} />)}
+          {rightContent}
         </div>
       )}
     </div>
