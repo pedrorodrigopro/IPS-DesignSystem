@@ -15,7 +15,7 @@ import css from "./pp_suggestion_card.module.scss";
 import classNames from "classnames";
 
 export type PPSuggestionCardVariant = "dark" | "light";
-export type PPSuggestionCardState   = "default" | "accepted" | "dismissed";
+export type PPSuggestionCardState   = "default" | "accepted" | "dismissed" | "expired";
 
 export type PPSuggestionCardProps = {
   /** Bold action label shown at top */
@@ -53,6 +53,14 @@ export function PPSuggestionCard({
   onMouseLeave,
   className,
 }: PPSuggestionCardProps) {
+  if (state === "expired") {
+    return (
+      <div className={classNames(css.card, css[variant], css.expired, className)}>
+        <span className={css.expiredLabel}>No longer applicable</span>
+      </div>
+    );
+  }
+
   if (state === "dismissed") {
     return (
       <div className={classNames(css.card, css[variant], css.dismissed, className)}>

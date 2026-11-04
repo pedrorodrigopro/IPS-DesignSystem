@@ -9,6 +9,7 @@
 .general     { background-color: var(--palette-neutral-1); }  // #E7EAF8
 .ai          { background-color: var(--palette-neutral-0); }  // #CFDAF7
 .bulk_banner { background-color: var(--palette-primary-3); }  // #E7F9FE
+.misalignment { background-color: color-mix(in srgb, var(--palette-orange-3) 25%, var(--palette-white-0)); } // peach tint of #FF6B00
 
 // ── Shared base ───────────────────────────────────────────────────────────────
 .alert {
@@ -37,6 +38,7 @@
   .general &,
   .ai &,
   .bulk_banner & { color: var(--palette-blue-0); }
+  .misalignment & { color: var(--palette-orange-3); }
 }
 
 // ── Header=False — inline (row) ───────────────────────────────────────────────
@@ -123,4 +125,14 @@
     outline: none;
     box-shadow: 0 0 0 4px var(--palette-blue-1), 0 0 0 2px var(--palette-white-0);
   }
+}
+
+// ── Bulk banner close (cross) button ─────────────────────────────────────────
+.closeBtn {
+  background: none;
+  border: none;
+  padding: 0 8px 0 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
 }

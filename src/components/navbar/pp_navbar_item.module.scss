@@ -157,3 +157,14 @@
 .wrapper:hover .tooltip {
   display: block;
 }
+
+// Navbar scrolls below this height (see navbar.module.scss) → keep the tooltip out of the clipping box
+@media (max-height: 717px) {
+  .tooltip {
+    position: fixed;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin-left: 62px; // 50px button + 12px gap
+  }
+}

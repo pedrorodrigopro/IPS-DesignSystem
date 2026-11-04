@@ -133,6 +133,11 @@ export type EngagementSidePanelData = {
   // Creator
   creatorName?:     string;
   creatorInitials?: string;
+  // Header buttons
+  /** Header "open" button — navigates to the engagement screen */
+  onOpenEngagement?:      () => void;
+  /** Header manage-roles button */
+  onManageRoles?:         () => void;
   // Actions
   onCreateBooking?:       () => void;
 };
@@ -160,7 +165,10 @@ export function EngagementSidePanel({ open, onClose, data }: EngagementSidePanel
               <span style={{ ...h4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{data.title}</span>
             </div>
             <div style={{ display: "flex", gap: 4, flexShrink: 0, marginLeft: 8 }}>
-              <Button kind="iconTertiary" size="regular" title="Open engagement" onClick={data.onCreateBooking}>
+              <Button kind="iconTertiary" size="regular" title="Manage roles" onClick={data.onManageRoles}>
+                <Icon name="manage-roles" size={16} />
+              </Button>
+              <Button kind="iconTertiary" size="regular" title="Open engagement" onClick={data.onOpenEngagement}>
                 <Icon name="open" size={16} />
               </Button>
               <Button kind="iconTertiary" size="regular" title="Close" onClick={onClose}>

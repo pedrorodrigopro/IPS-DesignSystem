@@ -15,6 +15,7 @@ export * from "./dropdown";
 export * from "./empty_state";
 export * from "./input";
 export * from "./loading";
+export * from "./modal";
 export * from "./navbar";
 export * from "./navigation";
 export * from "./pagination";

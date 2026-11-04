@@ -34,6 +34,7 @@ import { Icon }           from "../icon/icon";
 import { Button }         from "../button/button";
 import { WorkforceMember }from "../workforce_member/workforce_member";
 import { PillWFState, PillSimple } from "../pill/pill";
+import { Alert }          from "../alert/alert";
 import { SkillProfile }   from "../skill/skill";
 
 import type { WFState } from "../pill/pill";
@@ -112,6 +113,13 @@ export type RoleSidePanelData = {
   engagementName?:     string;
   engagementLabel?:    string; // defaults "Engagement"
   onOpenEngagement?:   () => void;
+  /** Header "open" button — navigates to the role screen */
+  onOpenRole?:         () => void;
+  /** Header manage-roles button */
+  onManageRoles?:      () => void;
+  /** Misalignment alert shown under the header (e.g. "Vacancy #1 has hours misalignment: 40h") */
+  misalignmentAlert?:  string;
+  onFixMisalignment?:  () => void;
   // Owner
   owners?:       { name: string; initials: string }[];
   // Description
@@ -153,7 +161,10 @@ export function RoleSidePanel({ open, onClose, data }: RoleSidePanelProps) {
               <span style={{ ...h4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{data.title}</span>
             </div>
             <div style={{ display: "flex", gap: 4, flexShrink: 0, marginLeft: 8 }}>
-              <Button kind="iconTertiary" size="regular" title="External link" onClick={data.onOpenEngagement}>
+              <Button kind="iconTertiary" size="regular" title="Manage roles" onClick={data.onManageRoles}>
+                <Icon name="manage-roles" size={16} />
+              </Button>
+              <Button kind="iconTertiary" size="regular" title="Open role" onClick={data.onOpenRole}>
                 <Icon name="open" size={16} />
               </Button>
               <Button kind="iconTertiary" size="regular" title="Close" onClick={onClose}>
@@ -167,6 +178,16 @@ export function RoleSidePanel({ open, onClose, data }: RoleSidePanelProps) {
 
         {/* ── Scrollable content — gap:16px from .content class ── */}
         <div className={css.content} style={{ padding: "16px 24px 24px" }}>
+
+        {/* ── Misalignment alert ── */}
+        {data.misalignmentAlert && (
+          <Alert
+            type="misalignment"
+            layout="inline"
+            message={data.misalignmentAlert}
+            actions={[{ label: "Fix", onClick: () => data.onFixMisalignment?.() }]}
+          />
+        )}
 
         {/* ── Role Subtitle — WF state pill + activity tag pill + text items ── */}
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
@@ -211,7 +232,7 @@ export function RoleSidePanel({ open, onClose, data }: RoleSidePanelProps) {
               </div>
             </div>
             {/* Engagement name link */}
-            <button style={{ ...linkStyle, textAlign: "left", paddingLeft: 22 }}>{data.engagementName}</button>
+            <button onClick={data.onOpenEngagement} style={{ ...linkStyle, textAlign: "left", paddingLeft: 22 }}>{data.engagementName}</button>
           </div>
         )}
 

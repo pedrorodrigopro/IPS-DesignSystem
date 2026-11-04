@@ -119,6 +119,8 @@ export type TableProps<T extends TableRow = TableRow> = {
   sortKey?: string;
   sortDirection?: SortDirection;
   onSort?: (key: string, direction: SortDirection) => void;
+  /** Makes body rows clickable (pointer cursor) */
+  onRowClick?: (row: T) => void;
   className?: string;
 };
 
@@ -247,6 +249,7 @@ export function Table<T extends TableRow = TableRow>({
   sortKey,
   sortDirection = "none",
   onSort,
+  onRowClick,
   className,
 }: TableProps<T>) {
   // ── Selection state ──────────────────────────────────────────────────────
@@ -391,6 +394,8 @@ export function Table<T extends TableRow = TableRow>({
                   css.row,
                   isSelected(row, i) && css.rowSelected
                 )}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                style={onRowClick ? { cursor: "pointer" } : undefined}
               >
                 {selectable && !compact && (
                   <td className={classNames(css.td, css.checkboxCell)}>

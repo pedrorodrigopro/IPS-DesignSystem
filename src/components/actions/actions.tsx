@@ -25,6 +25,8 @@
 
 import React, { ReactNode } from "react";
 import classNames from "classnames";
+import { Icon } from "../icon/icon";
+import type { IconName } from "../icon/icon";
 import css from "./actions.module.scss";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -36,6 +38,8 @@ export type ActionItem = {
   variant?: "primary" | "secondary";
   onClick?: () => void;
   disabled?: boolean;
+  /** Optional leading icon */
+  icon?: IconName;
 };
 
 export type ActionsProps = {
@@ -44,6 +48,8 @@ export type ActionsProps = {
   leftActions?: ActionItem[];
   /** Buttons on the right side (typically save / primary actions) */
   rightActions?: ActionItem[];
+  /** sticky-screen only: drop the 1280px max width and use this horizontal padding (px) — aligns the bar with the page padding */
+  insetX?: number;
   className?: string;
 };
 
@@ -61,6 +67,7 @@ function ActionButton({ action }: { action: ActionItem }) {
       )}
       onClick={action.onClick}
     >
+      {action.icon && <Icon name={action.icon} size={16} />}
       {action.label}
     </button>
   );
@@ -72,6 +79,7 @@ export function Actions({
   variant = "content",
   leftActions = [],
   rightActions = [],
+  insetX,
   className,
 }: ActionsProps) {
   const buttonRow = (
@@ -102,7 +110,7 @@ export function Actions({
   if (variant === "sticky-screen") {
     return (
       <div className={classNames(css.stickyScreen, className)}>
-        <div className={css.screenInner}>
+        <div className={css.screenInner} style={insetX !== undefined ? { maxWidth: "none", paddingLeft: insetX, paddingRight: insetX } : undefined}>
           {buttonRow}
         </div>
       </div>

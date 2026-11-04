@@ -21,6 +21,24 @@
   border-color: var(--palette-neutral-0);
 }
 
+// ── Expired state (sibling of accepted suggestion) ───────────────────────────
+
+.expired {
+  opacity: 0.4;
+}
+
+.expiredLabel {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label); // 12px
+  font-weight: var(--font-weight-regular);
+  font-style: italic;
+  color: var(--palette-blue-2);
+}
+
+.dark.expired .expiredLabel {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 // ── Dismissed state ───────────────────────────────────────────────────────────
 // No blanket opacity — use AA-compliant specific colours instead
 

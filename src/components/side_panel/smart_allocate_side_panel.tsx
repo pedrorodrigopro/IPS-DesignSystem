@@ -21,6 +21,7 @@ import { Button }             from "../button/button";
 import { Divider }            from "../divider/divider";
 import { Accordion }          from "../accordion/accordion";
 import { Alert }              from "../alert/alert";
+import { Navigation }         from "../navigation/navigation";
 import { Actions }            from "../actions/actions";
 import { Toggle }             from "../toggle/toggle";
 import { Checkbox }           from "../checkbox/checkbox";
@@ -35,6 +36,9 @@ export type SmartAllocateWFState =
   | "partially-filled" | "filled" | "partially-booked" | "booked"
   | "partially-confirmed" | "confirmed" | "not-filled";
 
+/** A mismatch between what the role asked for and what the suggested WM has */
+export type VacancyIssue = { field: string; requested: string; actual: string };
+
 export type StaffedVacancy = {
   type:              "staffed";
   id:                string;
@@ -46,6 +50,10 @@ export type StaffedVacancy = {
   matchPct:          number;
   availPct:          number;
   wfState:           SmartAllocateWFState;
+  /** Soft mismatches — shown as an orange exclamation circle next to the WM */
+  concessions?:      VacancyIssue[];
+  /** Hard mismatches (need approval) — shown as a red error icon next to the WM */
+  exceptions?:       VacancyIssue[];
 };
 
 export type EmptyVacancy = {
@@ -81,9 +89,18 @@ export type SmartAllocateSidePanelData = {
 };
 
 export type SmartAllocateSidePanelProps = {
-  open:    boolean;
-  onClose: () => void;
-  data?:   SmartAllocateSidePanelData;
+  open:               boolean;
+  onClose:            () => void;
+  data?:              SmartAllocateSidePanelData;
+  onCreateScenario?:  () => void;
+  /** Called when Fill & Book is clicked, with the number of checked staffed rows */
+  onFillBook?:        (count: number) => void;
+  /** Override the panel title (default "Smart allocate") */
+  title?:             string;
+  /** Read-only AI Tuning summary (e.g. "Cost > Staffing Mix > Utilization"). Row hidden when omitted. */
+  tuning?:            string;
+  /** Opens the AI Tuning panel */
+  onOpenTuning?:      () => void;
 };
 
 // ── Portal dropdown — renders children into document.body to escape overflow:hidden ──
@@ -195,6 +212,69 @@ const tdBase: React.CSSProperties = {
   padding: "8px", verticalAlign: "middle",
 };
 
+// ── Concession / exception indicator with tooltip ─────────────────────────────
+
+/** `potential` (default true) = suggested WM would cause it ("Potential concession"); false = it actually exists ("Concession") */
+export function IssueIndicator({ issues, kind, potential = true }: { issues: VacancyIssue[]; kind: "concession" | "exception"; potential?: boolean }) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const anchor = useRef<HTMLSpanElement>(null);
+  const isExc = kind === "exception";
+
+  const show = () => {
+    const r = anchor.current?.getBoundingClientRect();
+    if (r) setPos({ x: r.left + r.width / 2, y: r.top });
+  };
+
+  return (
+    <span
+      ref={anchor}
+      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, flexShrink: 0 }}
+      onMouseEnter={show}
+      onMouseLeave={() => setPos(null)}
+    >
+      {/* Glyphs live inside a 20×20 viewBox with 1–2px padding → rendered glyph is 16px tall */}
+      {isExc
+        ? <Icon name="error" size={20} style={{ color: "var(--palette-red-0)", flexShrink: 0 }} />
+        : <Icon name="soft-exception" size={20} style={{ color: "var(--palette-orange-1)", flexShrink: 0 }} />}
+      {/* Tooltip is portalled to <body> so it is never clipped by row / card / panel overflow */}
+      {pos && ReactDOM.createPortal(
+        <div style={{
+          position: "fixed", left: pos.x, top: pos.y - 8, transform: "translate(-50%, -100%)",
+          zIndex: 100000, background: "var(--palette-blue-1)", borderRadius: 8,
+          padding: "10px 14px", minWidth: 220, maxWidth: 320, pointerEvents: "none",
+          boxShadow: "0 4px 16px rgba(12,20,87,0.28)",
+        }}>
+          <div style={{ fontFamily: "var(--font-family)", fontSize: 12, fontWeight: 700, color: "#fff", marginBottom: 8 }}>
+            {`${potential ? "Potential " : ""}${isExc ? (potential ? "exception" : "Exception") : (potential ? "concession" : "Concession")}`}
+          </div>
+          {issues.map((it, i) => (
+            <div key={i} style={{ marginBottom: i < issues.length - 1 ? 8 : 0 }}>
+              <div style={{ fontFamily: "var(--font-family)", fontSize: 12, color: "rgba(255,255,255,0.7)", marginBottom: 2 }}>{it.field}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-family)", fontSize: 12 }}>
+                <span style={{ color: isExc ? "#ff9999" : "#ffc87a", textDecoration: "line-through" }}>{it.requested}</span>
+                <span style={{ color: "rgba(255,255,255,0.5)" }}>→</span>
+                <span style={{ color: "#fff", fontWeight: 600 }}>{it.actual}</span>
+              </div>
+            </div>
+          ))}
+          {isExc && (
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.15)", fontFamily: "var(--font-family)", fontSize: 11, color: "rgba(255,255,255,0.6)" }}>
+              {potential ? "Booking this person would require approval" : "Booking this person requires approval"}
+            </div>
+          )}
+          {/* Caret */}
+          <div style={{
+            position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)",
+            width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent",
+            borderTop: "6px solid var(--palette-blue-1)",
+          }} />
+        </div>,
+        document.body
+      )}
+    </span>
+  );
+}
+
 // ── Grade cell ────────────────────────────────────────────────────────────────
 
 function GradeCell({ grade, match }: { grade: string; match: boolean }) {
@@ -211,11 +291,13 @@ function GradeCell({ grade, match }: { grade: string; match: boolean }) {
 type VacancyRowState = "staffed" | "editing" | "empty";
 
 function StaffedRow({
-  vacancy, onEdit, onFillBook,
+  vacancy, onEdit, onFillBook, checked, onToggle,
 }: {
   vacancy:     StaffedVacancy;
   onEdit:      () => void;
   onFillBook:  () => void;
+  checked:     boolean;
+  onToggle:    () => void;
 }) {
   const [menuOpen,  setMenuOpen] = useState(false);
   const [menuPos,   setMenuPos]  = useState<DropdownPos>({ top: 0, left: 0, width: 0 });
@@ -230,11 +312,15 @@ function StaffedRow({
       style={{ background: hovered ? "var(--palette-trans-0)" : "white", cursor: "default" }}
     >
       <td style={{ ...tdBase, width: COL_WIDTHS.checkbox }}>
-        {/* Figma: IMAGE-SVG checkbox — not interactive on staffed rows */}
-        <Checkbox checked={false} onChange={() => {}} />
+        {/* Checked by default — the checked count drives "Fill & Book (N)" */}
+        <Checkbox checked={checked} onChange={onToggle} />
       </td>
       <td style={tdBase}>
-        <WorkforceMember variant="small-1line" name={vacancy.wmName} initials={vacancy.wmInitials} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <WorkforceMember variant="small-1line" name={vacancy.wmName} initials={vacancy.wmInitials} />
+          {vacancy.concessions && vacancy.concessions.length > 0 && <IssueIndicator issues={vacancy.concessions} kind="concession" />}
+          {vacancy.exceptions  && vacancy.exceptions.length  > 0 && <IssueIndicator issues={vacancy.exceptions}  kind="exception" />}
+        </div>
       </td>
       <td style={{ ...tdBase, width: COL_WIDTHS.grade }}>
         <GradeCell grade={vacancy.grade} match={vacancy.gradeMatch} />
@@ -284,7 +370,7 @@ function StaffedRow({
 
 // ── Row — No WM (empty input + toggle) ───────────────────────────────────────
 
-type SelectedWM = { id: string; name: string; initials: string; grade?: string; gradeMatch?: boolean; cost?: string; matchPct?: number; availPct?: number; wfState?: SmartAllocateWFState };
+type SelectedWM = { id: string; name: string; initials: string; grade?: string; gradeMatch?: boolean; cost?: string; matchPct?: number; availPct?: number; wfState?: SmartAllocateWFState; concessions?: VacancyIssue[]; exceptions?: VacancyIssue[] };
 
 function EmptyRow({ onWMSelected }: {
   onWMSelected: (wm: SelectedWM) => void;
@@ -350,13 +436,13 @@ function EmptyRow({ onWMSelected }: {
         </PortalDropdown>
       </td>
 
-      {/* Matches | Shortlist | Other resource toggle — spans Grade+Cost+Match+Avail cols */}
+      {/* Matches | Shortlist | All resources toggle — spans Grade+Cost+Match+Avail cols */}
       <td colSpan={4} style={tdBase}>
         <Toggle
           options={[
             { value: "matches",         label: "Matches"        },
             { value: "shortlist",       label: "Shortlist"      },
-            { value: "other-resource",  label: "Other resource" },
+            { value: "all-resources",   label: "All resources" },
           ]}
           value={listMode}
           onChange={setListMode}
@@ -372,13 +458,25 @@ function EmptyRow({ onWMSelected }: {
 
 // ── Vacancy row — two clear states: has-WM | no-WM ────────────────────────────
 
-function VacancyRow({ vacancy }: { vacancy: Vacancy }) {
+function VacancyRow({ vacancy, checked, onToggle, onStaffedChange }: {
+  vacancy:         Vacancy;
+  checked:         boolean;
+  onToggle:        () => void;
+  onStaffedChange: (id: string, staffed: boolean) => void;
+}) {
   // Local WM state — starts from the vacancy data, can be changed by selecting from dropdown
   const [wm, setWM] = useState<SelectedWM | null>(
     vacancy.type === "staffed"
-      ? { id: vacancy.id, name: vacancy.wmName, initials: vacancy.wmInitials, grade: vacancy.grade, gradeMatch: vacancy.gradeMatch, matchPct: vacancy.matchPct, availPct: vacancy.availPct, wfState: vacancy.wfState }
+      ? { id: vacancy.id, name: vacancy.wmName, initials: vacancy.wmInitials, grade: vacancy.grade, gradeMatch: vacancy.gradeMatch, cost: vacancy.cost, matchPct: vacancy.matchPct, availPct: vacancy.availPct, wfState: vacancy.wfState, concessions: vacancy.concessions, exceptions: vacancy.exceptions }
       : null
   );
+
+  // Tell the panel whether this vacancy currently has a WM (drives Fill & Book count)
+  const hasWM = !!wm;
+  useEffect(() => {
+    onStaffedChange(vacancy.id, hasWM);
+    return () => onStaffedChange(vacancy.id, false);
+  }, [vacancy.id, hasWM]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (wm) {
     // Has a WM — show staffed row with full datapoints
@@ -391,7 +489,10 @@ function VacancyRow({ vacancy }: { vacancy: Vacancy }) {
           cost: wm.cost,
           matchPct: wm.matchPct ?? 0, availPct: wm.availPct ?? 0,
           wfState: wm.wfState ?? "new",
+          concessions: wm.concessions, exceptions: wm.exceptions,
         }}
+        checked={checked}
+        onToggle={onToggle}
         onEdit={() => setWM(null)}
         onFillBook={() => alert(`Fill & Book: ${wm.name}`)}
       />
@@ -408,7 +509,12 @@ function VacancyRow({ vacancy }: { vacancy: Vacancy }) {
 
 // ── Role card ─────────────────────────────────────────────────────────────────
 
-function RoleCardBlock({ role }: { role: RoleCard }) {
+function RoleCardBlock({ role, unchecked, onToggle, onStaffedChange }: {
+  role:            RoleCard;
+  unchecked:       Set<string>;
+  onToggle:        (id: string) => void;
+  onStaffedChange: (id: string, staffed: boolean) => void;
+}) {
   return (
     <div style={{
       background: "white",
@@ -459,7 +565,13 @@ function RoleCardBlock({ role }: { role: RoleCard }) {
           </thead>
           <tbody>
             {role.vacancies.map(v => (
-              <VacancyRow key={v.id} vacancy={v} />
+              <VacancyRow
+                key={v.id}
+                vacancy={v}
+                checked={!unchecked.has(v.id)}
+                onToggle={() => onToggle(v.id)}
+                onStaffedChange={onStaffedChange}
+              />
             ))}
           </tbody>
         </table>
@@ -474,11 +586,40 @@ export function SmartAllocateSidePanel({
   open,
   onClose,
   data = { roleCount: 0, vacancyCount: 0, engagementCount: 0, engagements: [] },
+  onCreateScenario,
+  onFillBook,
+  title = "Smart allocate",
+  tuning,
+  onOpenTuning,
 }: SmartAllocateSidePanelProps) {
-  const staffedCount = data.engagements
-    .flatMap(e => e.roles)
-    .flatMap(r => r.vacancies)
-    .filter(v => v.type === "staffed").length;
+  const [tab, setTab] = useState<"all" | "concessions" | "exceptions">("all");
+  // All staffed rows are checked by default; unchecking removes them from the Fill & Book count
+  const [unchecked,  setUnchecked]  = useState<Set<string>>(new Set());
+  const [staffedIds, setStaffedIds] = useState<Set<string>>(() => new Set(
+    data.engagements.flatMap(e => e.roles).flatMap(r => r.vacancies).filter(v => v.type === "staffed").map(v => v.id)
+  ));
+  const toggleId = useCallback((id: string) => setUnchecked(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  }), []);
+  const onStaffedChange = useCallback((id: string, staffed: boolean) => setStaffedIds(prev => {
+    if (prev.has(id) === staffed) return prev;
+    const next = new Set(prev);
+    staffed ? next.add(id) : next.delete(id);
+    return next;
+  }), []);
+  const staffedCount = [...staffedIds].filter(id => !unchecked.has(id)).length;
+
+  // Tab counts + role filtering (rows stay mounted when hidden so ticks / counts are preserved)
+  const allVacancies = data.engagements.flatMap(e => e.roles).flatMap(r => r.vacancies);
+  const concessionCount = allVacancies.filter(v => v.type === "staffed" && v.concessions?.length).length;
+  const exceptionCount  = allVacancies.filter(v => v.type === "staffed" && v.exceptions?.length).length;
+  const roleMatches = (r: RoleCard) =>
+    tab === "all" ||
+    r.vacancies.some(v => v.type === "staffed" &&
+      (tab === "concessions" ? !!v.concessions?.length : !!v.exceptions?.length));
+  const visibleEngIds = data.engagements.filter(e => e.roles.some(roleMatches)).map(e => e.id);
 
   return (
     <SidePanel open={open} onClose={onClose} width={900}>
@@ -489,7 +630,10 @@ export function SmartAllocateSidePanel({
           {/* Header */}
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Header size="content" title="Smart allocate" />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="smart-allocation" size={20} style={{ color: "var(--palette-blue-0)" }} />
+                <Header size="content" title={title} />
+              </div>
               <span style={labelMuted}>
                 {data.roleCount} role{data.roleCount !== 1 ? "s" : ""}{" "}
                 ({data.vacancyCount} vacanc{data.vacancyCount !== 1 ? "ies" : "y"}){" "}
@@ -501,6 +645,31 @@ export function SmartAllocateSidePanel({
             </Button>
           </div>
 
+          {/* Read-only AI Tuning summary + button */}
+          {tuning !== undefined && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={labelMuted}>Tuning</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <span style={bodyBold}>{tuning}</span>
+                <Button kind="secondary" size="regular" onClick={onOpenTuning}>
+                  <Icon name="preferences" size={16} />AI Tuning
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Tabs */}
+          <Navigation
+            orientation="horizontal"
+            tabs={[
+              { id: "all",         label: "All roles" },
+              { id: "concessions", label: "Concessions", badge: concessionCount, icon: "soft-exception", iconColor: "var(--palette-orange-1)" },
+              { id: "exceptions",  label: "Exceptions",  badge: exceptionCount,  icon: "error",   iconColor: "var(--palette-red-0)" },
+            ]}
+            activeId={tab}
+            onChange={id => setTab(id as typeof tab)}
+          />
+
           {/* Optional warning alert */}
           {data.showAlert && (
             <Alert
@@ -511,18 +680,23 @@ export function SmartAllocateSidePanel({
           )}
 
           {/* Engagement groups */}
-          {data.engagements.map((eng, i) => (
-            <React.Fragment key={eng.id}>
-              {i > 0 && <Divider orientation="horizontal" />}
-              <Accordion title={eng.name} size="body" defaultExpanded>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
-                  {eng.roles.map(role => (
-                    <RoleCardBlock key={role.id} role={role} />
-                  ))}
-                </div>
-              </Accordion>
-            </React.Fragment>
-          ))}
+          {data.engagements.map(eng => {
+            const engVisible = visibleEngIds.includes(eng.id);
+            return (
+              <div key={eng.id} style={{ display: engVisible ? "flex" : "none", flexDirection: "column", gap: 16 }}>
+                {engVisible && visibleEngIds[0] !== eng.id && <Divider orientation="horizontal" />}
+                <Accordion title={eng.name} size="body" defaultExpanded>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
+                    {eng.roles.map(role => (
+                      <div key={role.id} style={{ display: roleMatches(role) ? "block" : "none" }}>
+                        <RoleCardBlock role={role} unchecked={unchecked} onToggle={toggleId} onStaffedChange={onStaffedChange} />
+                      </div>
+                    ))}
+                  </div>
+                </Accordion>
+              </div>
+            );
+          })}
 
           <div style={{ height: 16 }} />
         </div>
@@ -531,12 +705,15 @@ export function SmartAllocateSidePanel({
         <Actions
           variant="sticky-panel"
           leftActions={[{ label: "Cancel", variant: "secondary", onClick: onClose }]}
-          rightActions={[{
-            label:    `Fill & Book${staffedCount > 0 ? ` (${staffedCount})` : ""}`,
-            variant:  "primary",
-            onClick:  data.onFillBook,
-            disabled: staffedCount === 0,
-          }]}
+          rightActions={[
+            ...(onCreateScenario ? [{ label: "Create scenario", variant: "secondary" as const, onClick: onCreateScenario }] : []),
+            {
+              label:    `Fill & Book${staffedCount > 0 ? ` (${staffedCount})` : ""}`,
+              variant:  "primary" as const,
+              onClick:  () => { onFillBook?.(staffedCount); data.onFillBook?.(); },
+              disabled: staffedCount === 0,
+            },
+          ]}
         />
 
       </div>

@@ -5,11 +5,24 @@
 //   Selected: 35×35px filled circle #0C1457, selector pill on navbar left edge
 //   Focus:    box-shadow 0 0 0 4px white, 0 0 0 2px #0C1457
 
+// ── Responsive gaps ───────────────────────────────────────────────────────────
+// The navbar always fills the screen height. Gaps between items shrink (and grow back,
+// capped at the Figma values 16px / 24px) as the viewport height changes.
+//   fixed content (items 14×36, logo 40, ProPilot 50, dividers, padding) = 636px
+//   gaps at Figma size: 10 × 16px + 7 × 24px = 328px → full gaps from 964px viewport height
+//   minimum gaps 4px / 6px → below $nav-overflow-height the navbar scrolls (see media query)
+$nav-fixed-height: 636px;
+$nav-overflow-height: 718px; // 636 + 10×4 + 7×6
+
 .navbar {
+  --nav-gap-sm: clamp(4px, calc((100vh - #{$nav-fixed-height}) * 0.0488), 16px);
+  --nav-gap-lg: clamp(6px, calc((100vh - #{$nav-fixed-height}) * 0.0732), 24px);
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  gap: var(--nav-gap-lg); // keeps Top / Bottom apart when space is tight
   width: 60px;
   min-height: 100vh; // always full viewport height
   height: 100%;      // stretch to fill parent if taller
@@ -18,6 +31,17 @@
   padding: 24px 0 16px;
   flex-shrink: 0;
   overflow: visible; // allow tooltip to escape
+
+  // Too short for even the minimum gaps → the navbar itself scrolls (scrollbar hidden)
+  @media (max-height: #{$nav-overflow-height - 1px}) {
+    height: 100vh;
+    min-height: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
 }
 
 // ── Sections ──────────────────────────────────────────────────────────────────
@@ -27,7 +51,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: var(--nav-gap-lg);
   width: 100%;
 }
 
@@ -48,7 +72,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--nav-gap-sm);
   width: 60px;
 }
 
@@ -180,5 +204,15 @@
   // Show tooltip when parent wrapper is hovered
   .navItemWrapper:hover & {
     opacity: 1;
+  }
+
+  // When the navbar scrolls it clips absolute children, so the tooltip is taken out of the
+  // clipping box: fixed with auto offsets keeps its static position (right of the button).
+  @media (max-height: #{$nav-overflow-height - 1px}) {
+    position: fixed;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin-left: 48px; // 36px button + 12px gap
   }
 }

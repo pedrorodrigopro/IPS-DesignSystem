@@ -41,6 +41,10 @@ export type ProgressLinearProps = {
   showLabel?: boolean;
   /** Use semantic colours based on value */
   semantic?: boolean;
+  /** Custom fill colour (overrides default / semantic) */
+  color?: string;
+  /** Fill width transition in ms (default 300) — the fill is always mounted so value changes animate, incl. 0 → n */
+  duration?: number;
   className?: string;
 };
 
@@ -48,20 +52,24 @@ export const ProgressLinear = ({
   value,
   showLabel = false,
   semantic = false,
+  color,
+  duration,
   className,
 }: ProgressLinearProps) => {
   const pct = Math.max(0, Math.min(100, value));
-  const fillColor = semantic ? semanticColor(pct) : defaultColor;
+  const fillColor = color ?? (semantic ? semanticColor(pct) : defaultColor);
 
   return (
     <div className={classNames(css.linear, className)}>
       <div className={css.linearTrack} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        {pct > 0 && (
-          <div
-            className={css.linearFill}
-            style={{ width: `${pct}%`, backgroundColor: fillColor }}
-          />
-        )}
+        <div
+          className={css.linearFill}
+          style={{
+            width: `${pct}%`,
+            backgroundColor: fillColor,
+            ...(duration !== undefined ? { transitionDuration: `${duration}ms` } : {}),
+          }}
+        />
       </div>
       {showLabel && (
         <span className={css.label}>{pct}%</span>

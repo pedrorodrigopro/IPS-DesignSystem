@@ -17,7 +17,7 @@ $bubble-bg: #0C1457;        // --palette-blue-1
 $arrow:      5px;           // half arrow width (full arrow = 10px)
 $overlap:    3px;           // how much arrow overlaps bubble
 $offset:     8px;           // gap between trigger and bubble
-$min-width:  120px;         // prevent tiny single-word bubbles
+$min-width:  0;             // bubbles hug their text
 
 // ── Wrapper ────────────────────────────────────────────────────────────────────
 .wrapper {

@@ -11,7 +11,7 @@ export default {
     },
   },
   argTypes: {
-    type: { control: "select", options: ["error", "warning", "success", "general", "ai", "bulk-banner"] },
+    type: { control: "select", options: ["error", "warning", "success", "general", "ai", "bulk-banner", "misalignment"] },
     layout: { control: "select", options: ["inline", "with-header"] },
   },
 } satisfies Meta<typeof Alert>;
@@ -28,6 +28,7 @@ export const InlineWithActions: StoryFn<typeof Alert> = () => (
     <Alert type="general"     layout="inline" message="General inline notification" actions={[{ label: "Label", onClick: () => {} }, { label: "Label", onClick: () => {} }]} />
     <Alert type="ai"          layout="inline" message="AI notification"             actions={[{ label: "Label", onClick: () => {} }, { label: "Label", onClick: () => {} }]} />
     <Alert type="bulk-banner" layout="inline" message="10 items selected"           actions={[{ label: "Label", onClick: () => {} }, { label: "Label", onClick: () => {} }]} />
+    <Alert type="misalignment" layout="inline" message="Vacancy #1 has hours misalignment: 40h" actions={[{ label: "Fix", onClick: () => {} }]} />
   </div>
 );
 

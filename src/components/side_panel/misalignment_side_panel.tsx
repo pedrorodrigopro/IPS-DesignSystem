@@ -19,6 +19,7 @@ import { Icon }             from "../icon/icon";
 import { Button }           from "../button/button";
 import { InputSelect }      from "../input/input";
 import { Tile }             from "../tile/tile";
+import { Actions }          from "../actions/actions";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,11 @@ export type MisalignmentRange = {
 
 export type MisalignmentSidePanelData = {
   roleName:         string;
+  /** Show the booked WM as read-only text (label + bold name) instead of the select field; also hides the sort row */
+  wmName?:          string;
+  /** Labels for the two values of each item (default "Expected" / "Current") */
+  expectedLabel?:   string;
+  currentLabel?:    string;
   wmFilterValue?:   string;   // default "All (2 vacancies)"
   sortValue?:       string;   // default "Latest"
   ranges:           MisalignmentRange[];
@@ -47,6 +53,8 @@ export type MisalignmentSidePanelProps = {
   open:    boolean;
   onClose: () => void;
   data?:   MisalignmentSidePanelData;
+  /** Sticky footer: Close (secondary, left) + Fix (primary, right). Footer hidden when omitted. */
+  onFix?:  () => void;
 };
 
 // ── Typography ────────────────────────────────────────────────────────────────
@@ -66,7 +74,7 @@ const labelMuted: React.CSSProperties = {
 
 // ── Misalignment tile ─────────────────────────────────────────────────────────
 
-function MisalignmentTile({ range }: { range: MisalignmentRange }) {
+function MisalignmentTile({ range, expectedLabel = "Expected", currentLabel = "Current", alignColumns = false }: { range: MisalignmentRange; expectedLabel?: string; currentLabel?: string; alignColumns?: boolean }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
@@ -120,9 +128,9 @@ function MisalignmentTile({ range }: { range: MisalignmentRange }) {
           }}
         >
           <span style={bodyBold}>{item.fieldName}</span>
-          <div style={{ display: "flex", gap: 32 }}>
-            <span style={body}>Expected: {item.expected}</span>
-            <span style={body}>Current: {item.current}</span>
+          <div style={alignColumns ? { display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 16 } : { display: "flex", gap: 32 }}>
+            <span style={body}>{expectedLabel}: {item.expected}</span>
+            <span style={body}>{currentLabel}: {item.current}</span>
           </div>
         </div>
       ))}
@@ -136,6 +144,7 @@ export function MisalignmentSidePanel({
   open,
   onClose,
   data = { roleName: "Role", ranges: [] },
+  onFix,
 }: MisalignmentSidePanelProps) {
   const rangeCount = data.ranges.length;
   const rangeLabel = `${rangeCount} misalignment${rangeCount !== 1 ? "s" : ""}`;
@@ -162,14 +171,22 @@ export function MisalignmentSidePanel({
             </Button>
           </div>
 
-          {/* Workforce Member filter — full width */}
-          <InputSelect
-            label="Workforce Member"
-            value={data.wmFilterValue ?? "All (2 vacancies)"}
-            readOnly
-          />
+          {/* Workforce Member — read-only text when wmName is given, otherwise the select field */}
+          {data.wmName ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ ...body, fontSize: 12 }}>Workforce Member</span>
+              <span style={bodyBold}>{data.wmName}</span>
+            </div>
+          ) : (
+            <InputSelect
+              label="Workforce Member"
+              value={data.wmFilterValue ?? "All (2 vacancies)"}
+              readOnly
+            />
+          )}
 
           {/* Sort row */}
+          {!data.wmName && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button style={{
               display: "inline-flex", alignItems: "center", gap: 8,
@@ -185,16 +202,25 @@ export function MisalignmentSidePanel({
             </button>
             <span style={{ ...labelMuted, whiteSpace: "nowrap" }}>{rangeLabel}</span>
           </div>
+          )}
 
           {/* Misalignment tiles */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {data.ranges.map(range => (
-              <MisalignmentTile key={range.id} range={range} />
+              <MisalignmentTile key={range.id} range={range} expectedLabel={data.expectedLabel} currentLabel={data.currentLabel} alignColumns={!!data.expectedLabel} />
             ))}
           </div>
 
           <div style={{ height: 16 }} />
         </div>
+
+        {onFix && (
+          <Actions
+            variant="sticky-panel"
+            leftActions={[{ label: "Close", variant: "secondary", onClick: onClose }]}
+            rightActions={[{ label: "Fix", variant: "primary", onClick: onFix }]}
+          />
+        )}
 
       </div>
     </SidePanel>

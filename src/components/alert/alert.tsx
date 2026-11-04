@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import classNames from "classnames";
 import { Icon } from "../icon/icon";
 import css from "./alert.module.scss";
@@ -9,7 +10,8 @@ export type AlertType =
   | "success"      // bg: --palette-green-2  icon: --palette-green-0
   | "general"      // bg: --palette-neutral-1 icon: --palette-blue-0
   | "ai"           // bg: --palette-neutral-0 icon: --palette-blue-0
-  | "bulk-banner"; // bg: --palette-primary-3 icon: --palette-blue-0
+  | "bulk-banner"  // bg: --palette-primary-3 icon: --palette-blue-0
+  | "misalignment"; // bg: orange-3 tint     icon: calendar-delete, --palette-orange-3
 
 // Layout variants — Figma node 5047:257830 (.Notification/Alert master)
 // "inline"      → Header=False: row, icon + text left, optional actions right
@@ -30,6 +32,10 @@ export type AlertProps = {
   body?: string;
   /** Up to 2 action buttons (Ghost style). Optional in both layouts. */
   actions?: [AlertAction?, AlertAction?];
+  /** bulk-banner only: makes the leading cross a clickable close button (e.g. clears the selection) */
+  onClose?: () => void;
+  /** Inline layout only: custom content on the right (e.g. icon buttons for bulk actions) */
+  rightContent?: ReactNode;
   className?: string;
 };
 
@@ -41,6 +47,7 @@ const typeIconName: Record<AlertType, Parameters<typeof Icon>[0]["name"]> = {
   general:       "info",
   ai:            "ai",
   "bulk-banner": "cross",
+  misalignment:  "calendar-delete",
 };
 
 const typeClass = (type: AlertType) =>
@@ -62,6 +69,8 @@ export const Alert = ({
   message,
   body,
   actions,
+  onClose,
+  rightContent,
   className,
 }: AlertProps) => {
   const filteredActions = actions?.filter((a): a is AlertAction => !!a) ?? [];
@@ -87,14 +96,21 @@ export const Alert = ({
   return (
     <div className={classNames(css.alert, tc, css.inline, className)} role="alert">
       <div className={css.left}>
-        <span className={classNames(css.iconWrap, tc)}>
-          <Icon name={typeIconName[type]} size={20} />
-        </span>
+        {type === "bulk-banner" && onClose ? (
+          <button type="button" className={classNames(css.closeBtn, css.iconWrap, tc)} onClick={onClose} aria-label="Clear selection">
+            <Icon name="cross" size={24} />
+          </button>
+        ) : (
+          <span className={classNames(css.iconWrap, tc)}>
+            <Icon name={typeIconName[type]} size={20} />
+          </span>
+        )}
         <span className={css.message}>{message}</span>
       </div>
       {filteredActions.length > 0 && (
         <Actions actions={filteredActions} className={css.actionsRight} />
       )}
+      {rightContent && <div className={css.actionsRight}>{rightContent}</div>}
     </div>
   );
 };

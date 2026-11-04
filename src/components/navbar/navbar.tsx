@@ -41,18 +41,16 @@ const SECTION_ITEMS: NavItem[] = [
   { id: "workflow",      icon: "workflow",       label: "Workflow"      },
   { id: "audit-planner", icon: "audit-planner",  label: "Audit Planner" },
   { id: "insights",      icon: "insights",       label: "Insights"      },
-  { id: "reports",       icon: "reports",        label: "Reports"       },
-  { id: "activity-feed", icon: "activity-feed",  label: "Activity Feed" },
-  { id: "profiles",      icon: "profile",        label: "Profiles"      },
+  { id: "profiles",      icon: "profiles",       label: "Profiles"      },
   { id: "booking",       icon: "booking",        label: "Booking"       },
 ];
 
 const OPTION_ITEMS: NavItem[] = [
   { id: "notifications", icon: "notifications", label: "Notifications" },
+  { id: "help",          icon: "help",           label: "Help"          },
+  { id: "chat",          icon: "chat",           label: "Chat"          },
   { id: "links",         icon: "links",          label: "Links"         },
   { id: "admin",         icon: "admin",          label: "Admin"         },
-  { id: "chat",          icon: "chat",           label: "Chat"          },
-  { id: "help",          icon: "help",           label: "Help"          },
 ];
 
 // ProFinda logo SVG — node 5:580 (Logo/Small)

@@ -187,6 +187,15 @@ $match-col-width: 180px;
   min-width: 0;
 }
 
+// Left block of the profile column: WM (name + job title) then skills right below
+.profileMain {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 // ── Action column ──────────────────────────────────────────────────────────────
 // 120px fixed (user spec), column, align right, gap 8px
 .actionCol {
@@ -195,7 +204,7 @@ $match-col-width: 180px;
   align-items: stretch; // buttons fill width
   gap: 8px;
   flex-shrink: 0;
-  width: 120px;
+  width: 136px; // fits "Fill & Book" + info icon + chevron
 }
 
 // Status row: label + history icon button side by side, right-aligned
@@ -256,7 +265,7 @@ $match-col-width: 180px;
   transition: opacity 0.12s, background-color 0.12s;
 
   &:hover { opacity: 0.9; }
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .primary {

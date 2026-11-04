@@ -90,6 +90,10 @@ export type NavigationTab = {
   subtitle?: string;
   /** Show check icon to the left of label */
   showIcon?: boolean;
+  /** Custom leading icon (replaces the check icon) */
+  icon?: IconName;
+  /** Colour of the custom icon while the tab is active (inactive = --palette-blue-2) */
+  iconColor?: string;
   /** Badge count — shown to the right of label */
   badge?: number;
   disabled?: boolean;
@@ -135,7 +139,14 @@ export const Navigation = ({
           onClick={() => !tab.disabled && onChange?.(tab.id)}
         >
           {/* Icon — check mark, 16×16px */}
-          {tab.showIcon && (
+          {tab.icon ? (
+            <Icon
+              name={tab.icon}
+              size={16}
+              className={css.icon}
+              style={{ color: isActive ? (tab.iconColor ?? "var(--palette-blue-0)") : "var(--palette-blue-2)" }}
+            />
+          ) : tab.showIcon && (
             <Icon name="check" size={16} className={css.icon} />
           )}
 

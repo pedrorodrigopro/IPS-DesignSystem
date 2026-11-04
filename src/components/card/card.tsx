@@ -31,11 +31,14 @@
 // ── Directory ─────────────────────────────────────────────────────────────────
 // Secondary action button label: "Open CV"
 
-import React, { ReactNode, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import classNames from "classnames";
 import { Icon } from "../icon/icon";
 import { WorkforceMember } from "../workforce_member/workforce_member";
 import { ButtonGroup } from "../button_group/button_group";
+import { DropdownActions } from "../dropdown/dropdown";
+import type { DropdownItem } from "../dropdown/dropdown";
 import { SkillMatch } from "../skill/skill";
 import type { ProficiencyLevel } from "../skill/skill";
 import type { ProfileIconFlags } from "../workforce_member/workforce_member";
@@ -89,6 +92,13 @@ export type CardActions = {
   onShortlist?: () => void;
   onFillBook?: () => void;
   onFillBookDropdown?: () => void;
+  /** Items of the Fill & Book split-button menu (e.g. "no overbookings" / "Custom"). When set, the chevron opens this menu. */
+  fillBookMenu?: DropdownItem[];
+  /** Info tooltip shown on an info icon inside the Fill & Book button */
+  fillBookInfo?: string;
+  /** Disable all action buttons (rendered at 50% opacity) */
+  disabled?: boolean;
+  onFillBookSelect?: (id: string) => void;
   onInvite?: () => void;
   onFill?: () => void;
   onApprove?: () => void;
@@ -234,6 +244,44 @@ const STEPS_WITH_STATUS: Set<ResourcingStep> = new Set([
   "booked", "filled", "declined",
 ]);
 
+// Fill & Book split button; when `fillBookMenu` is given the chevron opens a dropdown (portalled, right-aligned)
+function FillBookGroup({ actions, variant }: { actions: CardActions; variant: "primary" | "secondary" }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos]   = useState<{ top: number; right: number } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
+    const t = setTimeout(() => document.addEventListener("mousedown", close), 0);
+    window.addEventListener("keydown", onKey, true);
+    return () => { clearTimeout(t); document.removeEventListener("mousedown", close); window.removeEventListener("keydown", onKey, true); };
+  }, [open]);
+
+  const toggle = () => {
+    if (!actions.fillBookMenu) { actions.onFillBookDropdown?.(); return; }
+    const r = ref.current?.getBoundingClientRect();
+    if (r) setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    setOpen(o => !o);
+  };
+
+  return (
+    <div ref={ref}>
+      <ButtonGroup variant={variant} label="Fill &amp; Book" fill info={actions.fillBookInfo} disabled={actions.disabled} onClick={actions.onFillBook} onDropdownClick={toggle} />
+      {open && pos && actions.fillBookMenu && ReactDOM.createPortal(
+        <div onMouseDown={e => e.stopPropagation()} style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 100000 }}>
+          <DropdownActions
+            items={actions.fillBookMenu}
+            onSelect={id => { setOpen(false); actions.onFillBookSelect?.(id); }}
+          />
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 function ActionButtons({ actions, variant }: { actions: CardActions; variant: CardVariant }) {
   const { step = "not-shortlisted" } = actions;
   const statusLabel = STATUS_LABELS[step];
@@ -275,26 +323,21 @@ function ActionButtons({ actions, variant }: { actions: CardActions; variant: Ca
           <button className={classNames(css.btn, css.primary)} onClick={actions.onShortlist}>
             Shortlist
           </button>
-          <ButtonGroup
-            variant="secondary"
-            label="Fill &amp; Book"
-            fill
-            onClick={actions.onFillBook}
-            onDropdownClick={actions.onFillBookDropdown}
-          />
+          <FillBookGroup variant="secondary" actions={actions} />
         </>
       )}
 
       {step === "shortlisted-reviewer" && (
         <>
-          <button className={classNames(css.btn, css.primary)} onClick={actions.onApprove}>
+          <button className={classNames(css.btn, css.primary)} onClick={actions.onApprove} disabled={actions.disabled}>
             <Icon name="check" size={16} />
             Approve
           </button>
-          <button className={classNames(css.btn, css.destructive)} onClick={actions.onReject}>
+          <button className={classNames(css.btn, css.destructive)} onClick={actions.onReject} disabled={actions.disabled}>
             <Icon name="cross" size={16} />
             Reject
           </button>
+          {(actions.onFillBook || actions.fillBookMenu) && <FillBookGroup variant="secondary" actions={actions} />}
         </>
       )}
 
@@ -311,13 +354,7 @@ function ActionButtons({ actions, variant }: { actions: CardActions; variant: Ca
       )}
 
       {step === "accepted-fillbook" && (
-        <ButtonGroup
-          variant="primary"
-          label="Fill &amp; Book"
-          fill
-          onClick={actions.onFillBook}
-          onDropdownClick={actions.onFillBookDropdown}
-        />
+        <FillBookGroup variant="primary" actions={actions} />
       )}
     </div>
   );
@@ -380,29 +417,31 @@ export function Card({
 
         {/* ── Profile + skills ─────────────────────────────────────── */}
         <div className={classNames(css.profileCol, variant === "match" && css.profileColBorder)}>
-          {/* Top: WM + actions */}
+          {/* WM + skills stacked on the left (skills sit right under the job title), actions on the right */}
           <div className={css.profileTop}>
-            <WorkforceMember
-              variant="card"
-              name={name}
-              jobTitle={jobTitle}
-              initials={initials}
-              avatarSrc={avatarSrc}
-              hideAvatar={variant === "match"}
-              {...profileFlags}
-              className={css.wm}
-            />
+            <div className={css.profileMain}>
+              <WorkforceMember
+                variant="card"
+                name={name}
+                jobTitle={jobTitle}
+                initials={initials}
+                avatarSrc={avatarSrc}
+                hideAvatar={variant === "match"}
+                {...profileFlags}
+                className={css.wm}
+              />
+
+              {/* Collapsed skill groups */}
+              {skillGroups.length > 0 && (
+                <div className={css.skills}>
+                  {skillGroups.map((group) => (
+                    <SkillGroupSection key={group.label} group={group} />
+                  ))}
+                </div>
+              )}
+            </div>
             {actions && <ActionButtons actions={actions} variant={variant} />}
           </div>
-
-          {/* Collapsed skill groups */}
-          {skillGroups.length > 0 && (
-            <div className={css.skills}>
-              {skillGroups.map((group) => (
-                <SkillGroupSection key={group.label} group={group} />
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
