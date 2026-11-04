@@ -15,13 +15,14 @@
 //
 // Both columns are taller than the visible area by 24px so the footer clips them, as in Figma.
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import { Navbar }          from "../../components/navbar/navbar";
 import { Page }            from "../../components/layout/layout";
 import { Tile }            from "../../components/tile/tile";
 import { Header }          from "../../components/header/header";
 import { Navigation }      from "../../components/navigation/navigation";
+import { Alert }           from "../../components/alert/alert";
 import { Button }          from "../../components/button/button";
 import { ButtonGroup }     from "../../components/button_group/button_group";
 import { Actions }         from "../../components/actions/actions";
@@ -36,6 +37,9 @@ import { PPChatInput }     from "../../components/pp_chat_input/pp_chat_input";
 import { PPSuggestionCard } from "../../components/pp_suggestion_card/pp_suggestion_card";
 import type { PPSuggestionCardState } from "../../components/pp_suggestion_card/pp_suggestion_card";
 import { PPPreviewBanner } from "../../components/pp_preview_banner/pp_preview_banner";
+import { SkillProfile }    from "../../components/skill/skill";
+import { applyChange, summarize } from "../cv_review/cv_review";
+import type { ReviewChange } from "../cv_review/cv_review";
 import { adaptCV, industryName, isIndustryMessage } from "./propilot_industry";
 import type { IndustryFields } from "./propilot_industry";
 
@@ -169,18 +173,22 @@ export function SelectMenu({
 }
 
 /** Split button (ButtonGroup) whose chevron opens an actions menu above it (the footer is at the bottom of the screen). */
-function SplitButton({
-  label, variant, items,
-}: { label: string; variant: "primary" | "secondary"; items: DropdownItem[] }) {
+/** Joined main button + chevron menu. `onClick` is the main action, `onSelect` receives the picked menu item id. */
+export function SplitButton({
+  label, variant, items, onClick, onSelect, placement = "top",
+}: {
+  label: string; variant: "primary" | "secondary"; items: DropdownItem[];
+  onClick?: () => void; onSelect?: (id: string) => void; placement?: "top" | "bottom";
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ position: "relative" }}>
-      <ButtonGroup label={label} variant={variant} onDropdownClick={() => setOpen(o => !o)} />
+      <ButtonGroup label={label} variant={variant} onClick={onClick} onDropdownClick={() => setOpen(o => !o)} />
       {open && (
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 100 }} onClick={() => setOpen(false)} />
-          <div style={{ position: "absolute", bottom: "100%", right: 0, zIndex: 101, marginBottom: 4, minWidth: "100%" }}>
-            <DropdownActions items={items} onSelect={() => setOpen(false)} />
+          <div style={{ position: "absolute", ...(placement === "top" ? { bottom: "100%", marginBottom: 4 } : { top: "100%", marginTop: 4 }), right: 0, zIndex: 101, minWidth: "100%", width: "max-content" }}>
+            <DropdownActions items={items} onSelect={id => { setOpen(false); onSelect?.(id); }} />
           </div>
         </>
       )}
@@ -243,6 +251,76 @@ export function CVPreview({ cv, highlight }: { cv: CV; highlight?: FieldKey[] })
       <PreviewRow label="Skills" highlight={highlight?.includes("skills")}>{cv.skills}</PreviewRow>
       <PreviewRow label="Accreditations" highlight={highlight?.includes("accreditations")}>{cv.accreditations}</PreviewRow>
     </div>
+  );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Review of profile edits (Figma 886:41024) — "Before / After" boxes under the changed fields
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export type ReviewScope = "this" | "all";
+
+/** Review of the profile's pending edits for the CV shown. The flow owns the state; the Studio reports the user's choices. */
+export type StudioReview = {
+  changes: ReviewChange[];
+  /** The Studio has already written the value into its CV; `scope` says whether other versions get it too. */
+  onUse: (id: string, scope: ReviewScope) => void;
+  onDismiss: (id: string, scope: ReviewScope) => void;
+  onPushAll: () => void;
+  onDismissAll: () => void;
+};
+
+const clamp3: React.CSSProperties = { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" };
+const reviewLabel: React.CSSProperties = { fontFamily: "var(--font-family)", fontSize: 12, fontWeight: 400, color: "var(--palette-blue-2)", lineHeight: "115%" };
+
+function ReviewButtons({ useLabel, useAllLabel, onUse, onDismiss }: {
+  useLabel: string; useAllLabel: string; onUse: (scope: ReviewScope) => void; onDismiss: (scope: ReviewScope) => void;
+}) {
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+      <SplitButton label="Dismiss" variant="secondary" placement="bottom"
+        items={[{ id: "all", label: "Dismiss in all versions" }]} onClick={() => onDismiss("this")} onSelect={() => onDismiss("all")} />
+      <SplitButton label={useLabel} variant="primary" placement="bottom"
+        items={[{ id: "all", label: useAllLabel }]} onClick={() => onUse("this")} onSelect={() => onUse("all")} />
+    </div>
+  );
+}
+
+/** A field edited on the profile: the field's input, a Before / After box and Dismiss | Use new. */
+function ReviewField({ change, children, onUse, onDismiss }: {
+  change: Extract<ReviewChange, { kind: "field" }>; children: React.ReactNode;
+  onUse: (scope: ReviewScope) => void; onDismiss: (scope: ReviewScope) => void;
+}) {
+  return (
+    <Tile tileStyle="default" padding="panel" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {children}
+      <Tile tileStyle="object-light" padding="panel" style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ ...reviewLabel, fontWeight: 700 }}>Before</span>
+          <span style={{ ...body, ...clamp3 }}>{change.before}</span>
+        </div>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ ...reviewLabel, fontWeight: 700 }}>After</span>
+          <span style={{ ...body, ...clamp3, alignSelf: "flex-start", background: "var(--palette-neutral-0)", borderRadius: 4, padding: "2px 4px" }}>{change.after}</span>
+        </div>
+      </Tile>
+      <ReviewButtons useLabel="Use new" useAllLabel="Use new in all versions" onUse={onUse} onDismiss={onDismiss} />
+    </Tile>
+  );
+}
+
+/** A skill added on the profile: the skill and Dismiss | Add. */
+function ReviewSkill({ change, onUse, onDismiss }: {
+  change: Extract<ReviewChange, { kind: "skill" }>; onUse: (scope: ReviewScope) => void; onDismiss: (scope: ReviewScope) => void;
+}) {
+  return (
+    <Tile tileStyle="default" padding="panel" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <Tile tileStyle="object-light" padding="panel" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ ...reviewLabel, fontWeight: 700 }}>{change.label}</span>
+        <div><SkillProfile label={change.skill} proficiency="advanced" disableTooltip /></div>
+      </Tile>
+      <ReviewButtons useLabel="Add" useAllLabel="Add to all versions" onUse={onUse} onDismiss={onDismiss} />
+    </Tile>
   );
 }
 
@@ -368,8 +446,10 @@ function TranslateTile({ count }: { count: number }) {
 
 function LeftModule({
   cv, onChange, count, mode, onModeChange, items, onSend, onApply, onDismissSuggestion, onPreview,
+  changes, onUseChange, onDismissChange,
 }: {
   cv: CV; onChange: (k: FieldKey, v: string) => void; count: number; mode: Mode; onModeChange: (m: Mode) => void;
+  changes: ReviewChange[]; onUseChange: (id: string, scope: ReviewScope) => void; onDismissChange: (id: string, scope: ReviewScope) => void;
   items: ChatItem[]; onSend: (text: string) => void; onApply: (id: number) => void; onDismissSuggestion: (id: number) => void;
   onPreview: (id: number | null) => void;
 }) {
@@ -386,13 +466,21 @@ function LeftModule({
 
         {mode === "edit" ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", flex: 1, minHeight: 0, padding: "0 8px 24px" }}>
-            {FIELDS.map(f =>
-              f.multiline ? (
-                <InputTextarea key={f.key} label={f.label} rows={7} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />
-              ) : (
-                <Input key={f.key} label={f.label} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />
-              )
-            )}
+            {FIELDS.map(f => {
+              const input = f.multiline
+                ? <InputTextarea label={f.label} rows={7} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />
+                : <Input label={f.label} value={cv[f.key]} onChange={e => onChange(f.key, e.target.value)} />;
+              const fieldChange = changes.find((c): c is Extract<ReviewChange, { kind: "field" }> => c.kind === "field" && c.field === f.key);
+              const skillChange = f.key === "skills" ? changes.find((c): c is Extract<ReviewChange, { kind: "skill" }> => c.kind === "skill") : undefined;
+              return (
+                <Fragment key={f.key}>
+                  {fieldChange
+                    ? <ReviewField change={fieldChange} onUse={sc => onUseChange(fieldChange.id, sc)} onDismiss={sc => onDismissChange(fieldChange.id, sc)}>{input}</ReviewField>
+                    : input}
+                  {skillChange && <ReviewSkill change={skillChange} onUse={sc => onUseChange(skillChange.id, sc)} onDismiss={sc => onDismissChange(skillChange.id, sc)} />}
+                </Fragment>
+              );
+            })}
           </div>
         ) : (
           <>
@@ -448,8 +536,14 @@ function LeftModule({
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export function CVStudioScreen({
-  cvs, initialMode = "edit", onClose, onNavigate,
-}: { cvs: CV[]; initialMode?: Mode; onClose?: () => void; onNavigate?: (navbarId: string) => void }) {
+  cvs, initialMode = "edit", onClose, onNavigate, review, onCVChange,
+}: {
+  cvs: CV[]; initialMode?: Mode; onClose?: () => void; onNavigate?: (navbarId: string) => void;
+  /** Pending profile edits to review for the CV shown (alert + Before / After boxes) */
+  review?: StudioReview;
+  /** Called with the CV at `index` whenever the user's edits (typing, Use new, Push all, ProPilot Apply) change it */
+  onCVChange?: (index: number, cv: CV) => void;
+}) {
   const multi = cvs.length > 1;
   const [data, setData] = useState(cvs);
   const [index, setIndex] = useState(0);
@@ -468,7 +562,24 @@ export function CVStudioScreen({
   useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
 
   const cv = data[index];
-  const edit = (k: FieldKey, v: string) => setData(d => d.map((c, i) => (i === index ? { ...c, [k]: v } : c)));
+  const patch = (fn: (c: CV) => CV) => setData(d => d.map((c, i) => (i === index ? fn(c) : c)));
+  const edit = (k: FieldKey, v: string) => patch(c => ({ ...c, [k]: v }));
+
+  // Report changed CVs (not the initial ones) to the flow so edits survive leaving the Studio
+  const reported = useRef(data);
+  useEffect(() => {
+    data.forEach((c, i) => { if (c !== reported.current[i]) onCVChange?.(i, c); });
+    reported.current = data;
+  }, [data]);   // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Review of the profile's pending edits (alert + per-field boxes)
+  const changes = review?.changes ?? [];
+  const useChange = (id: string, scope: ReviewScope) => {
+    const ch = changes.find(c => c.id === id);
+    if (ch) patch(c => applyChange(c, ch));
+    review?.onUse(id, scope);
+  };
+  const pushAll = () => { patch(c => changes.reduce(applyChange, c)); review?.onPushAll(); };
 
   const send = (text: string) => {
     const userId = nextId.current++;
@@ -531,10 +642,23 @@ export function CVStudioScreen({
             />
           </div>
 
+          {/* Pending profile edits — Figma 886:41024 */}
+          {changes.length > 0 && (
+            <div style={{ padding: "16px 24px 0" }}>
+              <Alert
+                type="general"
+                layout="inline"
+                message={summarize(changes)}
+                actions={[{ label: "Push all", onClick: pushAll }, { label: "Dismiss all", onClick: () => review?.onDismissAll() }]}
+              />
+            </div>
+          )}
+
           {/* Content row */}
           <div style={{ display: "flex", gap: 16, padding: "16px 24px 0", flex: 1, minHeight: 0, overflow: "hidden", alignItems: "flex-start" }}>
             <LeftModule cv={cv} onChange={edit} count={cvs.length} mode={mode} onModeChange={setMode}
-              items={items} onSend={send} onApply={apply} onDismissSuggestion={dismissSuggestion} onPreview={setPreviewing} />
+              items={items} onSend={send} onApply={apply} onDismissSuggestion={dismissSuggestion} onPreview={setPreviewing}
+              changes={changes} onUseChange={useChange} onDismissChange={(id, sc) => review?.onDismiss(id, sc)} />
 
             {/* CV preview card */}
             <Tile

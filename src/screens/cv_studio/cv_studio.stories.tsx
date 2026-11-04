@@ -23,7 +23,7 @@ const meta: Meta = {
           "CV Studio — preview, edit and export CVs. Two export variants (single CV, multiple CVs); the left module has two tabs " +
           "(ProPilot, Edit fields) under a Translate tile that goes through four states (pick a language, Translate now, progress, Reset). " +
           "Uses Page variant=\"fluid\", Header, InputInline selectors, Tile, Navigation, Input / InputTextarea, PPChatInput, " +
-          "ButtonGroup and Actions sticky-panel. Edits in the fields update the preview live. " +
+          "ButtonGroup and Actions sticky-panel. Edits in the fields update the preview live. With pending profile edits (Screens/MyProfile → Profiles Directory → a profile) an alert and Before / After boxes ask whether to use the new values in this version or in all versions. " +
           "Names, bio and details of John Smith and Mary Lee are placeholders.",
       },
     },

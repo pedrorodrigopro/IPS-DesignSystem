@@ -27,10 +27,15 @@ import { Input, InputSearch, InputSelect } from "../../components/input/input";
 import { DropdownMultiSelection }    from "../../components/dropdown/dropdown";
 import { Header }                    from "../../components/header/header";
 import { CVStudioScreen, ZARA }      from "../cv_studio/cv_studio";
+import type { CV }                   from "../cv_studio/cv_studio";
 import cvPhoto                       from "../cv_studio/assets/cv-photo.jpg";
 import { CVVersionsScreen, INITIAL_CV_VERSIONS } from "../cv_versions/cv_versions";
 import type { CVVersion }        from "../cv_versions/cv_versions";
 import { ProfilesDirectoryScreen }   from "../profiles_directory/profiles_directory";
+import type { ProfileEntry }         from "../profiles_directory/profiles_directory";
+import { applyChange, pendingVersionsText, seedChanges } from "../cv_review/cv_review";
+import type { PendingByVersion }     from "../cv_review/cv_review";
+import { Alert }                     from "../../components/alert/alert";
 import { PillSimple }                from "../../components/pill/pill";
 import { EmptyState }                from "../../components/empty_state/empty_state";
 import { SidePanel }                 from "../../components/side_panel/side_panel";
@@ -64,20 +69,76 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 //   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Studio
 //                         with every selected CV (Close → directory). Navbar profile item → back to My Profile
 type CVView = "profile" | "studio" | "versions" | "directory";
+type StudioFrom = "profile" | "versions" | "directory";
+
+/** Whose profile is open. Zara Bond is the default (and keeps her photo); the others come from the directory. */
+type Person = { name: string; jobTitle: string };
+const ZARA_PERSON: Person = { name: ZARA.name, jobTitle: ZARA.jobTitle };
+const personOf = (p: ProfileEntry): Person => ({ name: p.name, jobTitle: p.subtitle.split(",")[0] });
+const initialsOf = (name: string) => name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+
+/** The person's CV before any review (the "main" content every version starts from). */
+function baseCVOf(p: Person): CV {
+  return { ...ZARA, name: p.name, jobTitle: p.jobTitle, email: `${p.name.toLowerCase().replace(/[^a-z ]/g, "").trim().replace(/ +/g, ".")}@pf.com` };
+}
 
 function useCVFlow() {
   const [view, setView] = useState<CVView>("profile");
-  const [studioFrom, setStudioFrom] = useState<"profile" | "versions">("profile");
+  const [studioFrom, setStudioFrom] = useState<StudioFrom>("profile");
   const [versions, setVersions] = useState<CVVersion[]>(INITIAL_CV_VERSIONS);
+  const [studioVersion, setStudioVersion] = useState(INITIAL_CV_VERSIONS[0].id);
+  const [person, setPerson] = useState<Person>(ZARA_PERSON);
+  // Per-version CVs (a version without an entry shows the person's base CV) and the profile edits still to review
+  const [cvs, setCvs] = useState<Record<string, CV>>({});
+  const [pending, setPending] = useState<PendingByVersion>({});
+
+  const base = baseCVOf(person);
+  const cvOf = (id: string) => cvs[id] ?? base;
+  const pendingVersions = versions.filter(v => (pending[v.id]?.length ?? 0) > 0).length;
+
+  /** Arriving from the directory: the profile was edited since every CV version was last updated. */
+  const seed = (p: Person) => {
+    setPerson(p);
+    setCvs({});
+    setPending(Object.fromEntries(versions.map(v => [v.id, seedChanges(baseCVOf(p))])));
+  };
+  const withoutChange = (pb: PendingByVersion, id: string, versionId: string | "all"): PendingByVersion =>
+    Object.fromEntries(Object.entries(pb).map(([vid, list]) => [vid, versionId === "all" || vid === versionId ? list.filter(c => c.id !== id) : list]));
+
   return {
-    view,
-    versions,
-    setVersions,
-    openStudio: (from: "profile" | "versions") => { setStudioFrom(from); setView("studio"); },
+    view, versions, setVersions, person, base, cvs, cvOf, pending, pendingVersions, studioVersion,
+    openStudio: (from: StudioFrom, versionId: string = versions[0].id) => { setStudioFrom(from); setStudioVersion(versionId); setView("studio"); },
     openVersions: () => setView("versions"),
     openDirectory: () => setView("directory"),
     toProfile: () => setView("profile"),
     closeStudio: () => setView(studioFrom),
+    /** A card / name in the directory */
+    openProfileFor: (p: ProfileEntry) => { seed(personOf(p)); setView("profile"); },
+    /** "Open CV" in the directory → the main CV (first version) in CV Studio; Close returns to the directory */
+    openCVFor: (p: ProfileEntry) => { seed(personOf(p)); setStudioFrom("directory"); setStudioVersion(versions[0].id); setView("studio"); },
+    /** CV Studio reports the CV the user is editing */
+    setCV: (versionId: string, cv: CV) => setCvs(cs => ({ ...cs, [versionId]: cv })),
+    /** Alert on Profile / CV Versions: write every pending edit into every version, or drop them */
+    pushAll: () => {
+      setCvs(cs => Object.fromEntries(versions.map(v => [v.id, (pending[v.id] ?? []).reduce(applyChange, cs[v.id] ?? base)])));
+      setPending({});
+    },
+    dismissAll: () => setPending({}),
+    /** CV Studio: "Use new" / "Add" (the Studio already wrote it into its own CV); "all" also writes it into the other versions */
+    useChange: (versionId: string, id: string, scope: "this" | "all") => {
+      const ch = pending[versionId]?.find(c => c.id === id);
+      if (scope === "all" && ch) {
+        setCvs(cs => {
+          const next = { ...cs };
+          versions.forEach(v => { if (v.id !== versionId) next[v.id] = applyChange(next[v.id] ?? base, ch); });
+          return next;
+        });
+      }
+      setPending(pb => withoutChange(pb, id, scope === "all" ? "all" : versionId));
+    },
+    dismissChange: (versionId: string, id: string, scope: "this" | "all") => setPending(pb => withoutChange(pb, id, scope === "all" ? "all" : versionId)),
+    /** CV Studio "Push all" / "Dismiss all": this version is up to date */
+    clearVersion: (versionId: string) => setPending(pb => ({ ...pb, [versionId]: [] })),
   };
 }
 
@@ -89,29 +150,70 @@ function navbarHandler(flow: ReturnType<typeof useCVFlow>) {
   };
 }
 
-/** The CV Studio / CV Versions screens, for the person shown on this profile. */
-function CVFlowView({ flow, personName }: { flow: ReturnType<typeof useCVFlow>; personName: string }) {
+/** The CV Studio / CV Versions / Profiles Directory screens of the flow, for the person shown on this profile. */
+function CVFlowView({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
   if (flow.view === "directory") {
     return (
       <ProfilesDirectoryScreen
         initialView="table"
         initialSort="Profile name"
         onNavigate={navbarHandler(flow)}
+        onOpenProfile={flow.openProfileFor}
+        onOpenCV={flow.openCVFor}
       />
     );
   }
-  const cv = { ...ZARA, name: personName, email: `${personName.toLowerCase().replace(/ /g, ".")}@pf.com` };
-  if (flow.view === "studio") return <CVStudioScreen cvs={[cv]} onClose={flow.closeStudio} onNavigate={navbarHandler(flow)} />;
+  if (flow.view === "studio") {
+    const vid = flow.studioVersion;
+    return (
+      <CVStudioScreen
+        key={vid}
+        cvs={[flow.cvOf(vid)]}
+        onClose={flow.closeStudio}
+        onNavigate={navbarHandler(flow)}
+        onCVChange={(_, cv) => flow.setCV(vid, cv)}
+        review={{
+          changes: flow.pending[vid] ?? [],
+          onUse: (id, scope) => flow.useChange(vid, id, scope),
+          onDismiss: (id, scope) => flow.dismissChange(vid, id, scope),
+          onPushAll: () => flow.clearVersion(vid),
+          onDismissAll: () => flow.clearVersion(vid),
+        }}
+      />
+    );
+  }
   return (
     <CVVersionsScreen
-      personName={personName}
-      cv={cv}
+      personName={flow.person.name}
+      cv={flow.base}
+      cvs={flow.cvs}
+      pending={flow.pending}
+      onPushAll={flow.pushAll}
+      onDismissAll={flow.dismissAll}
       versions={flow.versions}
       onVersionsChange={flow.setVersions}
       onBack={flow.toProfile}
-      onCreate={() => flow.openStudio("versions")}
-      onEdit={() => flow.openStudio("versions")}
+      onCreate={v => flow.openStudio("versions", v.id)}
+      onEdit={v => flow.openStudio("versions", v.id)}
       onNavigate={navbarHandler(flow)}
+    />
+  );
+}
+
+/** Profile alert (Figma 886:40801): the profile was edited, CV versions may be out of date. */
+function PendingUpdatesAlert({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
+  if (flow.pendingVersions === 0) return null;
+  return (
+    <Alert
+      type="general"
+      layout="with-header"
+      message={pendingVersionsText(flow.pendingVersions)}
+      body="Profile has some fields edited, CV Versions might be showing some fields out dated. Would you like to push profile edits to all CV Versions?"
+      actions={[
+        { label: "Review", onClick: flow.openVersions },
+        { label: "Push all edits to all", onClick: flow.pushAll },
+        { label: "Dismiss for all", onClick: flow.dismissAll },
+      ]}
     />
   );
 }
@@ -125,8 +227,9 @@ const NAV_SECTIONS = [
 ];
 
 function ProfileSidebar({
-  activeNav, onNavChange, onOpenMainCV, onSeeAllVersions, cvVersionCount = 3,
+  personName = ZARA.name, activeNav, onNavChange, onOpenMainCV, onSeeAllVersions, cvVersionCount = 3,
 }: {
+  personName?: string;
   activeNav: string;
   onNavChange: (id: string) => void;
   onOpenMainCV?: () => void;
@@ -138,7 +241,13 @@ function ProfileSidebar({
 
       {/* Avatar + action buttons */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-        <img src={cvPhoto} alt={ZARA.name} width={100} height={100} style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+        {personName === ZARA.name ? (
+          <img src={cvPhoto} alt={ZARA.name} width={100} height={100} style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+        ) : (
+          <div style={{ width: 100, height: 100, borderRadius: "50%", flexShrink: 0, background: "var(--palette-neutral-0)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontFamily: "var(--font-family)", fontSize: 36, fontWeight: 700, color: "var(--palette-blue-0)" }}>{initialsOf(personName)}</span>
+          </div>
+        )}
         <Row gap={4}>
           <Button kind="iconTertiary" size="regular" title="Edit"><Icon name="edit" size={16} /></Button>
           <Button kind="iconTertiary" size="regular" title="More"><Icon name="menu-vertical" size={16} /></Button>
@@ -147,7 +256,7 @@ function ProfileSidebar({
 
       {/* Name */}
       <div style={{ textAlign: "center" }}>
-        <div style={h2}>{ZARA.name}</div>
+        <div style={h2}>{personName}</div>
       </div>
 
       {/* Progress */}
@@ -179,7 +288,7 @@ function ProfileSidebar({
 
       {/* Contact */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={labelCss}>Contact {ZARA.name.split(" ")[0]}</div>
+        <div style={labelCss}>Contact {personName.split(" ")[0]}</div>
         <Row gap={12}>
           {(["mail", "chat", "links", "marketplace", "link"] as const).map(icon => (
             <button key={icon} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--palette-blue-2)", display: "flex" }}>
@@ -606,14 +715,14 @@ function AvailabilitySection() {
 function MyProfileScreen() {
   const [activeNav, setActiveNav] = useState("summary");
   const flow = useCVFlow();
-  if (flow.view !== "profile") return <CVFlowView flow={flow} personName={ZARA.name} />;
+  if (flow.view !== "profile") return <CVFlowView flow={flow} />;
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
         navbar={<Navbar activeId="profile" onSelect={navbarHandler(flow)} />}
         variant="profile-summary"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
+        sidebar={<ProfileSidebar personName={flow.person.name} activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
         rightPanel={
           <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
             <OrgDataSection />
@@ -623,6 +732,7 @@ function MyProfileScreen() {
       >
         {/* CENTRE — main content */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
+          <PendingUpdatesAlert flow={flow} />
           {activeNav === "additional" ? (
             <AdditionalSection />
           ) : activeNav === "experience" ? (
@@ -655,7 +765,7 @@ const meta: Meta = {
       description: {
         component:
           "My Profile screen — three-column layout. " +
-          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation); a CV Versions block above Contact opens CV Studio (“Open main CV”) or CV Versions (“See all versions”). Clicking Experience shows a collapsible Filters box (search + Industry / Company / Client / Skills multi-selects, “Clear filters”) above the position cards. Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
+          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation); a CV Versions block above Contact opens CV Studio (“Open main CV”) or CV Versions (“See all versions”). Arriving from Profiles Directory (click a profile or “Open CV”) the profile was edited since the CV versions were last updated: an alert on top (Review / Push all edits to all / Dismiss for all) is repeated on CV Versions (plus “Outdated fields” on each card) and in CV Studio (Before / After boxes with Use new / Add / Dismiss, chevrons for “in all versions”). Clicking Experience shows a collapsible Filters box (search + Industry / Company / Client / Skills multi-selects, “Clear filters”) above the position cards. Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
           "Centre: Tile highlight content blocks — Skills with expandable framework groups (SkillProfile + Checkbox), Skills Groups carousel (Tile object-light cards), Accreditations. " +
           "Right: Tile highlight content — Organisation Data key-value grid + Availability mini-calendar with booking bars.",
       },
@@ -679,16 +789,17 @@ export const Default: Story = {
 function MyProfileNarrowScreen() {
   const [activeNav, setActiveNav] = useState("summary");
   const flow = useCVFlow();
-  if (flow.view !== "profile") return <CVFlowView flow={flow} personName={ZARA.name} />;
+  if (flow.view !== "profile") return <CVFlowView flow={flow} />;
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page
         navbar={<Navbar activeId="profile" onSelect={navbarHandler(flow)} />}
         variant="profile-regular"
-        sidebar={<ProfileSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
+        sidebar={<ProfileSidebar personName={flow.person.name} activeNav={activeNav} onNavChange={setActiveNav} onOpenMainCV={() => flow.openStudio("profile")} onSeeAllVersions={flow.openVersions} cvVersionCount={flow.versions.length} />}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
+          <PendingUpdatesAlert flow={flow} />
           {activeNav === "additional" ? (
             <AdditionalSection />
           ) : activeNav === "experience" ? (
