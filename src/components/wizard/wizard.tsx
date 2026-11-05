@@ -5,7 +5,7 @@
 // Step properties:
 //   Current          — body-selected (700 14px), bar #0D2976 (fill_8S2WPL)
 //   Enabled previous — body-unselected (400 14px), bar #8F9ED1 (fill_40Q0IM)
-//   Enabled next     — body-unselected (400 14px), bar #0D2976 (fill_8S2WPL)
+//   Enabled next     — body-unselected (400 14px), bar #8F9ED1 (same as enabled-previous; dark bar is for the current step only)
 //   Disabled         — body-unselected (400 14px), bar #8F9ED1, opacity 0.5
 //   Hover (prev/next)— body-unselected, bar #2358F8 (fill_VPV22R, primary blue)
 //

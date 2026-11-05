@@ -225,3 +225,12 @@ and the 20px title 688px, our title renders 234.6px, so scale 2.93 and 1472 / 2.
   Picking a day fills the field as `d Mon yyyy` and closes it; Escape or a click outside also close it. The text stays editable
   and the calendar opens on the typed/initial date. Fields in the right-hand column (end dates) open the calendar right-aligned
   so it stays on screen. The Continuity start date is unchanged (free text, no picker).
+
+### Update (2026-11-05, Summary rows)
+
+- **Expand / collapse is animated** (`SummaryStep`): the engagement's role table stays mounted and its height animates 0 ↔ natural
+  height in 250ms (`grid-template-rows` 0fr ↔ 1fr, ease) while the chevron rotates 90° (one `chevron-right` icon, no icon swap).
+  While collapsed the region is `visibility: hidden` (switched off after the collapse finishes), so it is not focusable and not in
+  the accessibility tree. Rows already open on first render (*Summary — Expanded*) appear without animation. Honours
+  `prefers-reduced-motion` (duration 0).
+- **Wizard:** the available next step uses the same muted bar as previous steps (`Wizard` component change, see its description).

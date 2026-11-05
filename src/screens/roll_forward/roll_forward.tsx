@@ -520,6 +520,9 @@ const SUMMARY_COLUMNS: TableColumn<SummaryRole>[] = [
   },
 ];
 
+// Expand / collapse animation of the engagement rows (no motion when the user prefers reduced motion)
+const EXPAND_MS = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? 0 : 250;
+
 export type SummaryStepProps = {
   /** Engagement rows initially expanded */
   expanded?: boolean;
@@ -588,7 +591,9 @@ export function SummaryStep({ expanded = false, selected: selectedProp, onSelect
                 <div role="group" aria-label={eng.title} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0" }}>
                   {/* margins -6/-6: Figma chevron centre x=142 (6px left of the row edge) while checkbox (x=158) and title (x=190) stay put */}
                   <Button kind="iconTertiary" size="small" title={isOpen ? "Collapse" : "Expand"} onClick={() => toggleOpen(eng.id)} style={{ marginLeft: -6, marginRight: -6 }}>
-                    <Icon name={isOpen ? "chevron-down" : "chevron-right"} size={16} />
+                    <span style={{ display: "inline-flex", transform: isOpen ? "rotate(90deg)" : "none", transition: `transform ${EXPAND_MS}ms ease` }}>
+                      <Icon name="chevron-right" size={16} />
+                    </span>
                   </Button>
                   <Checkbox
                     checked={ids.length > 0 && picked.length === ids.length}
@@ -597,8 +602,19 @@ export function SummaryStep({ expanded = false, selected: selectedProp, onSelect
                   />
                   <span style={bodyBold}>{eng.title}</span>
                 </div>
-                {isOpen && (
-                  <div role="region" aria-label={`${eng.title} roles`}>
+                {/* Kept mounted so it can animate: grid rows 0fr ↔ 1fr animate the height to the content's natural size;
+                    visibility (delayed on close) takes the collapsed table out of the tab order and the accessibility tree */}
+                <div
+                  role="region"
+                  aria-label={`${eng.title} roles`}
+                  style={{
+                    display: "grid",
+                    gridTemplateRows: isOpen ? "1fr" : "0fr",
+                    visibility: isOpen ? "visible" : "hidden",
+                    transition: `grid-template-rows ${EXPAND_MS}ms ease, visibility 0s linear ${isOpen ? 0 : EXPAND_MS}ms`,
+                  }}
+                >
+                  <div style={{ minHeight: 0, overflow: "hidden" }}>
                     <Table<SummaryRole>
                       columns={SUMMARY_COLUMNS}
                       rows={sortRows(eng.roles)}
@@ -611,7 +627,7 @@ export function SummaryStep({ expanded = false, selected: selectedProp, onSelect
                       onSort={(_key, dir) => setSortDirection(dir)}
                     />
                   </div>
-                )}
+                </div>
                 <Divider orientation="horizontal" />
               </React.Fragment>
             );

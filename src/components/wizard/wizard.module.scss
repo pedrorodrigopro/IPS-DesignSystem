@@ -8,7 +8,7 @@
 // Bar colours:
 //   current:          #0D2976 (fill_8S2WPL)
 //   enabled-previous: #8F9ED1 (fill_40Q0IM) — completed
-//   enabled-next:     #0D2976 (fill_8S2WPL) — available
+//   enabled-next:     #8F9ED1 — available (same muted bar as enabled-previous, so only the current step is dark)
 //   disabled:         #8F9ED1, opacity 0.5
 //   hover:            #2358F8 (fill_VPV22R) — on enabled steps only
 
@@ -98,7 +98,8 @@
   }
 }
 
-// Enabled next — available but not yet visited, dark bar, clickable
+// Enabled next — available but not yet visited, clickable. Same muted bar as enabled-previous:
+// the dark bar is reserved for the current step so the two can't be confused.
 .enabled-next {
   cursor: pointer;
 
@@ -108,7 +109,7 @@
   }
 
   .bar {
-    background-color: var(--palette-blue-0); // #0D2976 — same as current bar
+    background-color: var(--palette-neutral-3); // #8F9ED1 — same as enabled-previous
   }
 }
 

@@ -13,7 +13,7 @@ const meta: Meta<typeof Wizard> = {
         component:
           "Horizontal step indicator. Each step has a label and a 12px indicator bar. " +
           "States: current (bold label, #0D2976 bar), enabled-previous (muted #8F9ED1 bar, clickable), " +
-          "enabled-next (#0D2976 bar, clickable), disabled (#8F9ED1 bar, opacity 0.5). " +
+          "enabled-next (muted #8F9ED1 bar like enabled-previous, clickable), disabled (#8F9ED1 bar, opacity 0.5). " +
           "Hover on enabled steps turns bar #2358F8. Steps fill equal width.",
       },
     },
