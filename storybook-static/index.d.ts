@@ -22,11 +22,19 @@ export declare type ActionItem = {
     variant?: "primary" | "secondary";
     onClick?: () => void;
     disabled?: boolean;
-    /** Optional leading icon */
+    /** Optional icon (leading unless iconPosition="right") */
     icon?: IconName;
+    /** Where the icon sits relative to the label (default "left") (requires `icon`) */
+    iconPosition?: "left" | "right";
+    /**
+     * Shown in an IPS Tooltip on mouse hover (also on disabled buttons).
+     * Hover only — a disabled button is not keyboard-focusable.
+     * Positioned above the button, so it is clipped by an ancestor with overflow:hidden.
+     */
+    tooltip?: string;
 };
 
-export declare function Actions({ variant, leftActions, rightActions, insetX, leftContent, rightContent, className, }: ActionsProps): default_2.JSX.Element;
+export declare function Actions({ variant, leftActions, rightActions, insetX, leftContent, rightContent, infoText, className, }: ActionsProps): default_2.JSX.Element;
 
 export declare type ActionsProps = {
     variant?: ActionsVariant;
@@ -40,6 +48,8 @@ export declare type ActionsProps = {
     leftContent?: ReactNode;
     /** Extra content on the right, after rightActions (e.g. a split ButtonGroup) */
     rightContent?: ReactNode;
+    /** Muted text shown on the right, before the right-hand buttons (e.g. "2 engagements · 12 roles") */
+    infoText?: string;
     className?: string;
 };
 
@@ -656,7 +666,7 @@ export declare type IconProps = SVGProps<SVGSVGElement> & {
 
 export declare type IconSize = 14 | 16 | 20 | 24 | 32;
 
-export declare const Input: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, onChange, onFocus, onBlur, className, id, type, }: InputProps) => JSX.Element;
+export declare const Input: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, rightIcon, onClear, onChange, onFocus, onBlur, className, id, type, }: InputProps) => JSX.Element;
 
 export declare const InputBookingCategory: ({ label, selectedLabel, selectedColor, mandatory, onClick, className, }: InputBookingCategoryProps) => JSX.Element;
 
@@ -705,6 +715,10 @@ export declare type InputProps = {
     readOnly?: boolean;
     disabled?: boolean;
     mandatory?: boolean;
+    /** Trailing icon inside the field (e.g. "calendar" for date fields). Text input only. */
+    rightIcon?: IconName;
+    /** When set, shows a "clear filter" icon at the right end of the label row and calls this on click. Requires `label`; hidden when the field is disabled or read-only. */
+    onClear?: () => void;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
     onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
@@ -724,9 +738,9 @@ export declare type InputSearchProps = {
     id?: string;
 };
 
-export declare const InputSelect: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, onClick, className, id, }: InputSelectProps) => JSX.Element;
+export declare const InputSelect: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, onClear, onClick, className, id, }: InputSelectProps) => JSX.Element;
 
-export declare type InputSelectProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+export declare type InputSelectProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur" | "rightIcon"> & {
     onClick?: () => void;
 };
 
@@ -734,7 +748,7 @@ export declare type InputState = "default" | "error" | "warning" | "instructions
 
 export declare const InputTextarea: ({ label, value, placeholder, message, state, readOnly, disabled, mandatory, rows, onChange, onFocus, onBlur, className, id, }: InputTextareaProps) => JSX.Element;
 
-export declare type InputTextareaProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+export declare type InputTextareaProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur" | "rightIcon" | "onClear"> & {
     /** Visible lines (default 3) */
     rows?: number;
     onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -1665,7 +1679,7 @@ export declare type SwitchProps = {
     className?: string;
 };
 
-export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, onRowClick, className, }: TableProps<T>): default_2.JSX.Element;
+export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, onRowClick, tone, className, }: TableProps<T>): default_2.JSX.Element;
 
 export declare type TableCellType = "text-primary" | "text-regular" | "pill" | "wm" | "number" | "percentage" | "button" | "icon" | "checkbox" | "custom";
 
@@ -1719,6 +1733,11 @@ export declare type TableProps<T extends TableRow = TableRow> = {
     onSort?: (key: string, direction: SortDirection) => void;
     /** Makes body rows clickable (pointer cursor) */
     onRowClick?: (row: T) => void;
+    /**
+     * "default": white surface, neutral-2 hover, cyan selected-row tint.
+     * "subtle": neutral-2 surface (header, rows, sticky column), hover neutral-1, no selected-row tint — for tables nested inside a white tile.
+     */
+    tone?: "default" | "subtle";
     className?: string;
 };
 
