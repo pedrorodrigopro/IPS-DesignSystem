@@ -23,7 +23,7 @@ const meta: Meta = {
           "CV Studio — preview, edit and export CVs. Two export variants (single CV, multiple CVs); the left module has two tabs " +
           "(ProPilot, Edit fields) under a Translate tile that goes through four states (pick a language, Translate now, progress, Reset). " +
           "Uses Page variant=\"fluid\", Header, InputInline selectors, Tile, Navigation, Input / InputTextarea, PPChatInput, " +
-          "ButtonGroup and Actions sticky-panel. Edits in the fields update the preview live. " +
+          "ButtonGroup and Actions sticky-panel. Edits in the fields update the preview live. With pending profile edits (Screens/MyProfile → Profiles Directory → a profile) an alert and Before / After boxes ask whether to use the new values in this version or in all versions. " +
           "Names, bio and details of John Smith and Mary Lee are placeholders.",
       },
     },
@@ -41,7 +41,7 @@ export const SingleExport: Story = {
 
 export const SingleExportProPilot: Story = {
   name: "Single export — ProPilot",
-  parameters: { docs: { description: { story: "One CV, ProPilot tab active." } } },
+  parameters: { docs: { description: { story: "One CV, ProPilot tab active. Try typing “Please adapt this CV to the banking industry”: ProPilot loads, then offers a suggestion card; hovering it previews the result on the CV (PPPreviewBanner + the affected rows outlined with the ProPilot gradient), Apply commits it, Dismiss mutes it. Placeholder content, no real AI." } } },
   render: () => <CVStudioScreen cvs={[ZARA]} initialMode="propilot" />,
 };
 
@@ -53,6 +53,6 @@ export const MultiExport: Story = {
 
 export const MultiExportProPilot: Story = {
   name: "Multi export — ProPilot",
-  parameters: { docs: { description: { story: "Three CVs, ProPilot tab active (Figma 1440:36072)." } } },
+  parameters: { docs: { description: { story: "Three CVs, ProPilot tab active (Figma 1440:36072). The industry flow applies to the CV currently shown." } } },
   render: () => <CVStudioScreen cvs={[ZARA, JOHN, MARY]} initialMode="propilot" />,
 };

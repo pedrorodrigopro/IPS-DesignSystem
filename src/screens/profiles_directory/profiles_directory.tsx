@@ -71,7 +71,7 @@ type SkillEntry = {
   development?: boolean;
 };
 
-type ProfileEntry = {
+export type ProfileEntry = {
   id: string;
   name: string;
   initials: string;
@@ -222,7 +222,7 @@ const PROFILES_BROWSE: ProfileEntry[] = [
   { id: "b27", name: "Sofia Marchetti", initials: "SM", subtitle: "Talent Acquisition Lead, English, Italian, Lead", coreSkills: 0, otherSkills: 152, skills: [{ label: "Employee Relations", proficiency: "intermediate" }, { label: "Workforce Planning", proficiency: "advanced" }, { label: "Onboarding", proficiency: "basic" }] },
   { id: "b28", name: "Tomas Novak", initials: "TN", subtitle: "Test Automation Engineer, English, Czech, Senior", coreSkills: 3, otherSkills: 189, skills: [{ label: "Cypress", proficiency: "basic", core: true }, { label: "Test Planning", proficiency: "intermediate" }, { label: "Bug Triage", proficiency: "advanced" }] },
   { id: "b29", name: "Yuki Tanaka", initials: "YT", subtitle: "Management Consultant, English, Japanese, Senior", coreSkills: 0, otherSkills: 56, skills: [{ label: "Business Cases", proficiency: "advanced" }, { label: "Change Management", proficiency: "basic" }, { label: "Stakeholder Management", proficiency: "intermediate" }] },
-  { id: "b30", name: "Zainab Hussein", initials: "ZH", subtitle: "Finance Manager, English, Somali, Arabic, Lead", coreSkills: 0, otherSkills: 93, skills: [{ label: "Risk Management", proficiency: "intermediate" }, { label: "Financial Reporting", proficiency: "advanced" }, { label: "Budgeting and Forecasting", proficiency: "basic" }] },
+  { id: "b30", name: "Zara Bond", initials: "ZB", subtitle: "Accountant, English, Dutch, Finnish, French, Senior", coreSkills: 3, otherSkills: 118, skills: [{ label: "Payroll supervision", proficiency: "advanced", core: true }, { label: "Month-end reporting", proficiency: "intermediate" }, { label: "Budgeting and forecasting", proficiency: "advanced" }] },
 ];
 
 // ── Toolbar ───────────────────────────────────────────────────────────────────
@@ -312,8 +312,19 @@ function Toolbar({
 
 // ── Card row ──────────────────────────────────────────────────────────────────
 
-function ProfileCard({ profile, query }: { profile: ProfileEntry; query: string }) {
+/** The row actions: Shortlist + secondary Open CV (Figma "CV row" 163:49477). Clicks never reach the row/card handler. */
+function RowActions({ onOpenCV, size, width }: { onOpenCV: () => void; size: "small" | "regular"; width?: number }) {
   return (
+    <div onClick={e => e.stopPropagation()} style={{ display: "flex", flexDirection: "column", gap: 8, width, flexShrink: 0 }}>
+      <Button kind="primary" size={size} style={{ width: "100%" }}>Shortlist</Button>
+      <Button kind="secondary" size={size} style={{ width: "100%" }} onClick={onOpenCV}>Open CV</Button>
+    </div>
+  );
+}
+
+function ProfileCard({ profile, query, onOpen, onOpenCV }: { profile: ProfileEntry; query: string; onOpen?: () => void; onOpenCV: () => void }) {
+  return (
+    <div onClick={onOpen} style={{ cursor: onOpen ? "pointer" : undefined }}>
     <Tile tileStyle="interactive" padding="content">
       <SB style={{ alignItems: "flex-start" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -379,10 +390,11 @@ function ProfileCard({ profile, query }: { profile: ProfileEntry; query: string 
 
         </div>
 
-        {/* Shortlist button — right aligned */}
-        <Button kind="primary" size="regular" style={{ flexShrink: 0, marginLeft: 16 }}>Shortlist</Button>
+        {/* Shortlist + Open CV — right aligned */}
+        <div style={{ marginLeft: 16 }}><RowActions size="regular" onOpenCV={onOpenCV} /></div>
       </SB>
     </Tile>
+    </div>
   );
 }
 
@@ -396,8 +408,8 @@ const thStyle: React.CSSProperties = {
 const tdStyle: React.CSSProperties = { padding: "10px 12px", verticalAlign: "middle" };
 
 function ProfileTableRow({
-  profile, query, showExpanded, selected, onToggle,
-}: { profile: ProfileEntry; query: string; showExpanded: boolean; selected: boolean; onToggle: (checked: boolean) => void }) {
+  profile, query, showExpanded, selected, onToggle, onOpen, onOpenCV,
+}: { profile: ProfileEntry; query: string; showExpanded: boolean; selected: boolean; onToggle: (checked: boolean) => void; onOpen?: () => void; onOpenCV: () => void }) {
   const [expanded, setExpanded] = useState(showExpanded);
 
   return (
@@ -416,15 +428,15 @@ function ProfileTableRow({
           <Row gap={8}>
             <Avatar initials={profile.initials} size="small" />
             <div>
-              <div style={linkCss}>{profile.name}</div>
+              <div style={{ ...linkCss, cursor: onOpen ? "pointer" : undefined }} onClick={onOpen}>{profile.name}</div>
               <div style={labelCss}>{profile.subtitle.split(",")[0]}</div>
             </div>
           </Row>
         </td>
         <td style={{ ...tdStyle, width: 100, ...body }}>{profile.coreSkills > 0 ? profile.coreSkills : "-"}</td>
         <td style={{ ...tdStyle, width: 100, ...body }}>{profile.otherSkills > 0 ? profile.otherSkills : "-"}</td>
-        <td style={{ ...tdStyle, width: 100 }}>
-          <Button kind="primary" size="regular">Shortlist</Button>
+        <td style={{ ...tdStyle, width: 115, padding: "5px 12px 5px 4px" }}>
+          <RowActions size="small" width={115} onOpenCV={onOpenCV} />
         </td>
       </tr>
 
@@ -513,9 +525,10 @@ function ProfileTableRow({
 }
 
 function ProfileTable({
-  profiles, query, defaultExpanded = false, selectedIds, onToggle, onToggleAll,
+  profiles, query, defaultExpanded = false, selectedIds, onToggle, onToggleAll, onOpenProfile, onOpenCV,
 }: {
   profiles: ProfileEntry[]; query: string; defaultExpanded?: boolean;
+  onOpenProfile?: (p: ProfileEntry) => void; onOpenCV: (p: ProfileEntry) => void;
   selectedIds: string[]; onToggle: (id: string, checked: boolean) => void; onToggleAll: (checked: boolean) => void;
 }) {
   const selectedCount = profiles.filter(p => selectedIds.includes(p.id)).length;
@@ -540,7 +553,7 @@ function ProfileTable({
         </thead>
         <tbody>
           {profiles.map(p => (
-            <ProfileTableRow key={p.id} profile={p} query={query} showExpanded={defaultExpanded} selected={selectedIds.includes(p.id)} onToggle={checked => onToggle(p.id, checked)} />
+            <ProfileTableRow key={p.id} profile={p} query={query} showExpanded={defaultExpanded} selected={selectedIds.includes(p.id)} onToggle={checked => onToggle(p.id, checked)} onOpen={onOpenProfile && (() => onOpenProfile(p))} onOpenCV={() => onOpenCV(p)} />
           ))}
         </tbody>
       </table>
@@ -557,17 +570,24 @@ export function ProfilesDirectoryScreen({
   initialView = "cards" as ViewMode,
   initialSort = "Most relevant",
   onNavigate,
+  onOpenProfile,
+  onOpenCV,
 }: {
   initialSearch?: string;
   initialView?: ViewMode;
   initialSort?: string;
   /** Navbar item clicked (e.g. "profile" → back to My Profile) */
   onNavigate?: (id: string) => void;
+  /** A card / a table-row name was clicked → that person's profile. Not clickable when omitted. */
+  onOpenProfile?: (profile: ProfileEntry) => void;
+  /** "Open CV" was clicked. When omitted the screen opens CV Studio for that one profile itself (Close comes back here). */
+  onOpenCV?: (profile: ProfileEntry) => void;
 }) {
   const [search, setSearch]     = useState(initialSearch);
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [openedCV, setOpenedCV] = useState<ProfileEntry | null>(null);
   const [page, setPage]     = useState(1);
   const sort = initialSort;
 
@@ -597,13 +617,18 @@ export function ProfilesDirectoryScreen({
 
   // Bulk selection (table view) → "Export CV" opens CV Studio for the selected profiles; Close comes back here
   const selected = filtered.filter(p => selectedIds.includes(p.id));
+  const cvOf = (p: ProfileEntry) => ({
+    ...ZARA,
+    name: p.name,
+    jobTitle: p.subtitle.split(",")[0],
+    email: `${p.name.toLowerCase().replace(/[^a-z ]/g, "").trim().replace(/ +/g, ".")}@pf.com`,
+  });
+  const openCV = (p: ProfileEntry) => (onOpenCV ? onOpenCV(p) : setOpenedCV(p));
+  if (openedCV) {
+    return <CVStudioScreen cvs={[cvOf(openedCV)]} onClose={() => setOpenedCV(null)} onNavigate={id => { if (id === "profiles") setOpenedCV(null); else onNavigate?.(id); }} />;
+  }
   if (exporting && selected.length > 0) {
-    const cvs = selected.map(p => ({
-      ...ZARA,
-      name: p.name,
-      jobTitle: p.subtitle.split(",")[0],
-      email: `${p.name.toLowerCase().replace(/[^a-z ]/g, "").trim().replace(/ +/g, ".")}@pf.com`,
-    }));
+    const cvs = selected.map(cvOf);
     return <CVStudioScreen cvs={cvs} onClose={() => setExporting(false)} onNavigate={id => { if (id === "profiles") setExporting(false); else onNavigate?.(id); }} />;
   }
 
@@ -648,7 +673,7 @@ export function ProfilesDirectoryScreen({
           {viewMode === "cards" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {pageItems.map(p => (
-                <ProfileCard key={p.id} profile={p} query={search} />
+                <ProfileCard key={p.id} profile={p} query={search} onOpen={onOpenProfile && (() => onOpenProfile(p))} onOpenCV={() => openCV(p)} />
               ))}
             </div>
           ) : (
@@ -657,6 +682,8 @@ export function ProfilesDirectoryScreen({
               query={search}
               defaultExpanded={!!search.trim()}
               selectedIds={selectedIds}
+              onOpenProfile={onOpenProfile}
+              onOpenCV={openCV}
               onToggle={(id, checked) => setSelectedIds(ids => (checked ? [...ids, id] : ids.filter(x => x !== id)))}
               onToggleAll={checked => setSelectedIds(ids => { const rest = ids.filter(id => !pageItems.some(p => p.id === id)); return checked ? [...rest, ...pageItems.map(p => p.id)] : rest; })}
             />

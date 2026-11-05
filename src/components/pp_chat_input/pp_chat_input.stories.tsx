@@ -18,7 +18,7 @@ export default {
   },
 } satisfies Meta<typeof PPChatInput>;
 
-/** Empty — placeholder "Ask ProPilot" */
+/** Empty — placeholder "Ask ProPilot". Long text wraps and the field grows (up to 5 lines, then scrolls); Enter sends, Shift+Enter adds a line. */
 export const Default: StoryFn<typeof PPChatInput> = () => {
   const [value, setValue] = useState("");
   return (

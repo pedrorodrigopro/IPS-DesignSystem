@@ -19,11 +19,14 @@ import { PageHeader }   from "../../components/page_header/page_header";
 import { Button }       from "../../components/button/button";
 import { Icon }         from "../../components/icon/icon";
 import { Input, InputSearch, InputTextarea } from "../../components/input/input";
+import { Alert }        from "../../components/alert/alert";
 import { Modal }        from "../../components/modal/modal";
 import { Switch }       from "../../components/switch/switch";
 
 import { CVPreview, SelectMenu, ZARA } from "../cv_studio/cv_studio";
 import type { CV } from "../cv_studio/cv_studio";
+import { pendingVersionsText } from "../cv_review/cv_review";
+import type { ReviewChange } from "../cv_review/cv_review";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Data (names and descriptions are from the Figma; the CV content is the same placeholder CV)
@@ -97,10 +100,17 @@ function Meta({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function VersionCard({
-  version, cv, onToggle, onEdit, onDelete,
-}: { version: CVVersion; cv: CV; onToggle: (on: boolean) => void; onEdit: () => void; onDelete: () => void }) {
+  version, cv, outdated, onToggle, onEdit, onDelete,
+}: { version: CVVersion; cv: CV; outdated?: boolean; onToggle: (on: boolean) => void; onEdit: () => void; onDelete: () => void }) {
   return (
     <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Profile edits not yet applied to this version — Figma 886:40981 */}
+      {outdated && (
+        <Tile tileStyle="selected" padding="panel" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 8 }}>
+          <Icon name="info" size={20} />
+          <span style={value}>Outdated fields</span>
+        </Tile>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Switch checked={version.active} onChange={onToggle} showLabel={false} />
         <span style={{ ...bodyBold, flex: 1, minWidth: 0 }}>{version.name}</span>
@@ -133,10 +143,21 @@ export function CVVersionsScreen({
   onCreate,
   onEdit,
   onNavigate,
+  pending,
+  cvs,
+  onPushAll,
+  onDismissAll,
 }: {
   personName?: string;
   /** The CV shown in every thumbnail */
   cv?: CV;
+  /** Per-version CVs (thumbnails); a version without an entry shows `cv` */
+  cvs?: Record<string, CV>;
+  /** Profile edits waiting for review, per version id. A version with changes shows "Outdated fields"; the alert counts them. */
+  pending?: Record<string, ReviewChange[]>;
+  /** Alert buttons "Push all edits to all" / "Dismiss for all" */
+  onPushAll?: () => void;
+  onDismissAll?: () => void;
   /** Controlled list (keeps it when the screen is left and re-opened); uncontrolled when omitted */
   versions?: CVVersion[];
   onVersionsChange?: (versions: CVVersion[]) => void;
@@ -180,6 +201,8 @@ export function CVVersionsScreen({
   };
 
   const q = query.trim().toLowerCase();
+  const isOutdated = (id: string) => (pending?.[id]?.length ?? 0) > 0;
+  const outdatedCount = versions.filter(v => isOutdated(v.id)).length;
   const shown = versions
     .filter(v => !q || `${v.name} ${v.description}`.toLowerCase().includes(q))
     .sort((a, b) => (sort === "name" ? a.name.localeCompare(b.name) : 0));
@@ -193,6 +216,17 @@ export function CVVersionsScreen({
             title="CV Versions"
             actions={[{ label: "Create CV version", variant: "primary", onClick: () => setCreating(true) }]}
           />
+
+          {/* Pending profile edits — Figma 886:40981 */}
+          {outdatedCount > 0 && (
+            <Alert
+              type="general"
+              layout="with-header"
+              message={pendingVersionsText(outdatedCount)}
+              body="Profile has some fields edited, CV Versions might be showing some fields out dated. Would you like to push profile edits to all CV Versions?"
+              actions={[{ label: "Push all edits to all", onClick: () => onPushAll?.() }, { label: "Dismiss for all", onClick: () => onDismissAll?.() }]}
+            />
+          )}
 
           {/* Search, sort, count, filter */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -218,7 +252,8 @@ export function CVVersionsScreen({
               <VersionCard
                 key={v.id}
                 version={v}
-                cv={cv}
+                cv={cvs?.[v.id] ?? cv}
+                outdated={isOutdated(v.id)}
                 onToggle={on => setVersions(vs => vs.map(x => (x.id === v.id ? { ...x, active: on } : x)))}
                 onEdit={() => onEdit?.(v)}
                 onDelete={() => setVersions(vs => vs.filter(x => x.id !== v.id))}
