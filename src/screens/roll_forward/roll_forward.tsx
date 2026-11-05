@@ -182,8 +182,9 @@ function DateField({ label, value: initial = "", popoverAlign = "left" }: DateFi
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // The only button inside the field is the "clear" icon: clicking it must not open the calendar
   return (
-    <div style={{ position: "relative" }} onClick={() => setOpen(true)}>
+    <div style={{ position: "relative" }} onClick={e => { if (!(e.target as HTMLElement).closest("button")) setOpen(true); }}>
       <Input
         id={id}
         label={label}
