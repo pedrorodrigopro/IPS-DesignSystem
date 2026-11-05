@@ -18,6 +18,10 @@
 //   The wrapper shows a white→transparent gradient on its right edge
 //   whenever the table is horizontally overflowing (detected via ResizeObserver).
 //
+// Tone:
+//   "default" — white surface, cyan selected-row tint (Figma Table/Standard).
+//   "subtle"  — neutral-2 surface, no selected-row tint; for tables nested in a white tile.
+//
 // Header (Table/Header 1706:51230):
 //   Sortable=True  — text + caret-up/caret-down sort icon
 //   Sortable=False — text only
@@ -121,6 +125,11 @@ export type TableProps<T extends TableRow = TableRow> = {
   onSort?: (key: string, direction: SortDirection) => void;
   /** Makes body rows clickable (pointer cursor) */
   onRowClick?: (row: T) => void;
+  /**
+   * "default": white surface, neutral-2 hover, cyan selected-row tint.
+   * "subtle": neutral-2 surface (header, rows, sticky column), hover neutral-1, no selected-row tint — for tables nested inside a white tile.
+   */
+  tone?: "default" | "subtle";
   className?: string;
 };
 
@@ -250,6 +259,7 @@ export function Table<T extends TableRow = TableRow>({
   sortDirection = "none",
   onSort,
   onRowClick,
+  tone = "default",
   className,
 }: TableProps<T>) {
   // ── Selection state ──────────────────────────────────────────────────────
@@ -331,6 +341,7 @@ export function Table<T extends TableRow = TableRow>({
       className={classNames(
         css.tableWrapper,
         compact ? css.compact : css.standard,
+        tone === "subtle" && css.subtle,
         className
       )}
     >

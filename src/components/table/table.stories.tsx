@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Table } from "./table";
 import type { TableColumn, TableRow, WMCellValue } from "./table";
 import { PillWFState } from "../pill/pill";
+import { Tile } from "../tile/tile";
 import type { WFState } from "../pill/pill";
 
 const meta: Meta<typeof Table> = {
@@ -311,6 +312,38 @@ export const CompactScrollable: Story = {
             setSortDir(dir);
           }}
         />
+      </div>
+    );
+  },
+};
+
+// ── Subtle tone — table nested inside a white tile ─────────────────────────────
+
+export const Subtle: Story = {
+  name: "Subtle (nested in a white tile)",
+  render: () => {
+    const [selected, setSelected] = useState<(string | number)[]>([1, 3]);
+    const [sortKey, setSortKey] = useState<string | undefined>();
+    const [sortDir, setSortDir] = useState<"asc" | "desc" | "none">("none");
+
+    return (
+      <div style={{ padding: 24 }}>
+        <Tile tileStyle="highlight" padding="screen">
+          <Table
+            tone="subtle"
+            columns={standardColumns.slice(0, 6)}
+            rows={sampleRows}
+            selectable
+            selectedRows={selected}
+            onSelectionChange={setSelected}
+            sortKey={sortKey}
+            sortDirection={sortDir}
+            onSort={(key, dir) => {
+              setSortKey(key);
+              setSortDir(dir);
+            }}
+          />
+        </Tile>
       </div>
     );
   },

@@ -1,6 +1,7 @@
 // Tooltip — Figma node 1457:22694
 //
 // Bubble: bg #0C1457, radius 8px, padding 16px, body-regular white
+//   Hugs its text (width: max-content) and wraps at the maxWidth prop
 // Arrow: 10×10 triangle, fill #0C1457, overlaps bubble by 3px (gap: -3px in Figma)
 //
 // All placements implemented via:
@@ -42,9 +43,11 @@ $min-width:  0;             // bubbles hug their text
   color: #ffffff;
   border-radius: 8px;
   padding: 16px;
-  // Allow text to breathe — prevents single words wrapping to multiple lines
-  white-space: nowrap;
-  // Only wrap when content genuinely needs it (controlled by maxWidth prop)
+  // Hug the text: width follows the content on a single line…
+  width: max-content;
+  // …and wrap normally once the content exceeds the maxWidth prop
+  // (tooltip.tsx sets max-width inline; default 320px)
+  white-space: normal;
   min-width: $min-width;
   pointer-events: none;
   visibility: hidden;

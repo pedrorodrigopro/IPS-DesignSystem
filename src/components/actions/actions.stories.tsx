@@ -197,3 +197,34 @@ export const AllVariants: Story = {
     </div>
   ),
 };
+
+export const StickyScreenWithInfoAndTooltip: Story = {
+  name: "Sticky screen — info text + tooltip on disabled button",
+  parameters: { layout: "fullscreen" },
+  render: () => (
+    <div style={{ minHeight: "100vh", background: "#F8F9FD", display: "flex", flexDirection: "column" }}>
+      <div style={{
+        flex: 1, padding: 40,
+        fontFamily: "Mulish, sans-serif", fontSize: 14, color: "#5C6E9E",
+      }}>
+        Page content — hover the disabled "Next" button to see its tooltip.
+      </div>
+      <Actions
+        variant="sticky-screen"
+        leftActions={[{ label: "Cancel", variant: "secondary" }]}
+        infoText="101 engagements · 671 roles"
+        rightActions={[
+          { label: "Previous", variant: "secondary", icon: "arrow-left" },
+          {
+            label: "Next",
+            variant: "primary",
+            icon: "arrow-right",
+            iconPosition: "right",
+            disabled: true,
+            tooltip: "Please apply filters to narrow down engagements (max 100)",
+          },
+        ]}
+      />
+    </div>
+  ),
+};

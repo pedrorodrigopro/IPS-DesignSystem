@@ -12,6 +12,8 @@
 //   row, justify-between, padding-top 24px, border-top 1px #CFDAF7
 //   Left: secondary buttons (gap 16px)
 //   Right: secondary + primary buttons (gap 16px)
+//   Right order: info text (infoText), then rightActions, then rightContent.
+//   Per-action extras: `tooltip` (hover tooltip, also on disabled) and `iconPosition`.
 //
 // Sticky screen (fixed bottom of viewport):
 //   White bg panel + top divider + shadow blur above
@@ -26,6 +28,7 @@
 import React, { ReactNode } from "react";
 import classNames from "classnames";
 import { Icon } from "../icon/icon";
+import { Tooltip } from "../tooltip/tooltip";
 import type { IconName } from "../icon/icon";
 import css from "./actions.module.scss";
 
@@ -38,8 +41,16 @@ export type ActionItem = {
   variant?: "primary" | "secondary";
   onClick?: () => void;
   disabled?: boolean;
-  /** Optional leading icon */
+  /** Optional icon (leading unless iconPosition="right") */
   icon?: IconName;
+  /** Where the icon sits relative to the label (default "left") (requires `icon`) */
+  iconPosition?: "left" | "right";
+  /**
+   * Shown in an IPS Tooltip on mouse hover (also on disabled buttons).
+   * Hover only — a disabled button is not keyboard-focusable.
+   * Positioned above the button, so it is clipped by an ancestor with overflow:hidden.
+   */
+  tooltip?: string;
 };
 
 export type ActionsProps = {
@@ -54,13 +65,16 @@ export type ActionsProps = {
   leftContent?: ReactNode;
   /** Extra content on the right, after rightActions (e.g. a split ButtonGroup) */
   rightContent?: ReactNode;
+  /** Muted text shown on the right, before the right-hand buttons (e.g. "2 engagements · 12 roles") */
+  infoText?: string;
   className?: string;
 };
 
 // ── Button ────────────────────────────────────────────────────────────────────
 
 function ActionButton({ action }: { action: ActionItem }) {
-  return (
+  const iconEl = action.icon ? <Icon name={action.icon} size={16} /> : null;
+  const button = (
     <button
       type="button"
       disabled={action.disabled}
@@ -71,9 +85,21 @@ function ActionButton({ action }: { action: ActionItem }) {
       )}
       onClick={action.onClick}
     >
-      {action.icon && <Icon name={action.icon} size={16} />}
+      {action.iconPosition !== "right" && iconEl}
       {action.label}
+      {action.iconPosition === "right" && iconEl}
     </button>
+  );
+  return action.tooltip ? (
+    <Tooltip
+      content={action.tooltip}
+      placement="down-right"
+      maxWidth={320}
+    >
+      {button}
+    </Tooltip>
+  ) : (
+    button
   );
 }
 
@@ -86,6 +112,7 @@ export function Actions({
   insetX,
   leftContent,
   rightContent,
+  infoText,
   className,
 }: ActionsProps) {
   const buttonRow = (
@@ -96,8 +123,9 @@ export function Actions({
           {leftContent}
         </div>
       )}
-      {(rightActions.length > 0 || rightContent) && (
+      {(rightActions.length > 0 || rightContent || infoText) && (
         <div className={css.right}>
+          {infoText && <span className={css.infoText}>{infoText}</span>}
           {rightActions.map((a, i) => <ActionButton key={a.label + i} action={a} />)}
           {rightContent}
         </div>

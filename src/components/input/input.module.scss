@@ -39,6 +39,25 @@
   flex-shrink: 0;
 }
 
+// "Clear filter" action at the right end of the label row
+.labelClear {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--palette-blue-0);
+  cursor: pointer;
+
+  &:hover { color: var(--palette-primary-0); }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);
+  }
+}
+
 // ── Input box (shared shell) ──────────────────────────────────────────────────
 // row, align center, gap 8px, padding 8px, radius 8px, border 1px --palette-neutral-0
 

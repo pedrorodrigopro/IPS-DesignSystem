@@ -212,6 +212,39 @@
   background-color: var(--palette-white-0); // default row bg
 }
 
+// ── Tone: subtle ───────────────────────────────────────────────────────────────
+// For tables nested inside a white tile: neutral-2 surface, hover neutral-1, no selected tint.
+// Must stay AFTER .row / .rowSelected / .stickyCol: same-specificity rules resolve by source order.
+.subtle {
+  background-color: var(--palette-neutral-2); // #F8F9FD
+
+  .th,
+  .row,
+  .stickyCol {
+    background-color: var(--palette-neutral-2);
+  }
+
+  .row:hover,
+  .row:hover .stickyCol {
+    background-color: var(--palette-neutral-1); // #E7EAF8
+  }
+
+  .rowSelected,
+  .rowSelected .stickyCol {
+    background-color: var(--palette-neutral-2);
+  }
+
+  // The scroll gradient fades into the surface, so it must fade into neutral-2 (248, 249, 253), not white.
+  .scrollGradient::before {
+    background: linear-gradient(
+      to right,
+      rgba(248, 249, 253, 0) 0%,
+      rgba(248, 249, 253, 0.85) 50%,
+      rgba(248, 249, 253, 1) 100%
+    );
+  }
+}
+
 // ── Cell types ─────────────────────────────────────────────────────────────────
 
 .textPrimary {

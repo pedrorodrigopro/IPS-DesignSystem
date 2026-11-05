@@ -11,7 +11,15 @@
 import classNames from "classnames";
 import { useState } from "react";
 import { Icon } from "../icon/icon";
+import type { IconName } from "../icon/icon";
 import css from "./input.module.scss";
+
+// Small "clear filter" action shown at the right end of the label row
+const LabelClear = ({ label, onClear }: { label: string; onClear: () => void }) => (
+  <button type="button" className={css.labelClear} aria-label={`Clear ${label}`} onClick={onClear}>
+    <Icon name="filter-clean" size={14} />
+  </button>
+);
 
 // ── Mandatory icon ────────────────────────────────────────────────────────────
 // From Figma node 12016:234944 — mandatory icon (asterisk star), fill --palette-red-0
@@ -34,6 +42,10 @@ export type InputProps = {
   readOnly?: boolean;
   disabled?: boolean;
   mandatory?: boolean;
+  /** Trailing icon inside the field (e.g. "calendar" for date fields). Text input only. */
+  rightIcon?: IconName;
+  /** When set, shows a "clear filter" icon at the right end of the label row and calls this on click. Requires `label`; hidden when the field is disabled or read-only. */
+  onClear?: () => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
@@ -51,6 +63,8 @@ export const Input = ({
   readOnly = false,
   disabled = false,
   mandatory = false,
+  rightIcon,
+  onClear,
   onChange,
   onFocus,
   onBlur,
@@ -63,6 +77,7 @@ export const Input = ({
       <div className={css.labelRow}>
         <label className={css.label} htmlFor={id}>{label}</label>
         {mandatory && <MandatoryIcon />}
+        {onClear && !disabled && !readOnly && <LabelClear label={label} onClear={onClear} />}
       </div>
     )}
     <div className={classNames(css.inputBox, css[state], { [css.readOnly]: readOnly })}>
@@ -78,6 +93,7 @@ export const Input = ({
         onFocus={onFocus}
         onBlur={onBlur}
       />
+      {rightIcon && <Icon name={rightIcon} size={16} className={css.icon} />}
     </div>
     {message && (
       <div className={css.messageRow}>
@@ -93,7 +109,7 @@ export const Input = ({
 // ── Textarea (multi-line Input) ───────────────────────────────────────────────
 // Same shell as Input (border, radius, states, label, message); content wraps over `rows` lines.
 
-export type InputTextareaProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+export type InputTextareaProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur" | "rightIcon" | "onClear"> & {
   /** Visible lines (default 3) */
   rows?: number;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -152,7 +168,7 @@ export const InputTextarea = ({
 // ── Select (Input new + chevron-down) ─────────────────────────────────────────
 // Same as Input but with chevron-down icon on the right — for dropdown triggers
 
-export type InputSelectProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur"> & {
+export type InputSelectProps = Omit<InputProps, "type" | "onChange" | "onFocus" | "onBlur" | "rightIcon"> & {
   onClick?: () => void;
 };
 
@@ -165,6 +181,7 @@ export const InputSelect = ({
   readOnly = false,
   disabled = false,
   mandatory = false,
+  onClear,
   onClick,
   className,
   id,
@@ -174,6 +191,7 @@ export const InputSelect = ({
       <div className={css.labelRow}>
         <label className={css.label} htmlFor={id}>{label}</label>
         {mandatory && <MandatoryIcon />}
+        {onClear && !disabled && !readOnly && <LabelClear label={label} onClear={onClear} />}
       </div>
     )}
     <button

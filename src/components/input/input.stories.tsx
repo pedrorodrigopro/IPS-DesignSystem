@@ -133,3 +133,14 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
     <div style={{ width: 283 }}>{children}</div>
   </div>
 );
+
+// ── Right icon + clear filter (used by date fields and filter selects) ───────
+
+export const RightIconAndClear: StoryFn = () => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 283 }}>
+    <Input label="Start date" rightIcon="calendar" value="1 Oct 2026" onChange={() => {}} />
+    <Input label="End date" rightIcon="calendar" placeholder="Pick a date" mandatory />
+    <Input label="Start date (clearable)" rightIcon="calendar" value="1 Oct 2026" onChange={() => {}} onClear={() => {}} />
+    <InputSelect label="Template" value="2 selected" onClear={() => {}} />
+  </div>
+);

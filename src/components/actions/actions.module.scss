@@ -38,6 +38,13 @@ $panel-shadow: 0 -8px 20px 4px rgba(207, 218, 247, 0.85);
   gap: 16px;
 }
 
+// Muted info text before the right-hand buttons
+.infoText {
+  @include ts.label-regular; // 12px / 400
+  color: var(--palette-blue-2);
+  text-align: right;
+}
+
 // ── Shared button ──────────────────────────────────────────────────────────────
 .btn {
   @include ts.body-selected; // 14px 700 115%
