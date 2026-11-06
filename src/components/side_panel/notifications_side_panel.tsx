@@ -28,6 +28,8 @@ import { Accordion }        from "../accordion/accordion";
 import { InputSelect }      from "../input/input";
 import { Switch }           from "../switch/switch";
 import { PillSimple }       from "../pill/pill";
+import { DropdownActions }  from "../dropdown/dropdown";
+import type { DropdownItem } from "../dropdown/dropdown";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -68,6 +70,23 @@ export type NotificationItem = {
   /** When set, replaces the "Options + Open history" row with a single primary button */
   primaryLabel?:   string;
   onPrimary?:      () => void;
+  /** Date shown right under the body text (before the engagement / role lines), e.g. "Today". `date` then closes the item. */
+  bodyDate?:       string;
+  /**
+   * Custom action row (Figma 2362:258668, "Rollforward roles created"): an optional "Options" menu followed by these
+   * buttons, secondary first and the primary one last. Takes precedence over primaryLabel / onOptions / onOpenHistory.
+   */
+  actions?:        NotificationAction[];
+  /** Entries of the "Options" menu shown before `actions` (the button only appears when this is set) */
+  optionItems?:    DropdownItem[];
+  onOptionSelect?: (optionId: string) => void;
+};
+
+export type NotificationAction = {
+  label:   string;
+  /** Defaults to "secondary" */
+  kind?:   "secondary" | "primary";
+  onClick: () => void;
 };
 
 export type NotificationFilters = {
@@ -258,6 +277,7 @@ function FiltersBlock({ filters, filterCount, onClear }: {
 
 function NotificationItemRow({ item }: { item: NotificationItem }) {
   const [hovered, setHovered] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div
@@ -293,8 +313,9 @@ function NotificationItemRow({ item }: { item: NotificationItem }) {
       </div>
 
       {/* Body text */}
-      <div style={{ paddingLeft: 16 }}>
+      <div style={{ paddingLeft: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         <span style={labelReg}>{item.body}</span>
+        {item.bodyDate && <span style={labelMuted}>{item.bodyDate}</span>}
       </div>
 
       {/* Changes block — Before/After */}
@@ -326,8 +347,29 @@ function NotificationItemRow({ item }: { item: NotificationItem }) {
       </div>
 
       {/* Actions — always visible */}
-      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
-        {item.primaryLabel ? (
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        {item.actions ? (
+          <>
+            {item.optionItems && (
+              <div style={{ position: "relative" }}>
+                <Button kind="secondary" size="small" onClick={() => setMenuOpen(o => !o)}>
+                  Options <Icon name="chevron-down" size={14} />
+                </Button>
+                {menuOpen && (
+                  <>
+                    <div style={{ position: "fixed", inset: 0, zIndex: 10 }} onClick={() => setMenuOpen(false)} />
+                    <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 11, marginTop: 4, minWidth: 160 }}>
+                      <DropdownActions items={item.optionItems} onSelect={id => { setMenuOpen(false); item.onOptionSelect?.(id); }} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {item.actions.map(a => (
+              <Button key={a.label} kind={a.kind ?? "secondary"} size="small" onClick={a.onClick}>{a.label}</Button>
+            ))}
+          </>
+        ) : item.primaryLabel ? (
           <Button kind="primary" size="small" onClick={item.onPrimary}>
             {item.primaryLabel}
           </Button>

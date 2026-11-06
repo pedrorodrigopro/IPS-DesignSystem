@@ -144,3 +144,34 @@ export const Interactive: Story = {
     </ToastProvider>
   ),
 };
+
+// ── onClose ────────────────────────────────────────────────────────────────────
+
+function OnCloseDemo() {
+  const { showToast } = useToast();
+  const [log, setLog] = useState<string[]>([]);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center", fontFamily: "Mulish, sans-serif", color: "#0D2976" }}>
+      <button
+        style={{ padding: "8px 20px", borderRadius: 4, border: "1px solid #CFDAF7", background: "#fff", fontWeight: 700, fontSize: 13, color: "#0C1457", cursor: "pointer" }}
+        onClick={() => showToast({ type: "success", message: "Roles are being created in the background.", onClose: () => setLog(l => [...l, "toast closed"]) })}
+      >
+        Show toast
+      </button>
+      <span style={{ fontSize: 13 }}>{log.length === 0 ? "onClose has not fired yet" : `onClose fired ${log.length}×`}</span>
+    </div>
+  );
+}
+
+export const OnClose: Story = {
+  name: "onClose (fires when the toast has closed)",
+  parameters: {
+    layout: "centered",
+    docs: { description: { story: "`showToast({ …, onClose })` calls back once after the exit animation, whether the toast timed out or the cross was clicked. Use it to continue a flow once the toast is gone." } },
+  },
+  render: () => (
+    <ToastProvider>
+      <OnCloseDemo />
+    </ToastProvider>
+  ),
+};

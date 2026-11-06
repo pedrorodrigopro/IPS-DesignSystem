@@ -29,6 +29,8 @@ export type NavbarProps = {
   onProPilot?: () => void;
   /** Override the default section nav items (Marketplace → Booking) */
   sectionItems?: NavItem[];
+  /** Unread counts per nav item id, e.g. `{ notifications: 1 }`: a red badge on the item's icon (hidden at 0, "9+" above 9) */
+  badges?: Partial<Record<string, number>>;
 };
 
 const ACTION_ITEMS: NavItem[] = [
@@ -73,18 +75,20 @@ type NavButtonProps = {
   item: NavItem;
   isActive: boolean;
   onClick: () => void;
+  badge?: number;
 };
 
-const NavButton = ({ item, isActive, onClick }: NavButtonProps) => (
+const NavButton = ({ item, isActive, onClick, badge = 0 }: NavButtonProps) => (
   <div className={css.navItemWrapper}>
     <button
       type="button"
       className={classNames(css.navBtn, { [css.active]: isActive })}
       onClick={onClick}
-      aria-label={item.label}
+      aria-label={badge > 0 ? `${item.label}, ${badge} unread` : item.label}
       aria-current={isActive ? "page" : undefined}
     >
       <Icon name={item.icon} size={20} className={css.navIcon} />
+      {badge > 0 && <span className={css.badge} aria-hidden="true">{badge > 9 ? "9+" : badge}</span>}
     </button>
     {/* Tooltip — shown on hover via CSS, positioned to the right */}
     <span className={css.tooltip} aria-hidden="true">{item.label}</span>
@@ -100,6 +104,7 @@ export const Navbar = ({
   proPlilotOpen = false,
   onProPilot,
   sectionItems = SECTION_ITEMS,
+  badges,
 }: NavbarProps) => (
   <nav className={classNames(css.navbar, className)} aria-label="Main navigation">
     <div className={css.top}>
@@ -109,7 +114,7 @@ export const Navbar = ({
 
       <div className={css.group}>
         {ACTION_ITEMS.map((item) => (
-          <NavButton key={item.id} item={item} isActive={activeId === item.id} onClick={() => onSelect?.(item.id)} />
+          <NavButton key={item.id} item={item} isActive={activeId === item.id} onClick={() => onSelect?.(item.id)} badge={badges?.[item.id]} />
         ))}
       </div>
 
@@ -117,7 +122,7 @@ export const Navbar = ({
 
       <div className={css.group}>
         {sectionItems.map((item) => (
-          <NavButton key={item.id} item={item} isActive={activeId === item.id} onClick={() => onSelect?.(item.id)} />
+          <NavButton key={item.id} item={item} isActive={activeId === item.id} onClick={() => onSelect?.(item.id)} badge={badges?.[item.id]} />
         ))}
       </div>
     </div>
@@ -127,7 +132,7 @@ export const Navbar = ({
 
       <div className={css.group}>
         {OPTION_ITEMS.map((item) => (
-          <NavButton key={item.id} item={item} isActive={activeId === item.id} onClick={() => onSelect?.(item.id)} />
+          <NavButton key={item.id} item={item} isActive={activeId === item.id} onClick={() => onSelect?.(item.id)} badge={badges?.[item.id]} />
         ))}
       </div>
 

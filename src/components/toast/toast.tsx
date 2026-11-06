@@ -19,6 +19,8 @@
 //   - Dismiss: slides back down (translateY(0) → translateY(120%)), opacity 1→0, 250ms ease-in
 //   - onClose fires after the dismiss animation completes
 //
+// `onClose` (optional) fires once after the exit animation, for the auto-dismiss and for the cross.
+//
 // Usage (imperative via ToastProvider + useToast):
 //   const { showToast } = useToast();
 //   showToast({ type: "success", message: "Saved successfully" });
@@ -44,6 +46,8 @@ export type ToastOptions = {
   message: string;
   /** Auto-dismiss delay in ms. Defaults to 5000. Set to 0 to disable. */
   duration?: number;
+  /** Called once, after the exit animation, whether the toast closed by itself or through its cross button */
+  onClose?: () => void;
 };
 
 type ToastEntry = ToastOptions & { id: number };
@@ -74,11 +78,14 @@ function ToastItem({ entry, onDismiss }: ToastItemProps) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  const closed = useRef(false);
   const dismiss = useCallback(() => {
+    if (closed.current) return;   // the cross and the timer can both fire
+    closed.current = true;
     setVisible(false);
-    // Wait for exit animation (250ms) before calling onDismiss
-    setTimeout(() => onDismiss(entry.id), 260);
-  }, [entry.id, onDismiss]);
+    // Wait for exit animation (250ms) before calling onDismiss / onClose
+    setTimeout(() => { onDismiss(entry.id); entry.onClose?.(); }, 260);
+  }, [entry, onDismiss]);
 
   // Auto-dismiss
   useEffect(() => {

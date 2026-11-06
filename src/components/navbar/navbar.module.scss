@@ -139,6 +139,29 @@ $nav-overflow-height: 718px; // 636 + 10×4 + 7×6
   }
 }
 
+// ── Unread badge — red circle at the icon's top-right (e.g. Notifications) ──────
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: var(--palette-red-0);
+  color: var(--palette-white-0);
+  font-family: var(--font-family);
+  font-size: var(--font-size-label-small, 10px);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  pointer-events: none;
+}
+
 .avatarBtn {
   // Avatar btn inherits circle shape — no extra changes needed
 }

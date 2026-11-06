@@ -39,3 +39,23 @@ export const WithSearch: StoryFn<typeof Navbar> = () => (
     <Navbar activeId="search" avatarInitials="AB" />
   </div>
 );
+
+/** `badges` puts a red unread count on a nav item (hidden at 0, "9+" above 9) */
+export const WithBadge: StoryFn<typeof Navbar> = () => {
+  const [active, setActive] = useState("workflow");
+  const [unread, setUnread] = useState(1);
+  return (
+    <div style={{ display: "flex", height: "100vh", background: "#F8F9FD" }}>
+      <Navbar
+        activeId={active}
+        badges={{ notifications: unread }}
+        onSelect={id => { if (id === "notifications") setUnread(n => (n >= 12 ? 0 : n + 4)); else setActive(id); }}
+      />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontFamily: "Mulish, sans-serif", fontSize: 14, color: "#5C6E9E" }}>
+          Click the bell to change the unread count: <strong style={{ color: "#0D2976" }}>{unread}</strong>
+        </span>
+      </div>
+    </div>
+  );
+};
