@@ -603,6 +603,10 @@ export function ManageRolesScreen({
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged,
 }: ManageRolesScreenProps) {
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
+  // Counter above the groups: "X engagements · Y roles" (engagements = distinct titles; the template editor has none, so it shows roles only)
+  const engagementCount = new Set(groups.flatMap(g => g.roles.map(r => r.engagement).filter(Boolean))).size;
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const counter = engagementCount > 0 ? `${plural(engagementCount, "engagement")} · ${plural(total, "role")}` : plural(total, "role");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Engagement and role selection are mutually exclusive: `mode` is the kind that made the current selection
   const [mode, setMode] = useState<SelectKind | null>(null);
@@ -680,7 +684,7 @@ export function ManageRolesScreen({
               </>
             )}
 
-            <div style={{ ...labelCss, margin: header ? "12px 0 16px" : "0 0 16px", flexShrink: 0 }}>{total} role{total === 1 ? "" : "s"}</div>
+            <div style={{ ...labelCss, margin: header ? "12px 0 16px" : "0 0 16px", flexShrink: 0 }}>{counter}</div>
 
             {groups.map((g, i) => (
               <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} />
