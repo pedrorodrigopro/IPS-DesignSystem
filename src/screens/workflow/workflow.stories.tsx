@@ -8,6 +8,10 @@
 // Columns:
 //   Engagements: Title | Roles | State | Start date | Tier | Assignee | Dishes | Duration | ⋮ sticky
 //   Roles:       Title | Tag | Vacancies | State | WF State | Expiry | Availability | Due in days | ⋮ sticky
+//
+// Bulk selection: ticking rows shows a 600px bulk banner centred in the page header row with ghost icon buttons.
+//   Engagements: Manage roles · Roll forward · Share · Move · Change owner
+//   Roles:       Share · Move · Change owner   (no Manage roles: the roles are already the selection)
 
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
@@ -17,6 +21,8 @@ import { Page }         from "../../components/layout/layout";
 import { Header }       from "../../components/header/header";
 import { Navigation }   from "../../components/navigation/navigation";
 import { Tile }         from "../../components/tile/tile";
+import { Alert }        from "../../components/alert/alert";
+import { Tooltip }      from "../../components/tooltip/tooltip";
 import { Accordion }    from "../../components/accordion/accordion";
 import { Icon }         from "../../components/icon/icon";
 import { Button }       from "../../components/button/button";
@@ -27,6 +33,7 @@ import { WorkforceMember } from "../../components/workforce_member/workforce_mem
 
 import type { TableColumn, TableRow, SortDirection } from "../../components/table/table";
 import type { WFState } from "../../components/pill/pill";
+import type { IconName } from "../../components/icon/icon";
 
 // ── Shared typography ─────────────────────────────────────────────────────────
 
@@ -197,10 +204,9 @@ const engagementColumns: TableColumn<EngagementRow>[] = [
   },
 ];
 
-function EngagementsTab() {
+function EngagementsTab({ selected, onSelectedChange: setSelected }: { selected: (string | number)[]; onSelectedChange: (ids: (string | number)[]) => void }) {
   const [sortKey, setSortKey] = useState<string | undefined>();
   const [sortDir, setSortDir] = useState<SortDirection>("none");
-  const [selected, setSelected] = useState<(string | number)[]>([]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -297,10 +303,9 @@ const roleColumns: TableColumn<RoleRow>[] = [
   },
 ];
 
-function RolesTab() {
+function RolesTab({ selected, onSelectedChange: setSelected }: { selected: (string | number)[]; onSelectedChange: (ids: (string | number)[]) => void }) {
   const [sortKey, setSortKey] = useState<string | undefined>();
   const [sortDir, setSortDir] = useState<SortDirection>("none");
-  const [selected, setSelected] = useState<(string | number)[]>([]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -329,13 +334,61 @@ const TABS = [
   { id: "roles",       label: "Roles", badge: 374 },
 ];
 
+// ── Bulk banner ───────────────────────────────────────────────────────────────
+
+type BulkAction = { icon: IconName; label: string };
+const ENGAGEMENT_BULK: BulkAction[] = [
+  { icon: "manage-roles", label: "Manage roles" },
+  { icon: "rollforward",  label: "Roll forward" },
+  { icon: "share",        label: "Share" },
+  { icon: "bulk-move",    label: "Move" },
+  { icon: "owner",        label: "Change owner" },
+];
+// Roles: no "Manage roles" (the roles are already the selection) and no roll forward (an engagement action)
+const ROLE_BULK: BulkAction[] = ENGAGEMENT_BULK.filter(a => a.icon !== "manage-roles" && a.icon !== "rollforward");
+
+const srOnly: React.CSSProperties = { position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" };
+
+/** 600px banner overlaying the page header row (centred) without growing the layout */
+function BulkBanner({ count, actions, onDismiss }: { count: number; actions: BulkAction[]; onDismiss: () => void }) {
+  return (
+    <div style={{ position: "sticky", top: 8, height: 0, zIndex: 40, marginBottom: -16, pointerEvents: "none" }}>
+      <div style={{ position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", width: 600, pointerEvents: "auto", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card-hover)" }}>
+        <Alert
+          type="bulk-banner"
+          layout="inline"
+          message={`${count} selected`}
+          onDismiss={onDismiss}
+          rightContent={actions.map(a => (
+            <Tooltip key={a.label} content={a.label} placement="up-center" maxWidth={240}>
+              <Button kind="iconGhost" size="regular">
+                <Icon name={a.icon} size={16} />
+                <span style={srOnly}>{a.label}</span>
+              </Button>
+            </Tooltip>
+          ))}
+        />
+      </div>
+    </div>
+  );
+}
+
 function WorkflowScreen({ defaultTab = "engagements" }: { defaultTab?: string }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [selectedEngagements, setSelectedEngagements] = useState<(string | number)[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<(string | number)[]>([]);
 
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <Page navbar={<Navbar activeId="workflow" />} variant="1280">
         <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", paddingBottom: 32 }}>
+
+          {activeTab === "engagements" && selectedEngagements.length > 0 && (
+            <BulkBanner count={selectedEngagements.length} actions={ENGAGEMENT_BULK} onDismiss={() => setSelectedEngagements([])} />
+          )}
+          {activeTab === "roles" && selectedRoles.length > 0 && (
+            <BulkBanner count={selectedRoles.length} actions={ROLE_BULK} onDismiss={() => setSelectedRoles([])} />
+          )}
 
           <Header
             size="page"
@@ -353,8 +406,8 @@ function WorkflowScreen({ defaultTab = "engagements" }: { defaultTab?: string })
             onChange={setActiveTab}
           />
 
-          {activeTab === "engagements" && <EngagementsTab />}
-          {activeTab === "roles"       && <RolesTab />}
+          {activeTab === "engagements" && <EngagementsTab selected={selectedEngagements} onSelectedChange={setSelectedEngagements} />}
+          {activeTab === "roles"       && <RolesTab selected={selectedRoles} onSelectedChange={setSelectedRoles} />}
 
         </div>
       </Page>
@@ -375,7 +428,8 @@ const meta: Meta = {
           "Workflow screen — Engagements and Roles tabs. " +
           "Table wrapped in Tile highlight + content padding (16px). " +
           "Engagements: group header accordion + 19 sample rows with assignee WM cell, pin/menu sticky cols. " +
-          "Roles: Gantt toggle, WFState pills, availability range, due days, menu sticky col.",
+          "Roles: Gantt toggle, WFState pills, availability range, due days, menu sticky col. " +
+          "Ticking rows shows a 600px bulk banner centred in the header row: Engagements get Manage roles · Roll forward · Share · Move · Change owner; Roles get Share · Move · Change owner (no Manage roles).",
       },
     },
   },
