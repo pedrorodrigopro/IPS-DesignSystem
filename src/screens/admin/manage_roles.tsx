@@ -422,12 +422,13 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
     <div style={{ display: "flex", alignItems: "flex-start" }}>
       {rolesTable}
       {/* Same pattern as the Gantt in booking_engine / the Figma: a full-height neutral-0 strip that is itself the drag target,
-          with the IPS draggable Divider handle sticky in the middle (turns blue on hover / while dragging) */}
+          with the IPS draggable Divider handle sticky in the middle. On hover / while dragging the WHOLE strip turns blue, not just the handle */}
       <div
         onMouseDown={startDrag}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{ width: 4, flex: "0 0 auto", alignSelf: "stretch", cursor: "col-resize", background: "var(--palette-neutral-0)", userSelect: "none" }}
+        style={{ width: 4, flex: "0 0 auto", alignSelf: "stretch", cursor: "col-resize", userSelect: "none", transition: "background-color 0.15s ease",
+          background: dragging || hovered ? "var(--palette-primary-0)" : "var(--palette-neutral-0)" }}
       >
         <div style={{ position: "sticky", top: "50%", transform: "translateY(-50%)" }}>
           <Divider type="draggable" isHovered={dragging || hovered} />
