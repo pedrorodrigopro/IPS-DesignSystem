@@ -224,13 +224,19 @@ type SelectKind = "engagement" | "role";
 // Role ids that are selected + which kind of checkbox made the selection (engagement and role selection are mutually exclusive)
 type Selection = { selected: Set<string>; mode: SelectKind | null; toggle: (ids: string[], kind: SelectKind) => void };
 
-// Checkbox that is disabled — with an explanatory tooltip — while the other selection kind is active
+// Engagement and role selection are mutually exclusive. The other kind's boxes are locked, with an explanatory tooltip:
+//  - not part of the selection → greyed out (disabled)
+//  - part of the selection (roles of a ticked engagement, or the engagement of ticked roles) → shown selected as normal, but inert
 function SelectBox({ kind, selection, checked, indeterminate, onChange, header = false }: { header?: boolean; kind: SelectKind; selection: Selection; checked: boolean; indeterminate?: boolean; onChange: () => void }) {
   const locked = selection.mode !== null && selection.mode !== kind;
-  const box = <Checkbox checked={checked} indeterminate={indeterminate} disabled={locked} onChange={onChange} />;
+  const inSelection = checked || !!indeterminate;
+  const box = <Checkbox checked={checked} indeterminate={indeterminate} disabled={locked && !inSelection} onChange={onChange} />;
   if (!locked) return box;
+  const tip = kind === "engagement"
+    ? (inSelection ? "Selected through its roles. Clear the role selection to select engagements" : "Clear role selection to select engagements")
+    : (inSelection ? "Selected with their engagement. Clear the engagement selection to pick roles one by one" : "Clear engagement selection to select roles");
   return (
-    <Tooltip content={kind === "engagement" ? "Clear role selection to select engagements" : "Clear engagement selection to select roles"} placement={header ? "up-left" : "down-left"} maxWidth={400}>
+    <Tooltip content={tip} placement={header ? "up-left" : "down-left"} maxWidth={400}>
       <span style={{ display: "inline-flex" }}>{box}</span>
     </Tooltip>
   );
