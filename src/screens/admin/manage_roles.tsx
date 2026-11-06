@@ -185,7 +185,25 @@ type RoleRow = {
   location?: string;
   /** Adds the extra switch column (smoke-santi) to the group's table */
   extraColumns?: boolean;
+  /** Requested hours per week for the availability-rules table, one entry per week column (missing / null = empty cell).
+   *  `flag` draws a 2px red (error) or orange (warning) top border on the cell. */
+  availability?: AvailabilityCell[];
 };
+
+export type AvailabilityCell = number | { hours: number; flag?: "error" | "warning" } | null;
+
+/** Week columns of the availability-rules table (Figma "Manage roles" 2362:258886) */
+export const DEFAULT_AVAILABILITY_WEEKS = [
+  "5 - 9 Jan 2026", "12 - 16 Jan 2026", "19 - 22 Jan 2026", "25 - 29 Jan 2026", "2 - 6 Feb 2026", "9 - 13 Feb 2026",
+];
+
+// Row / header heights shared by the roles table and the availability table so their rows line up
+const ROW_H = 100;
+const HEAD_H = 49;   // the roles table header is as tall as its checkboxes need (32px + padding + border)
+const WEEK_W = 96;           // narrow week columns (the Figma's are 143px); headers wrap onto two lines
+const ACTIONS_W = 64;
+const DEFAULT_AVAILABILITY_W = WEEK_W * 4 + ACTIONS_W;   // four weeks visible by default; drag the divider to change it
+const MIN_AVAILABILITY_W = WEEK_W + ACTIONS_W;
 
 // ── Group table ───────────────────────────────────────────────────────────────
 
@@ -243,7 +261,9 @@ function SelectBox({ kind, selection, checked, indeterminate, onChange, header =
   );
 }
 
-function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {} }: { roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string> }) {
+function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth }: { roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void }) {
+  const [dragging, setDragging] = useState(false);
+  const [hovered, setHovered] = useState(false);
   // The merged Engagement column only exists when the roles belong to engagements (not on the template editor)
   const hasEngagement = roles.some(r => r.engagement);
   // What each header checkbox toggles: this table's engagement titles / role ids
@@ -275,16 +295,17 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
     { label: "Label",              mandatory: true,  width: 90  },
     { label: "Location",           mandatory: true,  width: 160 },
     { label: "Clients",            mandatory: false, width: 100 },
-    { label: "",                   mandatory: false, width: 64, sticky: true },
+    // With the availability table the row actions live at the end of that table instead
+    ...(availability ? [] : [{ label: "", mandatory: false, width: ACTIONS_W, sticky: true }]),
   ];
 
-  return (
-    <div style={{ overflowX: "auto" }}>
+  const rolesTable = (
+    <div style={{ overflowX: "auto", ...(availability ? { flex: "1 1 0", minWidth: 0 } : null) }}>
       <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 }}>
         <thead>
-          <tr>
+          <tr style={availability ? { height: HEAD_H } : undefined}>
             {headers.map((h, i) => (
-              <th key={i} style={{ ...thStyle, width: h.width, position: h.sticky ? "sticky" : "sticky", right: h.sticky ? 0 : undefined, zIndex: h.sticky ? 2 : 1 }}>
+              <th key={i} style={{ ...thStyle, width: h.width, position: h.sticky ? "sticky" : "sticky", right: h.sticky ? 0 : undefined, zIndex: h.sticky ? 2 : 1, ...(availability ? { height: HEAD_H, boxSizing: "border-box" as const } : null) }}>
                 {"checkbox" in h && h.checkbox
                   ? (() => {
                     const kind: SelectKind = h.mandatory ? "role" : "engagement";
@@ -307,7 +328,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
             const first = hasEngagement && (idx === 0 || roles[idx - 1].engagement !== role.engagement);
             const run = first ? roles.filter((x, j) => j >= idx && roles.slice(idx, j + 1).every(y => y.engagement === role.engagement)) : [];
             return (
-            <tr key={role.id} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
+            <tr key={role.id} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white", ...(availability ? { height: ROW_H } : null) }}>
               {/* Read-only engagement title, merged across the engagement's roles: neutral light background, regular weight, checkbox selects them all */}
               {first && (
                 <td rowSpan={run.length} style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
@@ -359,12 +380,102 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
               </td>
               <td style={tdStyle}><span style={muted}>-</span></td>
               {/* Sticky actions — filter:drop-shadow works on <td>, box-shadow does not */}
+              {!availability && (
+                <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
+                  <StickyActions variant={rowActions} />
+                </td>
+              )}
+            </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  if (!availability) return rolesTable;
+
+  // Drag the divider: moving it left widens the availability pane, right narrows it (1 week … all weeks)
+  const maxWidth = weeks.length * WEEK_W + ACTIONS_W;
+  const startDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = availabilityWidth;
+    setDragging(true);
+    const prevCursor = document.body.style.cursor;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    const move = (ev: MouseEvent) => onAvailabilityWidth?.(Math.min(maxWidth, Math.max(MIN_AVAILABILITY_W, startW + (startX - ev.clientX))));
+    const up = () => {
+      setDragging(false);
+      document.body.style.cursor = prevCursor;
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  // Two panes side by side: the roles table (scrolls horizontally on its own), the IPS draggable Divider, and the availability rules table
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start" }}>
+      {rolesTable}
+      {/* Same pattern as the Gantt in booking_engine / the Figma: a full-height neutral-0 strip that is itself the drag target,
+          with the IPS draggable Divider handle sticky in the middle (turns blue on hover / while dragging) */}
+      <div
+        onMouseDown={startDrag}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ width: 4, flex: "0 0 auto", alignSelf: "stretch", cursor: "col-resize", background: "var(--palette-neutral-0)", userSelect: "none" }}
+      >
+        <div style={{ position: "sticky", top: "50%", transform: "translateY(-50%)" }}>
+          <Divider type="draggable" isHovered={dragging || hovered} />
+        </div>
+      </div>
+      <AvailabilityTable roles={roles} weeks={weeks} selection={selection} selectable={selectable} rowActions={rowActions} width={Math.min(maxWidth, availabilityWidth)} />
+    </div>
+  );
+}
+
+// ── Availability rules table — requested hours per week (Figma "Manage roles" 2362:258886) ───────────────────────────
+// A separate table to the right of the roles table; one row per role (same 100px rows), one narrow column per week, the IPS draggable
+// Divider on its left (drag to resize the pane), and the row actions (tick + menu) sticky at its right edge.
+
+function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number }) {
+  const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined } : c);
+  return (
+    <div style={{ flex: "0 0 auto", width, overflowX: "auto" }}>
+      <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: weeks.length * WEEK_W + ACTIONS_W }}>
+        <thead>
+          <tr style={{ height: HEAD_H }}>
+            {weeks.map(w => (
+              <th key={w} style={{ ...thStyle, width: WEEK_W, height: HEAD_H, boxSizing: "border-box", textAlign: "center", color: "var(--palette-blue-0)", whiteSpace: "normal", lineHeight: "115%" }}>{w}</th>
+            ))}
+            <th style={{ ...thStyle, width: ACTIONS_W, height: HEAD_H, boxSizing: "border-box", position: "sticky", right: 0, zIndex: 2, borderRight: "none" }} />
+          </tr>
+        </thead>
+        <tbody>
+          {roles.map(role => (
+            <tr key={role.id} style={{ height: ROW_H, background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
+              {weeks.map((w, i) => {
+                const c = norm(role.availability?.[i]);
+                return (
+                  <td key={w} style={{ ...tdStyle, position: "relative", textAlign: "center" }}>
+                    {c && (
+                      <>
+                        {c.flag && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: c.flag === "error" ? "var(--palette-red-0)" : "var(--palette-orange-1)" }} />}
+                        <span style={bodyBold}>{c.hours}</span>
+                      </>
+                    )}
+                  </td>
+                );
+              })}
               <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
                 <StickyActions variant={rowActions} />
               </td>
             </tr>
-            );
-          })}
+          ))}
         </tbody>
       </table>
     </div>
@@ -373,7 +484,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
 // ── Accordion group ───────────────────────────────────────────────────────────
 
-function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags }: { name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string> }) {
+function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags, availability = false, weeks, availabilityWidth, onAvailabilityWidth }: { name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
@@ -397,7 +508,7 @@ function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", 
       </SB>
 
       {/* Roles table — no extra wrapper, sits directly inside the Tile */}
-      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} />}
+      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={onAvailabilityWidth} />}
     </Tile>
   );
 }
@@ -592,6 +703,10 @@ export type ManageRolesScreenProps = {
   saveLabel?: string;
   /** Checkboxes + bulk banner. Default true; off for the template editor. */
   selectable?: boolean;
+  /** Availability rules table (requested hours per week) to the right of the roles table. Default: on whenever `selectable` is on (engagement roles), off for the template editor. */
+  availability?: boolean;
+  /** Week column labels of the availability table (default: six weeks from "5 - 9 Jan 2026") */
+  weeks?: string[];
   /** Replaces the default Navbar (e.g. a prototype's navbar with an unread badge) */
   navbar?: React.ReactNode;
   navbarActiveId?: string;
@@ -603,7 +718,7 @@ export type ManageRolesScreenProps = {
 };
 
 export function ManageRolesScreen({
-  groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true,
+  groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks,
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged,
 }: ManageRolesScreenProps) {
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
@@ -616,6 +731,8 @@ export function ManageRolesScreen({
   const [mode, setMode] = useState<SelectKind | null>(null);
   const [tagging, setTagging] = useState(false);
   const [tags, setTags] = useState<Record<string, string>>({});
+  // Width of the availability pane, shared by every group so dragging one divider resizes them all
+  const [availabilityWidth, setAvailabilityWidth] = useState(DEFAULT_AVAILABILITY_W);
 
   // Toggle a set of rows: if every one is already selected they get deselected, otherwise all get selected
   const toggle = (ids: string[], kind: SelectKind) => {
@@ -691,7 +808,7 @@ export function ManageRolesScreen({
             <div style={{ ...labelCss, margin: header ? "12px 0 16px" : "0 0 16px", flexShrink: 0 }}>{counter}</div>
 
             {groups.map((g, i) => (
-              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} />
+              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} />
             ))}
 
             <div style={{ flex: 1, minHeight: 24 }} />
