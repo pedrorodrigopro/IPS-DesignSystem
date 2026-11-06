@@ -580,14 +580,15 @@ export type { RowActionsVariant };
 
 // ── Manage tags modal — Figma "Tag roles" 2738:67102 (two states: empty / filled with "Notify others" on) ──────────────
 
-const TAG_OPTIONS = ["EM to review", "Ready to fill", "Needs rework", "On hold"].map(t => ({ id: t, label: t }));
-const PEOPLE_OPTIONS = ["Megan Taylor", "Charlie Parker", "Spencer Harmon", "Santi Angulo"].map(t => ({ id: t, label: t }));
+export const DEFAULT_TAG_OPTIONS = ["EM to review", "RM to resource", "Ready to fill", "Needs rework", "On hold"];
+export const DEFAULT_PEOPLE_OPTIONS = ["Megan Taylor", "Charlie Parker", "Spencer Harmon", "Santi Angulo"];
+const toItems = (xs: string[]) => xs.map(t => ({ id: t, label: t }));
 const NOTE_MAX = 500;
 const summary = (ids: string[]) => (ids.length === 0 ? "" : ids.length <= 2 ? ids.join(", ") : `${ids.length} selected`);
 
 export type TagRolesResult = { tag: string; note: string; notify: string[] };
 
-function ManageTagsModal({ open, count, onClose, onUpdate }: { open: boolean; count: number; onClose: () => void; onUpdate: (r: TagRolesResult) => void }) {
+function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOptions, defaultNotify }: { open: boolean; count: number; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string }) {
   const [tag, setTag] = useState("");
   const [tagOpen, setTagOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -602,7 +603,7 @@ function ManageTagsModal({ open, count, onClose, onUpdate }: { open: boolean; co
 
   const toggleNotify = (on: boolean) => {
     setNotify(on);
-    if (on && people.length === 0) setPeople(["Megan Taylor"]);   // Figma shows Megan Taylor prefilled
+    if (on && people.length === 0) setPeople([defaultNotify]);   // Figma shows Megan Taylor prefilled
   };
 
   return (
@@ -640,7 +641,7 @@ function ManageTagsModal({ open, count, onClose, onUpdate }: { open: boolean; co
           <>
             <div style={{ position: "fixed", inset: 0, zIndex: 9 }} onClick={() => setTagOpen(false)} />
             <div style={{ position: "absolute", top: tag ? "calc(100% - 4px)" : "calc(100% - 24px)", left: 0, right: 0, zIndex: 10 }}>
-              <DropdownSelection items={TAG_OPTIONS} selectedId={tag} onSelect={id => { setTag(id); setTagOpen(false); }} />
+              <DropdownSelection items={toItems(tagOptions)} selectedId={tag} onSelect={id => { setTag(id); setTagOpen(false); }} />
             </div>
           </>
         )}
@@ -669,7 +670,7 @@ function ManageTagsModal({ open, count, onClose, onUpdate }: { open: boolean; co
             <>
               <div style={{ position: "fixed", inset: 0, zIndex: 9 }} onClick={() => setPeopleOpen(false)} />
               <div style={{ position: "absolute", top: "calc(100% - 28px)", left: 0, right: 0, zIndex: 10 }}>
-                <DropdownMultiSelection items={PEOPLE_OPTIONS} selectedIds={people} onSelectionChange={setPeople} searchable={false} />
+                <DropdownMultiSelection items={toItems(peopleOptions)} selectedIds={people} onSelectionChange={setPeople} searchable={false} />
               </div>
             </>
           )}
@@ -714,13 +715,22 @@ export type ManageRolesScreenProps = {
   onNavigate?: (navbarId: string) => void;
   onBack?: () => void;
   onSave?: () => void;
-  /** "Manage tags" → Update: the tag was applied to `roles` roles */
-  onTagged?: (info: { tag: string; roles: number; notified: string[] }) => void;
+  /** "Manage tags" → Update: the tag was applied to `roles` roles (`roleIds` says which) */
+  onTagged?: (info: { tag: string; roles: number; roleIds: string[]; notified: string[] }) => void;
+  /** Tags in the "Manage tags" dropdown (default: EM to review, RM to resource, Ready to fill, Needs rework, On hold) */
+  tagOptions?: string[];
+  /** People in the "Send a notification to" dropdown (default: Megan Taylor, Charlie Parker, Spencer Harmon, Santi Angulo) */
+  peopleOptions?: string[];
+  /** Person preselected when "Notify others" is switched on (default Megan Taylor, as in the Figma) */
+  defaultNotify?: string;
+  /** Tags already on roles when the screen opens: role id → tag */
+  initialTags?: Record<string, string>;
 };
 
 export function ManageRolesScreen({
   groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks,
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged,
+  tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {},
 }: ManageRolesScreenProps) {
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
   // Counter above the groups: "X engagements · Y roles" (engagements = distinct titles; the template editor has none, so it shows roles only)
@@ -731,7 +741,7 @@ export function ManageRolesScreen({
   // Engagement and role selection are mutually exclusive: `mode` is the kind that made the current selection
   const [mode, setMode] = useState<SelectKind | null>(null);
   const [tagging, setTagging] = useState(false);
-  const [tags, setTags] = useState<Record<string, string>>({});
+  const [tags, setTags] = useState<Record<string, string>>(initialTags);
   // Width of the availability pane, shared by every group so dragging one divider resizes them all
   const [availabilityWidth, setAvailabilityWidth] = useState(DEFAULT_AVAILABILITY_W);
 
@@ -754,7 +764,7 @@ export function ManageRolesScreen({
   const applyTag = (r: TagRolesResult) => {
     setTags(prev => ({ ...prev, ...Object.fromEntries(selectedRoles.map(x => [x.id, r.tag])) }));
     setTagging(false);
-    onTagged?.({ tag: r.tag, roles: selectedRoles.length, notified: r.notify });
+    onTagged?.({ tag: r.tag, roles: selectedRoles.length, roleIds: selectedRoles.map(x => x.id), notified: r.notify });
     clearSelection();
   };
 
@@ -826,7 +836,7 @@ export function ManageRolesScreen({
         />
       </div>
 
-      <ManageTagsModal open={tagging} count={selectedRoles.length} onClose={() => setTagging(false)} onUpdate={applyTag} />
+      <ManageTagsModal open={tagging} count={selectedRoles.length} onClose={() => setTagging(false)} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
     </div>
   );
 }
