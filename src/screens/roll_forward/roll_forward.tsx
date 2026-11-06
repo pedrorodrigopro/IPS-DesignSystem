@@ -507,7 +507,6 @@ const SUMMARY_ENGAGEMENTS: { id: string; title: string; roles: SummaryRole[] }[]
 /** Ids of every role in the Summary sample data (all roles are selected initially) */
 export const ALL_SUMMARY_ROLE_IDS: (string | number)[] = SUMMARY_ENGAGEMENTS.flatMap(e => e.roles.map(r => r.id));
 
-const SUMMARY_ROLE_COUNT = ALL_SUMMARY_ROLE_IDS.length;
 
 const SUMMARY_COLUMNS: TableColumn<SummaryRole>[] = [
   { key: "role", header: "Target role", sortable: true, renderCell: r => <span style={bodyBold}>{r.role}</span> },
@@ -542,6 +541,9 @@ export function SummaryStep({ expanded = false, selected: selectedProp, onSelect
   const selected = controlled ? selectedProp : internalSelected;
   const setSelected = (updater: (prev: (string | number)[]) => (string | number)[]) =>
     controlled ? onSelectedChange(updater(selectedProp)) : setInternalSelected(updater);
+  // Counter next to the search: the roles ticked with a checkbox, and how many engagements those roles belong to
+  const selectedRoleCount = ALL_SUMMARY_ROLE_IDS.filter(id => selected.includes(id)).length;
+  const selectedEngagementCount = SUMMARY_ENGAGEMENTS.filter(e => e.roles.some(r => selected.includes(r.id))).length;
   // One sort state shared by every expanded table (Table only reports clicks; it doesn't sort rows itself)
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
 
@@ -571,11 +573,11 @@ export function SummaryStep({ expanded = false, selected: selectedProp, onSelect
 
         {/* Figma: search row is indented 24px from the alert's left edge (field x=158 vs alert x=134) */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 24 }}>
-          {/* Figma: 283px search field; inert in this prototype: it neither filters nor changes the counts */}
+          {/* Figma: 283px search field; inert in this prototype: it doesn't filter the rows (the counts follow the checkboxes) */}
           <div style={{ width: 283 }}>
             <InputSearch value={search} onChange={e => setSearch(e.target.value)} onClear={() => setSearch("")} />
           </div>
-          <span style={labelCss}>{SUMMARY_ROLE_COUNT} target roles from {SUMMARY_ENGAGEMENTS.length} target engagements</span>
+          <span style={labelCss}>{plural(selectedRoleCount, "target role")} from {plural(selectedEngagementCount, "target engagement")}</span>
         </div>
 
         {/* marginTop -8 trims the 16px stack gap to Figma's ~8px between search row and first engagement row */}
@@ -614,7 +616,8 @@ export function SummaryStep({ expanded = false, selected: selectedProp, onSelect
                     transition: `grid-template-rows ${EXPAND_MS}ms ease, visibility 0s linear ${isOpen ? 0 : EXPAND_MS}ms`,
                   }}
                 >
-                  <div style={{ minHeight: 0, overflow: "hidden" }}>
+                  {/* paddingLeft 8: the nested table's checkboxes line up with the engagement's checkbox above (both centred at the same x) */}
+                  <div style={{ minHeight: 0, overflow: "hidden", paddingLeft: 8 }}>
                     <Table<SummaryRole>
                       columns={SUMMARY_COLUMNS}
                       rows={sortRows(eng.roles)}
