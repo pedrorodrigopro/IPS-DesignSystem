@@ -851,7 +851,7 @@ export declare type ModalProps = {
     rightActions?: ActionItem[];
 };
 
-export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, sectionItems, }: NavbarProps) => JSX.Element;
+export declare const Navbar: ({ activeId, onSelect, avatarInitials, avatarSrc, className, proPlilotOpen, onProPilot, sectionItems, badges, }: NavbarProps) => JSX.Element;
 
 export declare type NavbarProps = {
     activeId?: string;
@@ -865,6 +865,8 @@ export declare type NavbarProps = {
     onProPilot?: () => void;
     /** Override the default section nav items (Marketplace → Booking) */
     sectionItems?: NavItem[];
+    /** Unread counts per nav item id, e.g. `{ notifications: 1 }`: a red badge on the item's icon (hidden at 0, "9+" above 9) */
+    badges?: Partial<Record<string, number>>;
 };
 
 export declare const Navigation: ({ orientation, tabs, activeId, onChange, fillWidth, className, }: NavigationProps) => JSX.Element;
@@ -916,6 +918,13 @@ export declare type NavItem = {
     label: string;
 };
 
+export declare type NotificationAction = {
+    label: string;
+    /** Defaults to "secondary" */
+    kind?: "secondary" | "primary";
+    onClick: () => void;
+};
+
 export declare type NotificationChange = {
     /** Layout: hours grid (date range + M/T/W/T/F/S/S hours) */
     type: "hours";
@@ -961,6 +970,16 @@ export declare type NotificationItem = {
     /** When set, replaces the "Options + Open history" row with a single primary button */
     primaryLabel?: string;
     onPrimary?: () => void;
+    /** Date shown right under the body text (before the engagement / role lines), e.g. "Today". `date` then closes the item. */
+    bodyDate?: string;
+    /**
+     * Custom action row (Figma 2362:258668, "Rollforward roles created"): an optional "Options" menu followed by these
+     * buttons, secondary first and the primary one last. Takes precedence over primaryLabel / onOptions / onOpenHistory.
+     */
+    actions?: NotificationAction[];
+    /** Entries of the "Options" menu shown before `actions` (the button only appears when this is set) */
+    optionItems?: DropdownItem[];
+    onOptionSelect?: (optionId: string) => void;
 };
 
 export declare function NotificationsSidePanel({ open, onClose, data, }: NotificationsSidePanelProps): default_2.JSX.Element;
@@ -1779,6 +1798,8 @@ export declare type ToastOptions = {
     message: string;
     /** Auto-dismiss delay in ms. Defaults to 5000. Set to 0 to disable. */
     duration?: number;
+    /** Called once, after the exit animation, whether the toast closed by itself or through its cross button */
+    onClose?: () => void;
 };
 
 export declare type ToastProps = {
