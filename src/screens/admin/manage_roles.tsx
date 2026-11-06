@@ -4,7 +4,8 @@
 // used by prototypes) render this component with their own data.
 //
 // Selection (engagement roles): checkbox on the header, on each merged engagement cell and on each role. Engagement and role
-// selection are mutually exclusive. Selecting rows shows a 600px bulk banner centred in the page header row with three
+// selection are mutually exclusive: ticking an engagement leaves its roles unticked and disabled, but the actions still apply to the
+// roles inside it. Selecting rows shows a 600px bulk banner centred in the page header row with three
 // ghost icon buttons — tag-roles (opens "Manage tags"), tag and owner. "Manage tags" is Figma "Tag roles" (2738:67102).
 //
 // Container mapping (RULE 2b):
@@ -221,22 +222,22 @@ function StickyActions({ variant = "dtt" }: { variant?: RowActionsVariant }) {
 }
 
 type SelectKind = "engagement" | "role";
-// Role ids that are selected + which kind of checkbox made the selection (engagement and role selection are mutually exclusive)
+// Engagement and role selection are mutually exclusive. `selected` holds what the active kind picked:
+//   mode "engagement" → engagement titles (the roles inside are NOT ticked, their boxes are disabled, but every action applies to them)
+//   mode "role"       → role ids (the engagement boxes are disabled)
 type Selection = { selected: Set<string>; mode: SelectKind | null; toggle: (ids: string[], kind: SelectKind) => void };
 
-// Engagement and role selection are mutually exclusive. The other kind's boxes are locked, with an explanatory tooltip:
-//  - not part of the selection → greyed out (disabled)
-//  - part of the selection (roles of a ticked engagement, or the engagement of ticked roles) → shown selected as normal, but inert
+/** Is this role part of the selection (picked itself, or inside a picked engagement)? Drives the row highlight and the actions. */
+const roleInSelection = (sel: Selection, role: RoleRow) =>
+  sel.mode === "role" ? sel.selected.has(role.id) : sel.mode === "engagement" ? !!role.engagement && sel.selected.has(role.engagement) : false;
+
+// The other kind's checkboxes are disabled (unticked) with an explanatory tooltip
 function SelectBox({ kind, selection, checked, indeterminate, onChange, header = false }: { header?: boolean; kind: SelectKind; selection: Selection; checked: boolean; indeterminate?: boolean; onChange: () => void }) {
   const locked = selection.mode !== null && selection.mode !== kind;
-  const inSelection = checked || !!indeterminate;
-  const box = <Checkbox checked={checked} indeterminate={indeterminate} disabled={locked && !inSelection} onChange={onChange} />;
+  const box = <Checkbox checked={!locked && checked} indeterminate={!locked && indeterminate} disabled={locked} onChange={onChange} />;
   if (!locked) return box;
-  const tip = kind === "engagement"
-    ? (inSelection ? "Selected through its roles. Clear the role selection to select engagements" : "Clear role selection to select engagements")
-    : (inSelection ? "Selected with their engagement. Clear the engagement selection to pick roles one by one" : "Clear engagement selection to select roles");
   return (
-    <Tooltip content={tip} placement={header ? "up-left" : "down-left"} maxWidth={400}>
+    <Tooltip content={kind === "engagement" ? "Clear role selection to select engagements" : "Clear engagement selection to select roles"} placement={header ? "up-left" : "down-left"} maxWidth={400}>
       <span style={{ display: "inline-flex" }}>{box}</span>
     </Tooltip>
   );
@@ -245,8 +246,14 @@ function SelectBox({ kind, selection, checked, indeterminate, onChange, header =
 function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {} }: { roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string> }) {
   // The merged Engagement column only exists when the roles belong to engagements (not on the template editor)
   const hasEngagement = roles.some(r => r.engagement);
-  const allChecked  = roles.length > 0 && roles.every(r => selection.selected.has(r.id));
-  const someChecked = roles.some(r => selection.selected.has(r.id)) && !allChecked;
+  // What each header checkbox toggles: this table's engagement titles / role ids
+  const engagementKeys = [...new Set(roles.map(r => r.engagement).filter((e): e is string => !!e))];
+  const roleKeys = roles.map(r => r.id);
+  const headerState = (kind: SelectKind) => {
+    const keys = kind === "engagement" ? engagementKeys : roleKeys;
+    const n = keys.filter(k => selection.selected.has(k)).length;
+    return { keys, checked: selection.mode === kind && keys.length > 0 && n === keys.length, indeterminate: selection.mode === kind && n > 0 && n < keys.length };
+  };
   const headers = [
     ...(hasEngagement ? [{ label: "Engagement title", mandatory: false, width: 168, checkbox: selectable }] : []),
     { label: "Role title",         mandatory: true,  width: 168, checkbox: selectable },
@@ -277,12 +284,16 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
             {headers.map((h, i) => (
               <th key={i} style={{ ...thStyle, width: h.width, position: h.sticky ? "sticky" : "sticky", right: h.sticky ? 0 : undefined, zIndex: h.sticky ? 2 : 1 }}>
                 {"checkbox" in h && h.checkbox
-                  ? (
+                  ? (() => {
+                    const kind: SelectKind = h.mandatory ? "role" : "engagement";
+                    const st = headerState(kind);
+                    return (
                     <Row gap={8}>
-                      <SelectBox header kind={h.mandatory ? "role" : "engagement"} selection={selection} checked={allChecked} indeterminate={someChecked} onChange={() => selection.toggle(roles.map(r => r.id), h.mandatory ? "role" : "engagement")} />
+                      <SelectBox header kind={kind} selection={selection} checked={st.checked} indeterminate={st.indeterminate} onChange={() => selection.toggle(st.keys, kind)} />
                       {h.mandatory ? <MandatoryHeader label={h.label} /> : <span style={labelCss}>{h.label}</span>}
                     </Row>
-                  )
+                    );
+                  })()
                   : h.mandatory ? <MandatoryHeader label={h.label} /> : <span style={labelCss}>{h.label}</span>}
               </th>
             ))}
@@ -293,16 +304,13 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
             // Consecutive roles of the same engagement share one merged engagement cell
             const first = hasEngagement && (idx === 0 || roles[idx - 1].engagement !== role.engagement);
             const run = first ? roles.filter((x, j) => j >= idx && roles.slice(idx, j + 1).every(y => y.engagement === role.engagement)) : [];
-            const runIds = run.map(x => x.id);
-            const runAll = runIds.length > 0 && runIds.every(id => selection.selected.has(id));
-            const runSome = runIds.some(id => selection.selected.has(id)) && !runAll;
             return (
-            <tr key={role.id} style={{ background: selectable && selection.selected.has(role.id) ? "var(--palette-primary-3)" : "white" }}>
+            <tr key={role.id} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
               {/* Read-only engagement title, merged across the engagement's roles: neutral light background, regular weight, checkbox selects them all */}
               {first && (
                 <td rowSpan={run.length} style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
                   <Row gap={8} style={{ alignItems: "flex-start" }}>
-                    {selectable && <SelectBox kind="engagement" selection={selection} checked={runAll} indeterminate={runSome} onChange={() => selection.toggle(runIds, "engagement")} />}
+                    {selectable && <SelectBox kind="engagement" selection={selection} checked={!!role.engagement && selection.selected.has(role.engagement)} onChange={() => role.engagement && selection.toggle([role.engagement], "engagement")} />}
                     <span style={{ ...body, lineHeight: "20px", minWidth: 0 }}>{role.engagement}</span>
                   </Row>
                 </td>
@@ -612,15 +620,15 @@ export function ManageRolesScreen({
   };
   const clearSelection = () => { setSelected(new Set()); setMode(null); };
   const selection: Selection = { selected, mode, toggle };
-  // The banner counts engagements when engagements were selected, roles otherwise; the modal always counts roles
-  const selectedCount = mode === "engagement"
-    ? new Set(groups.flatMap(g => g.roles).filter(x => selected.has(x.id)).map(x => x.engagement)).size
-    : selected.size;
+  // The actions apply to the roles in the selection: the picked roles, or every role inside the picked engagements.
+  // The banner counts what was picked (engagements or roles); the modal always counts roles.
+  const selectedRoles = groups.flatMap(g => g.roles).filter(r => roleInSelection(selection, r));
+  const selectedCount = selected.size;
 
   const applyTag = (r: TagRolesResult) => {
-    setTags(prev => ({ ...prev, ...Object.fromEntries([...selected].map(id => [id, r.tag])) }));
+    setTags(prev => ({ ...prev, ...Object.fromEntries(selectedRoles.map(x => [x.id, r.tag])) }));
     setTagging(false);
-    onTagged?.({ tag: r.tag, roles: selected.size, notified: r.notify });
+    onTagged?.({ tag: r.tag, roles: selectedRoles.length, notified: r.notify });
     clearSelection();
   };
 
@@ -692,7 +700,7 @@ export function ManageRolesScreen({
         />
       </div>
 
-      <ManageTagsModal open={tagging} count={selected.size} onClose={() => setTagging(false)} onUpdate={applyTag} />
+      <ManageTagsModal open={tagging} count={selectedRoles.length} onClose={() => setTagging(false)} onUpdate={applyTag} />
     </div>
   );
 }
