@@ -101,7 +101,7 @@ const meta: Meta = {
           "MultiValue fields with Add link, Switch toggles, sticky actions. " +
           "Roles of an engagement share one merged, read-only Engagement cell. Checkboxes on the header, the Engagement cell and each role " +
           "(engagement and role selection are mutually exclusive) show a 600px bulk banner centred in the header row with three ghost icon " +
-          "buttons: tag-roles (opens the “Manage tags” modal, Figma 2738:67102), tag and owner. " +
+          "buttons: tag-roles (opens the “Manage tags” modal, Figma 2738:67102), tag and owner. A Tag column after Role title shows the tag a role was given. " +
           "Bottom: Actions variant='sticky-screen' — Cancel | Save / Fill & Book.",
       },
     },

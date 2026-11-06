@@ -257,6 +257,8 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
   const headers = [
     ...(hasEngagement ? [{ label: "Engagement title", mandatory: false, width: 168, checkbox: selectable }] : []),
     { label: "Role title",         mandatory: true,  width: 168, checkbox: selectable },
+    // Tag column (set with "Manage tags"); the template editor has no tags
+    ...(selectable ? [{ label: "Tag", mandatory: false, width: 140 }] : []),
     { label: "Workflow state",     mandatory: false, width: 140 },
     { label: "Description",        mandatory: true,  width: 180 },
     { label: "# Vacancies",        mandatory: true,  width: 90  },
@@ -318,12 +320,14 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
               <td style={tdStyle}>
                 <Row gap={8} style={{ alignItems: "flex-start" }}>
                   {selectable && <SelectBox kind="role" selection={selection} checked={selection.selected.has(role.id)} onChange={() => selection.toggle([role.id], "role")} />}
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <EditableTextCell defaultValue={role.title} />
-                    {tags[role.id] && <div><PillSimple label={tags[role.id]} size="small" leftIcon="tag" /></div>}
-                  </div>
+                  <EditableTextCell defaultValue={role.title} />
                 </Row>
               </td>
+              {selectable && (
+                <td style={tdStyle}>
+                  {tags[role.id] ? <PillSimple label={tags[role.id]} size="small" leftIcon="tag" /> : <span style={muted}>-</span>}
+                </td>
+              )}
               <td style={tdStyle}>{role.wfState && <PillWFState state={role.wfState} />}</td>
               <td style={tdStyle}><EditableTextCell defaultValue={role.description} /></td>
               <td style={tdStyle}><EditableNumberCell defaultValue={role.vacancies} /></td>
