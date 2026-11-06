@@ -1684,6 +1684,49 @@ export declare type StaffedVacancy = {
     exceptions?: VacancyIssue[];
 };
 
+export declare type SuggestCandidate = {
+    id: string;
+    name: string;
+    initials: string;
+    email?: string;
+    avatarSrc?: string;
+    /** WM grade / rank, e.g. "Manager" */
+    rank?: string;
+    /** Match with the role, 0–100 */
+    match?: number;
+    /** Availability for the role, 0–100 */
+    avail?: number;
+    /** e.g. "Shortlisted" */
+    status?: string;
+};
+
+export declare type SuggestListTab = "shortlist" | "matches" | "other";
+
+export declare function SuggestSidePanel({ open, onClose, roleTitle, subtitle, vacancies, requestedRank, shortlist, matches, other, suggested, onChange, onDone, }: SuggestSidePanelProps): default_2.JSX.Element;
+
+export declare type SuggestSidePanelProps = {
+    open: boolean;
+    onClose: () => void;
+    /** Role the suggestions are for (header title) */
+    roleTitle: string;
+    /** Header subtitle (default "Suggested WM") */
+    subtitle?: string;
+    /** How many WMs can be suggested for the role (default 1) */
+    vacancies?: number;
+    /** Rank the role asks for: a suggested WM of that rank gets a green check in the Grade column */
+    requestedRank?: string;
+    /** Candidates per tab */
+    shortlist?: SuggestCandidate[];
+    matches?: SuggestCandidate[];
+    other?: SuggestCandidate[];
+    /** WMs already suggested when the panel opens */
+    suggested?: SuggestCandidate[];
+    /** Every Suggest / remove */
+    onChange?: (suggested: SuggestCandidate[]) => void;
+    /** Done: the final list (the panel closes itself) */
+    onDone?: (suggested: SuggestCandidate[]) => void;
+};
+
 export declare function Switch({ checked, defaultChecked, onChange, label, showLabel, layout, disabled, id: providedId, className, }: SwitchProps): default_2.JSX.Element;
 
 export declare type SwitchLayout = "vertical" | "horizontal-left" | "mobile-full";
@@ -1700,7 +1743,7 @@ export declare type SwitchProps = {
     className?: string;
 };
 
-export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, onRowClick, tone, className, }: TableProps<T>): default_2.JSX.Element;
+export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, onRowClick, tone, layout, headerSize, className, }: TableProps<T>): default_2.JSX.Element;
 
 export declare type TableCellType = "text-primary" | "text-regular" | "pill" | "wm" | "number" | "percentage" | "button" | "icon" | "checkbox" | "custom";
 
@@ -1759,6 +1802,14 @@ export declare type TableProps<T extends TableRow = TableRow> = {
      * "subtle": neutral-2 surface (header, rows, sticky column), hover neutral-1, no selected-row tint — for tables nested inside a white tile.
      */
     tone?: "default" | "subtle";
+    /**
+     * "auto" (default): columns grow with their content.
+     * "fixed": the table keeps its width, column `width`s are honoured and the rest is shared; text in headers and cells truncates
+     * with an ellipsis instead of overflowing (e.g. tables inside a side panel).
+     */
+    layout?: "auto" | "fixed";
+    /** Header text: "body" (default, 14px) or "label" (12px, for dense tables such as the ones in side panels). Colour is the same. */
+    headerSize?: "body" | "label";
     className?: string;
 };
 
