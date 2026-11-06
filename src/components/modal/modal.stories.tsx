@@ -35,3 +35,24 @@ export const Default: StoryFn<typeof Modal> = () => {
     </>
   );
 };
+
+/** `subtitle` is a small muted line under the title (Figma "Manage tags" — "8 roles") */
+export const WithSubtitle: StoryFn<typeof Modal> = () => {
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <Button kind="primary" size="regular" onClick={() => setOpen(true)}>Open modal</Button>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Manage tags"
+        subtitle="8 roles"
+        width={500}
+        leftActions={[{ label: "Cancel", variant: "secondary", onClick: () => setOpen(false) }]}
+        rightActions={[{ label: "Update", variant: "primary", onClick: () => setOpen(false) }]}
+      >
+        <span style={{ fontFamily: "var(--font-family)", fontSize: 14, color: "var(--palette-blue-0)" }}>Pick a tag to add to these roles:</span>
+      </Modal>
+    </>
+  );
+};

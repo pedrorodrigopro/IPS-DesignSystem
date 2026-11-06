@@ -20,6 +20,8 @@ export type ModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Small muted line right under the title, e.g. "8 roles" */
+  subtitle?: string;
   /** Dialog width in px (default 640) */
   width?: number;
   children?: React.ReactNode;
@@ -29,7 +31,7 @@ export type ModalProps = {
 
 const EXIT_MS = 200;
 
-export function Modal({ open, onClose, title, width = 640, children, leftActions, rightActions }: ModalProps) {
+export function Modal({ open, onClose, title, subtitle, width = 640, children, leftActions, rightActions }: ModalProps) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
 
@@ -63,8 +65,11 @@ export function Modal({ open, onClose, title, width = 640, children, leftActions
         aria-modal="true"
         aria-label={title}
       >
-        <div className={css.header}>
-          <span className={css.title}>{title}</span>
+        <div className={`${css.header} ${subtitle ? css.headerTop : ""}`}>
+          <div className={css.heading}>
+            <span className={css.title}>{title}</span>
+            {subtitle && <span className={css.subtitle}>{subtitle}</span>}
+          </div>
           <Button kind="iconTertiary" size="regular" title="Close" onClick={onClose}>
             <Icon name="cross" size={20} />
           </Button>

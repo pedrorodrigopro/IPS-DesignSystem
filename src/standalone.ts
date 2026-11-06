@@ -23,6 +23,10 @@ import { createRoot } from "react-dom/client";
 
 export * from "./components";
 
+// Screens that prototypes need to feed with their own data (stories can only be rendered as-is)
+export { ManageRolesScreen } from "./screens/admin/manage_roles";
+export type { ManageRolesScreenProps, ManageRolesGroup, ManageRolesRole } from "./screens/admin/manage_roles";
+
 export { React, createRoot };
 
 /** Tagged-template JSX replacement: html`<${Button} kind="primary">Save<//>` */

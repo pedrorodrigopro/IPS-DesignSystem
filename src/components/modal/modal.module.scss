@@ -43,6 +43,23 @@
   gap: 16px;
 }
 
+// With a subtitle the close button stays on the title row
+.headerTop { align-items: flex-start; }
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.subtitle {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-big);
+  color: var(--palette-blue-2);
+}
+
 .title {
   font-family: var(--font-family);
   font-size: var(--font-size-h4);

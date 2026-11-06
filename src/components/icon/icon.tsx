@@ -76,6 +76,7 @@ import Split from "./svg/split.svg";
 import Subtract from "./svg/subtract.svg";
 import Table from "./svg/table.svg";
 import Tag from "./svg/tag.svg";
+import TagRoles from "./svg/tag-roles.svg";
 import SubstituteParentChild from "./svg/substitute-parent-child.svg";
 import Undo from "./svg/undo.svg";
 import Unseen from "./svg/unseen.svg";
@@ -220,7 +221,7 @@ export type IconName =
   | "question" | "reassign" | "refresh" | "remove" | "reports" | "role"
   | "save" | "search" | "share" | "shown" | "skills-framework"
   | "smart-allocation" | "sort" | "split" | "subtract"
-  | "table" | "tag" | "undo" | "unseen" | "up" | "user-filled"
+  | "table" | "tag" | "tag-roles" | "undo" | "unseen" | "up" | "user-filled"
   | "verified" | "verified-credly" | "verified-others"
   | "warning" | "workflow" | "zoom-in" | "zoom-out"
   | "heart" | "placeholder-profile" | "suggested" | "timeline"
@@ -336,6 +337,7 @@ const iconMap: Record<IconName, SvgComponent> = {
   "subtract": Subtract,
   "table": Table,
   "tag": Tag,
+  "tag-roles": TagRoles,
   "substitute-parent-child": SubstituteParentChild,
   "undo": Undo,
   "unseen": Unseen,
