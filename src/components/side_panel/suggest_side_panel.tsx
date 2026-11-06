@@ -18,7 +18,7 @@ import { Actions }         from "../actions/actions";
 import { Toggle }          from "../toggle/toggle";
 import { Alert }           from "../alert/alert";
 import { Avatar }          from "../avatar/avatar";
-import { PillSimple }      from "../pill/pill";
+import { PillRemovable, PillSimple } from "../pill/pill";
 import { Table }           from "../table/table";
 import type { SortDirection, TableColumn, TableRow } from "../table/table";
 import { EmptyState }      from "../empty_state/empty_state";
@@ -168,7 +168,8 @@ function SuggestedTable({ rows, requestedRank, onRemove }: { rows: SuggestCandid
     <div style={TABLE_BLEED}>
       <Table<Row> columns={columns} rows={sorted} compact layout="fixed" headerSize="label" {...props} />
       {sorted.length === 0 && (
-        <div style={{ padding: "8px 8px" }}>
+        // Same height as a row with a suggested WM (51px incl. its 1px bottom border), so the table doesn't jump when someone is suggested
+        <div style={{ height: 51, boxSizing: "border-box", display: "flex", alignItems: "center", padding: "0 8px", borderBottom: "1px solid var(--palette-neutral-0)" }}>
           <EmptyState size="small-horizontal" title="No suggested WM" />
         </div>
       )}
@@ -200,17 +201,9 @@ function CandidatesTable({ rows, suggestedIds, canSuggest, onSuggest, onRemove }
           <Icon name="history" size={14} style={{ flexShrink: 0 }} />
         </span>
       ) : <span style={labelMuted}>–</span> },
-    { key: "action", header: "", width: "108px", align: "right",
+    { key: "action", header: "", width: "116px", align: "right",
       renderCell: c => suggestedIds.has(c.id) ? (
-        <Button
-          kind="tertiary" size="small" onClick={() => onRemove(c.id)} title={`Remove ${c.name} from the suggested WMs`}
-          style={{ background: "var(--palette-neutral-1)", borderRadius: 16, border: "none" }}
-        >
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Icon name="cross" size={14} />
-            Suggested
-          </span>
-        </Button>
+        <PillRemovable label="Suggested" size="small" onRemove={() => onRemove(c.id)} />
       ) : (
         <Button kind="secondary" size="small" disabled={!canSuggest} onClick={() => onSuggest(c)} title={canSuggest ? undefined : "All vacancies are suggested"}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>

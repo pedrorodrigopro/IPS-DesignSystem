@@ -860,6 +860,8 @@ export function ManageRolesScreen({
     return [known ?? { id: `s-${role.id}`, name, initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), rank: role.suggested.rank }];
   };
   const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: setSuggestRole };
+  const showAvailability = availability ?? selectable;
+  const rolesWithSuggestion = groups.flatMap(g => g.roles).filter(r => suggestedFor(r).length > 0).length;
   // Width of the availability pane, shared by every group so dragging one divider resizes them all
   const [availabilityWidth, setAvailabilityWidth] = useState(DEFAULT_AVAILABILITY_W);
 
@@ -951,7 +953,14 @@ export function ManageRolesScreen({
           variant="sticky-screen"
           insetX={32}
           leftActions={[{ label: "Cancel", variant: "secondary", onClick: onBack }]}
-          rightActions={[{ label: saveLabel, variant: "primary", onClick: onSave }]}
+          // Engagement tables: "All roles saved" before the button, and the button counts the roles that already have a suggested WM
+          infoText={showAvailability ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Icon name="check" size={16} style={{ color: "var(--palette-green-0)" }} />
+              All roles saved
+            </span>
+          ) : undefined}
+          rightActions={[{ label: showAvailability ? `${saveLabel} (${rolesWithSuggestion})` : saveLabel, variant: "primary", onClick: onSave }]}
         />
       </div>
 

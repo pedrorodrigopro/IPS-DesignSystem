@@ -66,7 +66,7 @@ export type ActionsProps = {
   /** Extra content on the right, after rightActions (e.g. a split ButtonGroup) */
   rightContent?: ReactNode;
   /** Muted text shown on the right, before the right-hand buttons (e.g. "2 engagements · 12 roles") */
-  infoText?: string;
+  infoText?: React.ReactNode;
   className?: string;
 };
 
