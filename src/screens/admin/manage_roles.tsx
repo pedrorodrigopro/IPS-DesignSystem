@@ -830,13 +830,17 @@ export type ManageRolesScreenProps = {
   onSuggestedChange?: (info: { roleId: string; suggested: SuggestCandidate[] }) => void;
   /** Suggestions already made when the screen opens: role id → WMs (wins over a role's own `suggested`) */
   initialSuggested?: Record<string, SuggestCandidate[]>;
+  /** Opens (`roleId`) or closes (`null`) the Suggest side panel from outside, e.g. a prototype tour. A new `n` re-applies the command. */
+  suggestCommand?: { n: number; roleId: string | null };
+  /** The Suggest side panel opened (role id) or closed (null) */
+  onSuggestOpenChange?: (roleId: string | null) => void;
 };
 
 export function ManageRolesScreen({
   groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks,
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {},
-  suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {},
+  suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange,
 }: ManageRolesScreenProps) {
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
   // Counter above the groups: "X engagements · Y roles" (engagements = distinct titles; the template editor has none, so it shows roles only)
@@ -860,6 +864,13 @@ export function ManageRolesScreen({
     return [known ?? { id: `s-${role.id}`, name, initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), rank: role.suggested.rank }];
   };
   const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: setSuggestRole };
+  // Open / close the panel on command (also applied when the screen mounts with one), and report every change
+  useEffect(() => {
+    if (!suggestCommand) return;
+    setSuggestRole(suggestCommand.roleId ? groups.flatMap(g => g.roles).find(r => r.id === suggestCommand.roleId) ?? null : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestCommand?.n]);
+  useEffect(() => { onSuggestOpenChange?.(suggestRole?.id ?? null); }, [suggestRole?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const showAvailability = availability ?? selectable;
   const rolesWithSuggestion = groups.flatMap(g => g.roles).filter(r => suggestedFor(r).length > 0).length;
   // Width of the availability pane, shared by every group so dragging one divider resizes them all
