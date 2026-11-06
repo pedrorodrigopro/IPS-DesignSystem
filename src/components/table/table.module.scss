@@ -346,3 +346,39 @@
     align-items: center;
   }
 }
+
+// ── Layout: fixed ──────────────────────────────────────────────────────────────
+// Opt-in (`layout="fixed"`): the table never grows past its container, the text of headers and cells truncates, and the cells are denser (8px side padding).
+.fixed {
+  .table {
+    table-layout: fixed;
+  }
+
+  // Dense: 8px instead of 12px beside every cell (the header keeps its own vertical padding)
+  .th,
+  .td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .th .headerContent {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .th .headerLabel,
+  .textPrimary,
+  .textRegular {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+}
+
+// ── Header size: label ─────────────────────────────────────────────────────────
+.labelHeader .th .headerLabel {
+  @include ts.label-regular; // 12px / 400
+}

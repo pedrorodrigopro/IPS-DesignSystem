@@ -7,3 +7,4 @@ export * from "./booking_side_panel";
 export * from "./misalignment_side_panel";
 export * from "./notifications_side_panel";
 export * from "./smart_allocate_side_panel";
+export * from "./suggest_side_panel";

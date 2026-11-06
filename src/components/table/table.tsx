@@ -130,6 +130,14 @@ export type TableProps<T extends TableRow = TableRow> = {
    * "subtle": neutral-2 surface (header, rows, sticky column), hover neutral-1, no selected-row tint — for tables nested inside a white tile.
    */
   tone?: "default" | "subtle";
+  /**
+   * "auto" (default): columns grow with their content.
+   * "fixed": the table keeps its width, column `width`s are honoured and the rest is shared; text in headers and cells truncates
+   * with an ellipsis instead of overflowing (e.g. tables inside a side panel).
+   */
+  layout?: "auto" | "fixed";
+  /** Header text: "body" (default, 14px) or "label" (12px, for dense tables such as the ones in side panels). Colour is the same. */
+  headerSize?: "body" | "label";
   className?: string;
 };
 
@@ -260,6 +268,8 @@ export function Table<T extends TableRow = TableRow>({
   onSort,
   onRowClick,
   tone = "default",
+  layout = "auto",
+  headerSize = "body",
   className,
 }: TableProps<T>) {
   // ── Selection state ──────────────────────────────────────────────────────
@@ -342,6 +352,8 @@ export function Table<T extends TableRow = TableRow>({
         css.tableWrapper,
         compact ? css.compact : css.standard,
         tone === "subtle" && css.subtle,
+        layout === "fixed" && css.fixed,
+        headerSize === "label" && css.labelHeader,
         className
       )}
     >

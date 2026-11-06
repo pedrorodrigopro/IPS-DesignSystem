@@ -23,7 +23,7 @@
 //   Switch columns: Switch component
 //   Row actions: check icon (sticky) + menu-vertical
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { Navbar }          from "../../components/navbar/navbar";
 import { Icon }            from "../../components/icon/icon";
@@ -42,6 +42,8 @@ import type { WFState }    from "../../components/pill/pill";
 import { Modal }           from "../../components/modal/modal";
 import { InputSelect, InputTextarea } from "../../components/input/input";
 import { DropdownMultiSelection, DropdownSelection } from "../../components/dropdown/dropdown";
+import { SuggestSidePanel } from "../../components/side_panel/suggest_side_panel";
+import type { SuggestCandidate } from "../../components/side_panel/suggest_side_panel";
 
 
 // ── Typography helpers ────────────────────────────────────────────────────────
@@ -126,6 +128,99 @@ function InlineSelectCell({ value, placeholder }: { value?: string; placeholder?
   );
 }
 
+// ── Suggested workforce member cell — Figma "Input excel select" (name + rank, chevron); empty = warning background ──────
+
+const SUGGESTED_W = 170;
+
+/** Sample candidates of the Suggest side panel (people the role's Suggested WM cell can be set to) */
+export const DEFAULT_SUGGEST_CANDIDATES: { shortlist: SuggestCandidate[]; matches: SuggestCandidate[]; other: SuggestCandidate[] } = {
+  shortlist: [
+    { id: "jn", name: "John Norton",  initials: "JN", email: "john.norton@example.com",  rank: "Manager", match: 75, avail: 95,  status: "Shortlisted" },
+    { id: "ls", name: "Leslie Smith", initials: "LS", email: "leslie.smith@example.com", rank: "Manager", match: 90, avail: 92,  status: "Shortlisted" },
+    { id: "aj", name: "Ashley Jones", initials: "AJ", email: "ashley.jones@example.com", rank: "Manager", match: 50, avail: 100, status: "Shortlisted" },
+  ],
+  matches: [
+    { id: "ml", name: "Mary Lee",         initials: "ML", email: "mary.lee@example.com",         rank: "Senior",     match: 88, avail: 80 },
+    { id: "sh", name: "Spencer Harmon",   initials: "SH", email: "spencer.harmon@example.com",   rank: "Manager",    match: 82, avail: 70 },
+    { id: "sa", name: "Santi Angulo",     initials: "SA", email: "santi.angulo@example.com",     rank: "Consultant", match: 64, avail: 100 },
+    { id: "fa", name: "Fatima Al-Rashid", initials: "FA", email: "fatima.alrashid@example.com",  rank: "Manager",    match: 58, avail: 60 },
+  ],
+  other: [
+    { id: "ap", name: "Albert Pierce", initials: "AP", email: "albert.pierce@example.com", rank: "Analyst" },
+    { id: "au", name: "Aubrey Lee",    initials: "AL", email: "aubrey.lee@example.com",    rank: "Senior" },
+    { id: "bc", name: "Brett Coleen",  initials: "BC", email: "brett.coleen@example.com",  rank: "Manager" },
+  ],
+};
+
+// What the cell shows and what a click does come from the screen (it owns the suggestions and the side panel)
+type SuggestCtx = { valueFor: (role: RoleRow) => SuggestCandidate[]; open: (role: RoleRow) => void };
+const SuggestContext = createContext<SuggestCtx | null>(null);
+
+function SuggestedWMCell({ role }: { role: RoleRow }) {
+  const ctx = useContext(SuggestContext);
+  const list = ctx ? ctx.valueFor(role) : role.suggested ? [{ id: role.id, name: role.suggested.name, initials: "", rank: role.suggested.rank }] : [];
+  const first = list[0];
+  const empty = !first;
+  const rankLine = first ? [first.rank, list.length > 1 ? `+${list.length - 1} more` : null].filter(Boolean).join(" · ") : "";
+  return (
+    // Fills the whole cell edge to edge; the empty state uses the warning yellow (palette-orange-2), a populated cell stays transparent so the row tint shows through
+    <td
+      style={{ ...tdStyle, padding: 0, background: empty ? "var(--palette-orange-2)" : "transparent", cursor: ctx ? "pointer" : "default" }}
+      title={empty ? "No suggested workforce member" : undefined}
+      onClick={() => ctx?.open(role)}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 4, padding: "8px 8px 8px 12px" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4, minHeight: 32, justifyContent: "center" }}>
+          {first && <span style={{ ...body, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{first.name}</span>}
+          {rankLine && <span style={{ ...labelCss, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rankLine}</span>}
+        </div>
+        <Icon name="chevron-down" size={14} style={{ color: "var(--palette-blue-2)", flexShrink: 0, marginTop: 9 }} />
+      </div>
+    </td>
+  );
+}
+
+// ── Editable hours cell (availability table) — Figma "Input week time rule" 2757:286931 ───────────────────────────────
+// Default: the value, centred. Hover: grey cell (rgba(0,0,0,.04)) with the value in an 8px-radius pill (1px neutral-0 border).
+// Focused (typing): white cell with a 2px navy border (blue-1), the pill turns light blue (primary-3).
+
+function HoursTd({ defaultValue, flag }: { defaultValue?: number; flag?: "error" | "warning" }) {
+  const [val, setVal] = useState(defaultValue == null ? "" : String(defaultValue));
+  const [hover, setHover] = useState(false);
+  const [focus, setFocus] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <td
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onMouseDown={e => { if (e.target !== input.current) { e.preventDefault(); input.current?.focus(); } }}
+      style={{
+        ...tdStyle, position: "relative", textAlign: "center", cursor: "text",
+        background: focus ? "var(--palette-white-0)" : hover ? "rgba(0, 0, 0, 0.04)" : undefined,
+        boxShadow: focus ? "inset 0 0 0 2px var(--palette-blue-1)" : undefined,
+      }}
+    >
+      {flag && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: flag === "error" ? "var(--palette-red-0)" : "var(--palette-orange-1)" }} />}
+      <input
+        ref={input}
+        value={val}
+        inputMode="numeric"
+        aria-label="Requested hours"
+        onChange={e => setVal(e.target.value.replace(/\D/g, "").slice(0, 3))}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        style={{
+          display: "block", width: "100%", height: 24, marginTop: 4, boxSizing: "border-box", textAlign: "center", outline: "none", padding: "0 8px",
+          fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, lineHeight: "115%", color: "var(--palette-blue-0)",
+          borderRadius: 8, border: "1px solid transparent",
+          background: focus ? "var(--palette-primary-3)" : hover ? "rgba(0, 0, 0, 0.04)" : "transparent",
+          borderColor: focus || hover ? "var(--palette-neutral-0)" : "transparent",
+        }}
+      />
+    </td>
+  );
+}
+
 // ── Booking category cell ─────────────────────────────────────────────────────
 
 function BookingCategoryCell({ label, category }: { label: string; category: "booking-blue" | "booking-red" | "booking-purple" | "booking-green" }) {
@@ -188,6 +283,10 @@ type RoleRow = {
   /** Requested hours per week for the availability-rules table, one entry per week column (missing / null = empty cell).
    *  `flag` draws a 2px red (error) or orange (warning) top border on the cell. */
   availability?: AvailabilityCell[];
+  /** Suggested workforce member ("Suggested WM" column of the engagement tables). Missing / null = nobody suggested yet: the cell shows the warning background. */
+  suggested?: { name: string; rank?: string } | null;
+  /** Rank the role asks for: a suggested WM of that rank gets the green check in the Suggest side panel */
+  requestedRank?: string;
 };
 
 export type AvailabilityCell = number | { hours: number; flag?: "error" | "warning" } | null;
@@ -204,6 +303,8 @@ const WEEK_W = 96;           // narrow week columns (the Figma's are 143px); hea
 const ACTIONS_W = 64;
 const DEFAULT_AVAILABILITY_W = WEEK_W * 4 + ACTIONS_W;   // four weeks visible by default; drag the divider to change it
 const MIN_AVAILABILITY_W = WEEK_W + ACTIONS_W;
+const DIVIDER_W = 4;           // the draggable strip
+const MIN_LEFT_W = 240;        // the roles table always keeps at least this much room
 
 // ── Group table ───────────────────────────────────────────────────────────────
 
@@ -264,6 +365,7 @@ function SelectBox({ kind, selection, checked, indeterminate, onChange, header =
 function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth }: { roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void }) {
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const paneRef = useRef<HTMLDivElement>(null);
   // The merged Engagement column only exists when the roles belong to engagements (not on the template editor)
   const hasEngagement = roles.some(r => r.engagement);
   // What each header checkbox toggles: this table's engagement titles / role ids
@@ -280,6 +382,8 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
     // Tag column (set with "Manage tags"); the template editor has no tags
     ...(selectable ? [{ label: "Tag", mandatory: false, width: 140 }] : []),
     { label: "Workflow state",     mandatory: false, width: 140 },
+    // Engagement tables: the workforce member the rollforward suggests (empty = needs attention)
+    ...(availability ? [{ label: "Suggested WM", mandatory: false, width: SUGGESTED_W }] : []),
     { label: "Description",        mandatory: true,  width: 180 },
     { label: "# Vacancies",        mandatory: true,  width: 90  },
     { label: "Assignee",           mandatory: false, width: 110 },
@@ -301,7 +405,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
   const rolesTable = (
     <div style={{ overflowX: "auto", ...(availability ? { flex: "1 1 0", minWidth: 0 } : null) }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) }}>
         <thead>
           <tr style={availability ? { height: HEAD_H } : undefined}>
             {headers.map((h, i) => (
@@ -350,6 +454,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
                 </td>
               )}
               <td style={tdStyle}>{role.wfState && <PillWFState state={role.wfState} />}</td>
+              {availability && <SuggestedWMCell role={role} />}
               <td style={tdStyle}><EditableTextCell defaultValue={role.description} /></td>
               <td style={tdStyle}><EditableNumberCell defaultValue={role.vacancies} /></td>
               <td style={tdStyle}><InlineSelectCell placeholder="" value={role.assignee} /></td>
@@ -395,12 +500,13 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
   if (!availability) return rolesTable;
 
-  // Drag the divider: moving it left widens the availability pane, right narrows it (1 week … all weeks)
-  const maxWidth = weeks.length * WEEK_W + ACTIONS_W;
+  // Drag the divider: moving it left widens the availability pane (all the way until only MIN_LEFT_W of the roles table is left),
+  // right narrows it (down to one week). When the pane is wider than the weeks need, the week columns stretch.
   const startDrag = (e: React.MouseEvent) => {
     e.preventDefault();
     const startX = e.clientX;
     const startW = availabilityWidth;
+    const maxWidth = Math.max(MIN_AVAILABILITY_W, (paneRef.current?.clientWidth ?? 0) - DIVIDER_W - MIN_LEFT_W);
     setDragging(true);
     const prevCursor = document.body.style.cursor;
     document.body.style.cursor = "col-resize";
@@ -419,7 +525,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
   // Two panes side by side: the roles table (scrolls horizontally on its own), the IPS draggable Divider, and the availability rules table
   return (
-    <div style={{ display: "flex", alignItems: "flex-start" }}>
+    <div ref={paneRef} style={{ display: "flex", alignItems: "flex-start" }}>
       {rolesTable}
       {/* Same pattern as the Gantt in booking_engine / the Figma: a full-height neutral-0 strip that is itself the drag target,
           with the IPS draggable Divider handle sticky in the middle. On hover / while dragging the WHOLE strip turns blue, not just the handle */}
@@ -427,14 +533,14 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
         onMouseDown={startDrag}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{ width: 4, flex: "0 0 auto", alignSelf: "stretch", cursor: "col-resize", userSelect: "none", transition: "background-color 0.15s ease",
+        style={{ width: DIVIDER_W, flex: "0 0 auto", alignSelf: "stretch", cursor: "col-resize", userSelect: "none", transition: "background-color 0.15s ease",
           background: dragging || hovered ? "var(--palette-primary-0)" : "var(--palette-neutral-0)" }}
       >
         <div style={{ position: "sticky", top: "50%", transform: "translateY(-50%)" }}>
           <Divider type="draggable" isHovered={dragging || hovered} />
         </div>
       </div>
-      <AvailabilityTable roles={roles} weeks={weeks} selection={selection} selectable={selectable} rowActions={rowActions} width={Math.min(maxWidth, availabilityWidth)} />
+      <AvailabilityTable roles={roles} weeks={weeks} selection={selection} selectable={selectable} rowActions={rowActions} width={availabilityWidth} />
     </div>
   );
 }
@@ -444,14 +550,14 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 // Divider on its left (drag to resize the pane), and the row actions (tick + menu) sticky at its right edge.
 
 function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number }) {
-  const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined } : c);
+  const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined } : c);
   return (
-    <div style={{ flex: "0 0 auto", width, overflowX: "auto" }}>
-      <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: weeks.length * WEEK_W + ACTIONS_W }}>
+    <div style={{ flex: "0 0 auto", width, maxWidth: `calc(100% - ${DIVIDER_W + MIN_LEFT_W}px)`, overflowX: "auto" }}>
+      <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: weeks.length * WEEK_W + ACTIONS_W }}>
         <thead>
           <tr style={{ height: HEAD_H }}>
             {weeks.map(w => (
-              <th key={w} style={{ ...thStyle, width: WEEK_W, height: HEAD_H, boxSizing: "border-box", textAlign: "center", color: "var(--palette-blue-0)", whiteSpace: "normal", lineHeight: "115%" }}>{w}</th>
+              <th key={w} style={{ ...thStyle, height: HEAD_H, boxSizing: "border-box", textAlign: "center", color: "var(--palette-blue-0)", whiteSpace: "normal", lineHeight: "115%" }}>{w}</th>
             ))}
             <th style={{ ...thStyle, width: ACTIONS_W, height: HEAD_H, boxSizing: "border-box", position: "sticky", right: 0, zIndex: 2, borderRight: "none" }} />
           </tr>
@@ -462,14 +568,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
               {weeks.map((w, i) => {
                 const c = norm(role.availability?.[i]);
                 return (
-                  <td key={w} style={{ ...tdStyle, position: "relative", textAlign: "center" }}>
-                    {c && (
-                      <>
-                        {c.flag && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: c.flag === "error" ? "var(--palette-red-0)" : "var(--palette-orange-1)" }} />}
-                        <span style={bodyBold}>{c.hours}</span>
-                      </>
-                    )}
-                  </td>
+                  <HoursTd key={w} defaultValue={c?.hours} flag={c?.flag} />
                 );
               })}
               <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
@@ -725,12 +824,19 @@ export type ManageRolesScreenProps = {
   defaultNotify?: string;
   /** Tags already on roles when the screen opens: role id → tag */
   initialTags?: Record<string, string>;
+  /** Candidates of the Suggest side panel (opened by clicking a Suggested WM cell); defaults to a sample list */
+  suggestCandidates?: { shortlist?: SuggestCandidate[]; matches?: SuggestCandidate[]; other?: SuggestCandidate[] };
+  /** The Suggest side panel's Done: the WMs now suggested for a role */
+  onSuggestedChange?: (info: { roleId: string; suggested: SuggestCandidate[] }) => void;
+  /** Suggestions already made when the screen opens: role id → WMs (wins over a role's own `suggested`) */
+  initialSuggested?: Record<string, SuggestCandidate[]>;
 };
 
 export function ManageRolesScreen({
   groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks,
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {},
+  suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {},
 }: ManageRolesScreenProps) {
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
   // Counter above the groups: "X engagements · Y roles" (engagements = distinct titles; the template editor has none, so it shows roles only)
@@ -742,6 +848,18 @@ export function ManageRolesScreen({
   const [mode, setMode] = useState<SelectKind | null>(null);
   const [tagging, setTagging] = useState(false);
   const [tags, setTags] = useState<Record<string, string>>(initialTags);
+  // Suggested WMs: the Suggest side panel writes them here (role id → WMs); roles never opened keep their own `suggested`
+  const [suggestedBy, setSuggestedBy] = useState<Record<string, SuggestCandidate[]>>(initialSuggested);
+  const [suggestRole, setSuggestRole] = useState<RoleRow | null>(null);
+  const allCandidates = [...(suggestCandidates.shortlist ?? []), ...(suggestCandidates.matches ?? []), ...(suggestCandidates.other ?? [])];
+  const suggestedFor = (role: RoleRow): SuggestCandidate[] => {
+    if (suggestedBy[role.id]) return suggestedBy[role.id];
+    if (!role.suggested) return [];
+    const name = role.suggested.name;
+    const known = allCandidates.find(c => c.name === name);
+    return [known ?? { id: `s-${role.id}`, name, initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), rank: role.suggested.rank }];
+  };
+  const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: setSuggestRole };
   // Width of the availability pane, shared by every group so dragging one divider resizes them all
   const [availabilityWidth, setAvailabilityWidth] = useState(DEFAULT_AVAILABILITY_W);
 
@@ -769,6 +887,7 @@ export function ManageRolesScreen({
   };
 
   return (
+    <SuggestContext.Provider value={suggestCtx}>
     <div style={{ display: "flex", height: "var(--ips-vh, 100vh)", overflow: "hidden", background: "var(--palette-neutral-2)" }}>
       {navbar ?? <Navbar activeId={navbarActiveId} onSelect={onNavigate} />}
 
@@ -837,6 +956,24 @@ export function ManageRolesScreen({
       </div>
 
       <ManageTagsModal open={tagging} count={selectedRoles.length} onClose={() => setTagging(false)} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
+      <SuggestSidePanel
+        open={!!suggestRole}
+        onClose={() => setSuggestRole(null)}
+        roleTitle={suggestRole?.title ?? ""}
+        vacancies={suggestRole?.vacancies ?? 1}
+        requestedRank={suggestRole?.requestedRank}
+        shortlist={suggestCandidates.shortlist}
+        matches={suggestCandidates.matches}
+        other={suggestCandidates.other}
+        suggested={suggestRole ? suggestedFor(suggestRole) : []}
+        onDone={list => {
+          if (!suggestRole) return;
+          setSuggestedBy(prev => ({ ...prev, [suggestRole.id]: list }));
+          onSuggestedChange?.({ roleId: suggestRole.id, suggested: list });
+        }}
+      />
+
     </div>
+    </SuggestContext.Provider>
   );
 }

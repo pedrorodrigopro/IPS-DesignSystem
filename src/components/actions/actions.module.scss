@@ -36,6 +36,7 @@ $panel-shadow: 0 -8px 20px 4px rgba(207, 218, 247, 0.85);
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
+  margin-left: auto; // stays on the right when there are no left actions
 }
 
 // Muted info text before the right-hand buttons

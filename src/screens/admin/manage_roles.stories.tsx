@@ -49,13 +49,13 @@ const ENGAGEMENT_GROUPS: ManageRolesGroup[] = [
   {
     name: "GPS Role",
     roles: [
-      role("e1", "ST engagement test", "Role 1", { bookingCategory: { label: "Holiday", category: "booking-blue" }, availability: wk(0, "error") }),
+      role("e1", "ST engagement test", "Role 1", { bookingCategory: { label: "Holiday", category: "booking-blue" }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "error") }),
       role("e2", "ST engagement test", "Role 2", { bookingCategory: { label: "Confirmed External Customer Project", category: "booking-red" }, availability: wk(1) }),
     ],
   },
   {
     name: "No Requirements :)",
-    roles: [role("e3", "ST engagement test", "x", { label: "", availability: wk(2, "warning") }), role("e4", "ST engagement test", "x", { label: "", availability: wk(1) })],
+    roles: [role("e3", "ST engagement test", "x", { label: "", suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(2, "warning") }), role("e4", "ST engagement test", "x", { label: "", availability: wk(1) })],
   },
 ];
 
@@ -64,14 +64,14 @@ const ROLLED_FORWARD_GROUPS: ManageRolesGroup[] = [
   {
     name: "Rolled forward roles",
     roles: [
-      role("f1", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Javascript developer", { availability: wk(0, "error") }),
-      role("f2", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Junior Javascript developer", { availability: wk(1) }),
-      role("f3", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Accessibility consultant", { availability: wk(2, "warning") }),
-      role("f4", "RF_CLONE_2_[2026 Q3] ProFinda IT", "React developer", { availability: wk(1) }),
+      role("f1", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Javascript developer", { suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "error") }),
+      role("f2", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Junior Javascript developer", { requestedRank: "Manager", availability: wk(1) }),
+      role("f3", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Accessibility consultant", { suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(2, "warning") }),
+      role("f4", "RF_CLONE_2_[2026 Q3] ProFinda IT", "React developer", { suggested: { name: "Spencer Harmon", rank: "Principal Consultant" }, requestedRank: "Manager", availability: wk(1) }),
       role("f5", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Javascript developer", { availability: wk(1) }),
-      role("f6", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Junior Javascript developer", { availability: wk(1) }),
+      role("f6", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Junior Javascript developer", { suggested: { name: "Santi Angulo", rank: "Consultant" }, availability: wk(1) }),
       role("f7", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Accessibility consultant", { availability: wk(2) }),
-      role("f8", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "React developer", { availability: wk(0) }),
+      role("f8", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "React developer", { suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(0) }),
     ],
   },
 ];
@@ -106,7 +106,7 @@ const meta: Meta = {
           "Roles of an engagement share one merged, read-only Engagement cell. Checkboxes on the header, the Engagement cell and each role " +
           "(engagement and role selection are mutually exclusive) show a 600px bulk banner centred in the header row with three ghost icon " +
           "buttons: tag-roles (opens the “Manage tags” modal, Figma 2738:67102), tag and owner. A Tag column after Role title shows the tag a role was given. " +
-          "Engagement variants add a separate availability-rules table to the right (Figma 2362:258886): requested hours per week, one column per week, red/orange top borders for conflicts/warnings, row actions at its right edge. " +
+          "Engagement variants add a Suggested WM column (an empty one shows the warning background) and a separate availability-rules table to the right (Figma 2362:258886): requested hours per week (editable), one column per week, red/orange top borders for conflicts/warnings, row actions at its right edge. Drag the divider to resize the table; it can take almost the whole width, and the week columns stretch. " +
           "Bottom: Actions variant='sticky-screen' — Cancel | Save / Fill & Book.",
       },
     },
