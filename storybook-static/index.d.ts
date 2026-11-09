@@ -625,6 +625,34 @@ export declare type FiltersAppliedProps = {
     className?: string;
 };
 
+export declare type GuidePlacement = "top" | "bottom" | "left" | "right";
+
+export declare type GuideStep = {
+    /** Unique within `steps` */
+    id: string;
+    /** Screen id this step belongs to (matches the `screen` prop) */
+    screen: string;
+    /** CSS selector of the target, normally `[data-tour="roll-forward"]` */
+    target: string;
+    title: string;
+    body: string;
+    /** Preferred popover side; flips when there is no room (default "bottom") */
+    placement?: GuidePlacement;
+    /**
+     * Puts the prototype in the state where this step's screen is showing. Called when the step is reached through the bar
+     * (Next, Back, jump) from a different screen, and always for Restart (step 1). Optional.
+     *
+     * - It only runs when the step belongs to a different screen than the one showing (or for Restart). Two steps that need
+     *   different sub-states of the SAME screen id therefore never call it: give such states different screen ids.
+     * - It must land on `step.screen`; otherwise the screen-sync effect snaps the guide back to that screen's first step.
+     * - `steps` may be passed inline (a new array every render), so `enter` closures must be safe to call from a later render
+     *   (use state setters, not values captured from a stale render).
+     */
+    enter?: () => void;
+    /** Show only as a hotspot (never part of the tour sequence / jump list) */
+    hotspotOnly?: boolean;
+};
+
 export declare function Header({ size, title, subtitle, leftIcon, rightIcon, actions, rightContent, className, }: HeaderProps): default_2.JSX.Element;
 
 export declare type HeaderAction = {
@@ -1340,6 +1368,28 @@ export declare type ProgressRadialProps = {
     /** Size in px — default 40px (from Figma) */
     size?: number;
     className?: string;
+};
+
+export declare function PrototypeGuide({ screen, steps, screenLabels, defaultEnabled, barActions, children }: PrototypeGuideProps): default_2.JSX.Element;
+
+export declare type PrototypeGuideProps = {
+    /** Which screen of the prototype is showing */
+    screen: string;
+    /**
+     * The tour. May be passed inline (a new array every render). Step ids must be unique. Don't switch `steps` between empty and
+     * non-empty while mounted: with no steps the guide renders only `children`, so the tree shape changes and the prototype remounts.
+     */
+    steps: GuideStep[];
+    /** Readable screen names for the step list (default: the screen id) */
+    screenLabels?: Record<string, string>;
+    /** Initial state of the Tour switch. For stories / tests; prototypes leave it off */
+    defaultEnabled?: boolean;
+    /** Extra buttons at the right of the tour bar (shown whether or not the tour is on), e.g. a prototype's "Map" */
+    barActions?: {
+        label: string;
+        onClick: () => void;
+    }[];
+    children: default_2.ReactNode;
 };
 
 export declare const Radio: ({ label, subLabel, checked, disabled, layout, name, value, onChange, className, id: idProp, }: RadioProps) => JSX.Element;
