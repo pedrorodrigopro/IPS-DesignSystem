@@ -1,0 +1,189 @@
+// PrototypeGuide — tour bar (outside the platform design) + stage that holds the prototype.
+//
+// Layout: .root = 100vh column → .bar (48px, dark) + .stage (rest).
+// .stage is a containing block for position:fixed descendants (transform) and defines --ips-vh, so IPS components that
+// size to the viewport (Navbar, Layout, SidePanel) fill the stage instead of the whole window.
+
+@use "../../styles/text-styles" as ts;
+
+$bar-h: 48px;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+}
+
+// ── Tour bar ──────────────────────────────────────────────────────────────────
+// Figma "Tour" (node 15096:3319): navy bar, padding 8px 24px, gap 16px, white label, vertical dividers, ghost buttons in white.
+.bar {
+  position: relative;
+  z-index: 10000; // above the stage and everything fixed inside it
+  flex: 0 0 $bar-h;
+  height: $bar-h;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 24px;
+  background-color: var(--palette-blue-1); // #0C1457
+  --switch-on-bg: var(--palette-primary-0); // the Tour switch must stand out from the navy bar when ON
+}
+
+.barLabel {
+  @include ts.body-regular;
+  color: var(--palette-white-0);
+  cursor: pointer;
+  user-select: none;
+}
+
+// IPS ghost buttons are navy-on-light; on the navy bar Figma shows them white (text + 1px border)
+.bar .barBtn {
+  color: var(--palette-white-0);
+  border-color: var(--palette-white-0);
+
+  &:hover:not(:disabled) { background-color: var(--palette-trans-light-0); }
+}
+
+.btnInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.picker {
+  position: relative;
+  width: 283px; // Figma: input width 283
+}
+
+.catcher {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.stepList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 2;
+  width: 360px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+// ── Stage (the prototype) ─────────────────────────────────────────────────────
+.stage {
+  --ips-vh: calc(100vh - #{$bar-h});
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: calc(100vh - #{$bar-h});
+  transform: translateZ(0); // containing block for position:fixed descendants
+  overflow: hidden;
+}
+
+// Scrolls the prototype inside the stage; overlays are siblings of this element so they never scroll with the content
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+// ── Overlay layer (hotspots, spotlight, popover) ──────────────────────────────
+// Covers the stage; transparent to clicks except for the hotspots and the popover.
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+}
+
+.spotlight {
+  position: absolute;
+  border-radius: var(--radius-md);
+  outline: 2px solid var(--palette-primary-0);
+  box-shadow: 0 0 0 9999px rgba(12, 20, 87, 0.35); // dims everything around the target
+  pointer-events: none; // clicks go through to the real target
+}
+
+// Slide only while the step changes (the component adds .animate for ~250ms); a permanent transition would make the
+// spotlight / popover lag behind their targets on resize and layout changes.
+.spotlight.animate { transition: left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease; }
+
+// Absolute box of one hotspot; only left / top are set inline. 20x20 comes from .hotspot (must match HOTSPOT in the TSX).
+.hotspotAnchor {
+  position: absolute;
+  display: flex;
+  pointer-events: auto;
+}
+
+.hotspot {
+  position: relative; // in flow so the (flex) anchor is exactly 20x20; also anchors the ::before ring
+  width: 20px;   // keep in sync with HOTSPOT in the TSX
+  height: 20px;  // keep in sync with HOTSPOT in the TSX
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--palette-primary-0);
+  cursor: pointer;
+  pointer-events: auto;
+
+  // pulsing ring behind the dot
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-color: var(--palette-primary-0);
+    opacity: 0.35;
+    animation: pg-pulse 1.6s ease-out infinite;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--palette-primary-0);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+}
+
+.hotspotDot {
+  position: relative; // above the ring
+  display: flex;
+}
+
+@keyframes pg-pulse {
+  0%   { transform: scale(0.6); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.popover {
+  position: absolute; // width is set inline from POPOVER_W in the TSX
+  pointer-events: auto;
+  border-radius: var(--radius-md);
+  box-shadow: var(--tile-shadow-interactive);
+}
+
+.popover.animate { transition: left 0.2s ease, top 0.2s ease; }
+
+.popHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.popBody {
+  @include ts.body-regular;
+  color: var(--palette-blue-0);
+  display: block;
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot::before { animation: none; }
+  .spotlight.animate, .popover.animate { transition: none; }
+}

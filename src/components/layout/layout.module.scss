@@ -16,7 +16,7 @@
   flex-direction: row;
   align-items: stretch;
   width: 100%;
-  min-height: 100vh;
+  min-height: var(--ips-vh, 100vh);
   background-color: var(--palette-neutral-2); // #F8F9FD
 }
 

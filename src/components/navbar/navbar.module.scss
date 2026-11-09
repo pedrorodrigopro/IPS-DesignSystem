@@ -15,8 +15,8 @@ $nav-fixed-height: 636px;
 $nav-overflow-height: 718px; // 636 + 10×4 + 7×6
 
 .navbar {
-  --nav-gap-sm: clamp(4px, calc((100vh - #{$nav-fixed-height}) * 0.0488), 16px);
-  --nav-gap-lg: clamp(6px, calc((100vh - #{$nav-fixed-height}) * 0.0732), 24px);
+  --nav-gap-sm: clamp(4px, calc((var(--ips-vh, 100vh) - #{$nav-fixed-height}) * 0.0488), 16px);
+  --nav-gap-lg: clamp(6px, calc((var(--ips-vh, 100vh) - #{$nav-fixed-height}) * 0.0732), 24px);
 
   display: flex;
   flex-direction: column;
@@ -24,7 +24,7 @@ $nav-overflow-height: 718px; // 636 + 10×4 + 7×6
   align-items: center;
   gap: var(--nav-gap-lg); // keeps Top / Bottom apart when space is tight
   width: 60px;
-  min-height: 100vh; // always full viewport height
+  min-height: var(--ips-vh, 100vh); // always full viewport height (or the guide stage height)
   height: 100%;      // stretch to fill parent if taller
   background-color: var(--palette-blue-1); // #0C1457
   border-radius: 0 16px 16px 0;
@@ -34,9 +34,9 @@ $nav-overflow-height: 718px; // 636 + 10×4 + 7×6
 
   // Too short for even the minimum gaps → the navbar itself scrolls (scrollbar hidden)
   @media (max-height: #{$nav-overflow-height - 1px}) {
-    height: 100vh;
+    height: var(--ips-vh, 100vh);
     min-height: 0;
-    max-height: 100vh;
+    max-height: var(--ips-vh, 100vh);
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;

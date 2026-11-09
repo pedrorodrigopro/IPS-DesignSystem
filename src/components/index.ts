@@ -47,3 +47,4 @@ export * from "./switch";
 export * from "./tile";
 export * from "./page_header";
 export * from "./booking_slideshow";
+export * from "./prototype_guide";

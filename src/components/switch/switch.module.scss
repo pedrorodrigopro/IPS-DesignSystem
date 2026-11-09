@@ -97,7 +97,8 @@ $indicator-off: 2.4px; // same gap on both sides
 
 // On state
 .on {
-  background-color: var(--palette-blue-1); // #0C1457
+  // --switch-on-bg lets a container recolour the ON track (e.g. the navy tour bar uses primary-0); default unchanged
+  background-color: var(--switch-on-bg, var(--palette-blue-1)); // #0C1457
 
   &:hover {
     background-color: var(--palette-primary-1); // On hover: #1531B8

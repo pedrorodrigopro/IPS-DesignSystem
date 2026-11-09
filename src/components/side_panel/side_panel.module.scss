@@ -25,7 +25,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  height: 100vh;
+  height: var(--ips-vh, 100vh);
   z-index: 901;
   background: #FFFFFF;
   border-radius: 8px 0 0 8px;  // Figma: borderRadius "8px 0px 0px 8px"
