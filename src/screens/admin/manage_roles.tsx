@@ -687,7 +687,9 @@ const summary = (ids: string[]) => (ids.length === 0 ? "" : ids.length <= 2 ? id
 
 export type TagRolesResult = { tag: string; note: string; notify: string[] };
 
-function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOptions, defaultNotify }: { open: boolean; count: number; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string }) {
+export type TagPrefill = { tag: string; notify?: string[] };
+
+function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOptions, defaultNotify, prefill }: { open: boolean; count: number; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string; prefill?: TagPrefill }) {
   const [tag, setTag] = useState("");
   const [tagOpen, setTagOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -697,7 +699,7 @@ function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOpt
 
   // Every opening starts empty
   useEffect(() => {
-    if (open) { setTag(""); setTagOpen(false); setNote(""); setNotify(false); setPeople([]); setPeopleOpen(false); }
+    if (open) { setTag(prefill?.tag ?? ""); setTagOpen(false); setNote(""); setNotify(!!prefill?.notify?.length); setPeople(prefill?.notify ?? []); setPeopleOpen(false); }
   }, [open]);
 
   const toggleNotify = (on: boolean) => {
@@ -834,13 +836,15 @@ export type ManageRolesScreenProps = {
   suggestCommand?: { n: number; roleId: string | null };
   /** The Suggest side panel opened (role id) or closed (null) */
   onSuggestOpenChange?: (roleId: string | null) => void;
+  /** Selects roles / engagements and opens Manage tags from outside, e.g. a prototype's flow map. Applied on mount and whenever `n` changes while `open` is true. */
+  tagCommand?: { n: number; open?: boolean; select?: { kind: "role" | "engagement"; keys: string[] }; prefill?: TagPrefill };
 };
 
 export function ManageRolesScreen({
   groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks,
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {},
-  suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange,
+  suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange, tagCommand,
 }: ManageRolesScreenProps) {
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
   // Counter above the groups: "X engagements · Y roles" (engagements = distinct titles; the template editor has none, so it shows roles only)
@@ -851,6 +855,7 @@ export function ManageRolesScreen({
   // Engagement and role selection are mutually exclusive: `mode` is the kind that made the current selection
   const [mode, setMode] = useState<SelectKind | null>(null);
   const [tagging, setTagging] = useState(false);
+  const [tagPrefill, setTagPrefill] = useState<TagPrefill | undefined>();
   const [tags, setTags] = useState<Record<string, string>>(initialTags);
   // Suggested WMs: the Suggest side panel writes them here (role id → WMs); roles never opened keep their own `suggested`
   const [suggestedBy, setSuggestedBy] = useState<Record<string, SuggestCandidate[]>>(initialSuggested);
@@ -871,6 +876,14 @@ export function ManageRolesScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestCommand?.n]);
   useEffect(() => { onSuggestOpenChange?.(suggestRole?.id ?? null); }, [suggestRole?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Flow map / prototypes: select what the command says and open Manage tags (prefilled)
+  useEffect(() => {
+    if (!tagCommand?.open) return;
+    if (tagCommand.select) { setSelected(new Set(tagCommand.select.keys)); setMode(tagCommand.select.kind); }
+    setTagPrefill(tagCommand.prefill);
+    setTagging(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tagCommand?.n]);
   const showAvailability = availability ?? selectable;
   const rolesWithSuggestion = groups.flatMap(g => g.roles).filter(r => suggestedFor(r).length > 0).length;
   // Width of the availability pane, shared by every group so dragging one divider resizes them all
@@ -918,7 +931,7 @@ export function ManageRolesScreen({
                   onDismiss={clearSelection}
                   rightContent={BULK_ACTIONS.map(a => (
                     <Tooltip key={a.id} content={a.label} placement="up-center" maxWidth={240}>
-                      <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" ? () => setTagging(true) : undefined}>
+                      <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" ? () => { setTagPrefill(undefined); setTagging(true); } : undefined}>
                         <Icon name={a.id} size={16} />
                         <span style={srOnly}>{a.label}</span>
                       </Button>
@@ -975,7 +988,7 @@ export function ManageRolesScreen({
         />
       </div>
 
-      <ManageTagsModal open={tagging} count={selectedRoles.length} onClose={() => setTagging(false)} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
+      <ManageTagsModal open={tagging} prefill={tagPrefill} count={selectedRoles.length} onClose={() => setTagging(false)} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
       <SuggestSidePanel
         open={!!suggestRole}
         onClose={() => setSuggestRole(null)}
