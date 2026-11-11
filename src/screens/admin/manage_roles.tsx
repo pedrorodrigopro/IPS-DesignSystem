@@ -689,7 +689,7 @@ export type TagRolesResult = { tag: string; note: string; notify: string[] };
 
 export type TagPrefill = { tag: string; notify?: string[] };
 
-function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOptions, defaultNotify, prefill }: { open: boolean; count: number; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string; prefill?: TagPrefill }) {
+export function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOptions, defaultNotify, prefill }: { open: boolean; count: number; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string; prefill?: TagPrefill }) {
   const [tag, setTag] = useState("");
   const [tagOpen, setTagOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -784,8 +784,13 @@ function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOpt
 // ── Bulk buttons — three ghost icon buttons in the bulk banner ────────────────────────────────────────────────────────
 
 type BulkAction = { id: "tag-roles" | "tag" | "owner"; label: string };
-const BULK_ACTIONS: BulkAction[] = [
+// Engagements selected: tag-roles tags every role inside them. Roles selected: tag tags the picked roles (no tag-roles). Both open "Manage tags".
+const ENGAGEMENT_ACTIONS: BulkAction[] = [
   { id: "tag-roles", label: "Tag roles" },
+  { id: "tag",       label: "Tag" },
+  { id: "owner",     label: "Owners" },
+];
+const ROLE_ACTIONS: BulkAction[] = [
   { id: "tag",       label: "Tag" },
   { id: "owner",     label: "Owners" },
 ];
@@ -929,9 +934,9 @@ export function ManageRolesScreen({
                   layout="inline"
                   message={`${selectedCount} selected`}
                   onDismiss={clearSelection}
-                  rightContent={BULK_ACTIONS.map(a => (
+                  rightContent={(mode === "role" ? ROLE_ACTIONS : ENGAGEMENT_ACTIONS).map(a => (
                     <Tooltip key={a.id} content={a.label} placement="up-center" maxWidth={240}>
-                      <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" ? () => { setTagPrefill(undefined); setTagging(true); } : undefined}>
+                      <Button kind="iconGhost" size="regular" onClick={(a.id === "tag-roles" || (a.id === "tag" && mode === "role")) ? () => { setTagPrefill(undefined); setTagging(true); } : undefined}>
                         <Icon name={a.id} size={16} />
                         <span style={srOnly}>{a.label}</span>
                       </Button>

@@ -10,8 +10,8 @@
 //   Roles:       Title | Tag | Vacancies | State | WF State | Expiry | Availability | Due in days | ⋮ sticky
 //
 // Bulk selection: ticking rows shows a 600px bulk banner centred in the page header row with ghost icon buttons.
-//   Engagements: Manage roles · Roll forward · Share · Move · Change owner
-//   Roles:       Share · Move · Change owner   (no Manage roles: the roles are already the selection)
+//   Engagements: Manage roles · Tag roles · Roll forward · Share · Move · Change owner
+//   Roles:       Tag · Share · Move · Change owner   (no Manage roles / Tag roles: the roles are already the selection)
 
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
@@ -339,13 +339,14 @@ const TABS = [
 type BulkAction = { icon: IconName; label: string };
 const ENGAGEMENT_BULK: BulkAction[] = [
   { icon: "manage-roles", label: "Manage roles" },
+  { icon: "tag-roles",    label: "Tag roles" },
   { icon: "rollforward",  label: "Roll forward" },
   { icon: "share",        label: "Share" },
   { icon: "bulk-move",    label: "Move" },
   { icon: "owner",        label: "Change owner" },
 ];
 // Roles: no "Manage roles" (the roles are already the selection) and no roll forward (an engagement action)
-const ROLE_BULK: BulkAction[] = ENGAGEMENT_BULK.filter(a => a.icon !== "manage-roles" && a.icon !== "rollforward");
+const ROLE_BULK: BulkAction[] = [{ icon: "tag", label: "Tag" }, ...ENGAGEMENT_BULK.filter(a => !["manage-roles", "tag-roles", "rollforward"].includes(a.icon))];
 
 const srOnly: React.CSSProperties = { position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" };
 
@@ -429,7 +430,7 @@ const meta: Meta = {
           "Table wrapped in Tile highlight + content padding (16px). " +
           "Engagements: group header accordion + 19 sample rows with assignee WM cell, pin/menu sticky cols. " +
           "Roles: Gantt toggle, WFState pills, availability range, due days, menu sticky col. " +
-          "Ticking rows shows a 600px bulk banner centred in the header row: Engagements get Manage roles · Roll forward · Share · Move · Change owner; Roles get Share · Move · Change owner (no Manage roles).",
+          "Ticking rows shows a 600px bulk banner centred in the header row: Engagements get Manage roles · Tag roles · Roll forward · Share · Move · Change owner; Roles get Tag · Share · Move · Change owner (no Manage roles / Tag roles).",
       },
     },
   },
