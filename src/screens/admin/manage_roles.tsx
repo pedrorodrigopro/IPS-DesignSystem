@@ -11,7 +11,7 @@
 // Container mapping (RULE 2b):
 //   Page bg: white (form/edit screen — not neutral-2)
 //   Groups: Accordion header + flat inline table on white (no Tile wrapper)
-//   Bottom: Actions variant="sticky-screen" — Cancel left | Save right
+//   Bottom: Actions variant="sticky-screen" — Cancel (DTT) / Close (engagement variants) left | Save right
 //
 // Editable table cells per column:
 //   Title, Description: plain text Input
@@ -981,7 +981,8 @@ export function ManageRolesScreen({
         <Actions
           variant="sticky-screen"
           insetX={32}
-          leftActions={[{ label: "Cancel", variant: "secondary", onClick: onBack }]}
+          // DTT (template editor) still has a pending Save, so it keeps "Cancel"; the engagement variants save per row, so the button just leaves: "Close"
+          leftActions={[{ label: rowActions === "dtt" ? "Cancel" : "Close", variant: "secondary", onClick: onBack }]}
           // Engagement tables: "All roles saved" before the button, and the button counts the roles that already have a suggested WM
           infoText={showAvailability ? (
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>

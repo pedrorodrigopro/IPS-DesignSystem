@@ -107,7 +107,7 @@ const meta: Meta = {
           "(engagement and role selection are mutually exclusive) show a 600px bulk banner centred in the header row with three ghost icon " +
           "buttons: roles selected = tag (opens the “Manage tags” modal, Figma 2738:67102) and owner; engagements selected = tag-roles (opens the same modal for every role inside them), tag and owner. A Tag column after Role title shows the tag a role was given. " +
           "Engagement variants add a Suggested WM column (an empty one shows the warning background) and a separate availability-rules table to the right (Figma 2362:258886): requested hours per week (editable), one column per week, red/orange top borders for conflicts/warnings, row actions at its right edge. Drag the divider to resize the table; it can take almost the whole width, and the week columns stretch. " +
-          "Bottom: Actions variant='sticky-screen' — Cancel | Save / Fill & Book.",
+          "Bottom: Actions variant='sticky-screen' — Cancel | Save in the DTT variant, Close | Fill & Book in the engagement variants.",
       },
     },
   },
