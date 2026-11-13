@@ -158,7 +158,7 @@ export declare type BookingCellState = "default" | "read-only";
 
 export declare function BookingPill({ category, label, hours, nonDemand, otherBookings, size, className, onClick, }: BookingPillProps): default_2.JSX.Element;
 
-export declare type BookingPillCategory = "booking-blue" | "booking-red" | "booking-purple" | "engagement-booked" | "engagement-partial" | "role-booked" | "role-partial" | "pending" | "hidden" | "preview";
+export declare type BookingPillCategory = "booking-blue" | "booking-red" | "booking-purple" | "engagement-booked" | "engagement-partial" | "role-booked" | "role-partial" | "pending" | "misaligned" | "hidden" | "preview";
 
 export declare type BookingPillProps = {
     category: BookingPillCategory;
@@ -1010,6 +1010,9 @@ export declare type NotificationItem = {
     /** Entries of the "Options" menu shown before `actions` (the button only appears when this is set) */
     optionItems?: DropdownItem[];
     onOptionSelect?: (optionId: string) => void;
+    /** Entries of a "Filter" menu (secondary button + chevron-down, same look as "Options") shown after "Options" and before `actions` (the button only appears when this is set) */
+    filterItems?: DropdownItem[];
+    onFilterSelect?: (filterId: string) => void;
 };
 
 export declare function NotificationsSidePanel({ open, onClose, data, }: NotificationsSidePanelProps): default_2.JSX.Element;
@@ -1368,6 +1371,30 @@ export declare type ProgressRadialProps = {
     /** Size in px — default 40px (from Figma) */
     size?: number;
     className?: string;
+};
+
+export declare type PrototypeFlow = {
+    id: string;
+    label: string;
+};
+
+export declare function PrototypeFlows({ flows, flow, onFlow, onRestart, label, barActions, children }: PrototypeFlowsProps): default_2.JSX.Element;
+
+export declare type PrototypeFlowsProps = {
+    flows: PrototypeFlow[];
+    /** Id of the selected flow */
+    flow: string;
+    onFlow: (id: string) => void;
+    /** Shows a Restart button after the flows (starts the selected flow again from its first screen) */
+    onRestart?: () => void;
+    /** Bar label before the flows (default "Flow") */
+    label?: string;
+    /** Extra buttons at the right of the bar */
+    barActions?: {
+        label: string;
+        onClick: () => void;
+    }[];
+    children: default_2.ReactNode;
 };
 
 export declare function PrototypeGuide({ screen, steps, screenLabels, defaultEnabled, barActions, children }: PrototypeGuideProps): default_2.JSX.Element;
@@ -1941,7 +1968,7 @@ export declare type ToggleProps = {
     className?: string;
 };
 
-export declare function Tooltip({ content, children, placement, maxWidth, disabled, className, }: TooltipProps): default_2.JSX.Element;
+export declare function Tooltip({ content, children, placement, maxWidth, disabled, portal, className, }: TooltipProps): default_2.JSX.Element;
 
 export declare type TooltipPlacement = "no-arrow" | "down-center" | "down-left" | "down-right" | "up-center" | "up-left" | "up-right" | "left-center" | "left-up" | "left-down" | "right-center" | "right-up" | "right-down";
 
@@ -1955,6 +1982,11 @@ export declare type TooltipProps = {
     maxWidth?: number;
     /** Disable the tooltip entirely */
     disabled?: boolean;
+    /**
+     * Draw the bubble in document.body (position: fixed, over the trigger) instead of inside it. Use it when the trigger sits in a container
+     * that scrolls or clips (overflow: auto / hidden, e.g. a table cell in a scroll pane): there the default bubble is cut off at the container's edge.
+     */
+    portal?: boolean;
     className?: string;
 };
 
