@@ -53,6 +53,18 @@ export const WorkforceGrid: Story = {
   render: () => <BookingEngineScreen panel="workforce" calendar="grid" />,
 };
 
+// Filters applied: SearchFilter shows them right next to the search box in the toolbar row; the Filter icon becomes filter-applied.
+// The screen manages them itself here (a prototype can pass filters + onRemoveFilter + onClearFilters to control them).
+export const ProjectsEngagementsGanttFiltersApplied: Story = {
+  name: "Projects / Engagements / Gantt — filters applied",
+  render: () => <BookingEngineScreen view="engagements" calendar="gantt" filters={[{ id: "eng", field: "Engagement", value: "Q4 Financial Audit" }, { id: "state", field: "State", value: "Open" }]} />,
+};
+
+export const WorkforceBookingsFiltersApplied: Story = {
+  name: "Workforce / Bookings — filters applied",
+  render: () => <BookingEngineScreen panel="workforce" calendar="gantt" filters={[{ id: "wm", field: "Workforce Member", value: "Alexandra I. Poane" }, { id: "unit", field: "Business unit", value: "Executive" }]} />,
+};
+
 // ── Misalignment demo: one role, role row as a green role pill, a profile row with the dashed line ──────────────
 
 const MIS_WEEKS: GridWeeks = [

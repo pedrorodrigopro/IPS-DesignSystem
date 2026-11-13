@@ -1203,6 +1203,8 @@ export type BookingEngineScreenProps = {
   filters?: AppliedFilter[];
   onRemoveFilter?: (id: string) => void;
   onClearFilters?: () => void;
+  /** Engagements / roles that start expanded (default: the sample's "e2" / "r2"); lets a prototype open on its own roles with the profile rows showing */
+  initialExpanded?: { engagements?: string[]; roles?: string[] };
   /** The Filter icon button of the toolbar was clicked (e.g. a prototype applies a filter straight away instead of opening the drawer) */
   onFilter?: () => void;
   /** Grid: counter at the top-left of the calendar (default "874 projects") */
@@ -1214,7 +1216,7 @@ export type BookingEngineScreenProps = {
 
 export function BookingEngineScreen({
   view: initialView = "engagements", calendar: initialCalendar = "gantt", panel: initialPanel = "projects",
-  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, countLabel, onNavigate, avatarInitials,
+  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, initialExpanded, countLabel, onNavigate, avatarInitials,
 }: BookingEngineScreenProps) {
   const [panel,    setPanel]    = useState<"projects" | "workforce">(initialPanel);
   const [view,     setView]     = useState<ViewType>(initialView);
@@ -1229,8 +1231,8 @@ export function BookingEngineScreen({
   const shownFilters = onRemoveFilter ? (filters ?? []) : ownFilters;
   const removeFilter = (id: string) => (onRemoveFilter ? onRemoveFilter(id) : setOwnFilters(f => f.filter(x => x.id !== id)));
   const clearFilters = () => (onClearFilters ? onClearFilters() : setOwnFilters([]));
-  const [expanded, setExpanded]             = useState<Set<string>>(new Set(["e2"]));
-  const [expandedRoles, setExpandedRoles]   = useState<Set<string>>(new Set(["r2"]));
+  const [expanded, setExpanded]             = useState<Set<string>>(new Set(initialExpanded?.engagements ?? ["e2"]));
+  const [expandedRoles, setExpandedRoles]   = useState<Set<string>>(new Set(initialExpanded?.roles ?? ["r2"]));
   const [page, setPage]                     = useState(1);
   const [leftWidth, setLeftWidth]           = useState(420);
   const [isDragging, setIsDragging]         = useState(false);
