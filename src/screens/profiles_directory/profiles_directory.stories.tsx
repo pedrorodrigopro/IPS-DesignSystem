@@ -46,3 +46,9 @@ export const SearchingTable: Story = {
   name: "Searching — Table",
   render: () => <ProfilesDirectoryScreen initialSearch="project management" initialView="table" initialSort="Most relevant" />,
 };
+
+// Filters applied: SearchFilter shows them right next to the search box (after the sort and count), in the toolbar row
+export const FiltersApplied: Story = {
+  name: "Filters applied",
+  render: () => <ProfilesDirectoryScreen initialSearch="" initialView="cards" initialSort="Profile name" initialFilters={[{ id: "loc", field: "Location", value: "London" }, { id: "skill", field: "Skill", value: "Project management" }]} />,
+};

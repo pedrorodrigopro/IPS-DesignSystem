@@ -16,7 +16,9 @@ const meta: Meta<typeof FiltersApplied> = {
           "Applied filter bar (Figma node 6848:115955). " +
           "Applied=False (empty filters array): renders nothing. " +
           "Applied=True: shows 'Filters' label + 'Clear all' link + removable filter pills. " +
-          "Each pill has a field name (10px) stacked above a bold value (12px), with a cross to remove.",
+          "Each pill has a field name (10px) stacked above a bold value (12px), with a cross to remove. " +
+          "**Placement: applied filters sit right next to the search box, in the same toolbar row, never in a row of their own. " +
+          "Use the SearchFilter molecule for that row instead of placing FiltersApplied by hand.**",
       },
     },
   },

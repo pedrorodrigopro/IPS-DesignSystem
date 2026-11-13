@@ -1,5 +1,7 @@
 // FiltersApplied — Figma node 6848:115955 (Filters applied component set)
 //
+// Placement: right next to the search box, in the same toolbar row — never in a row of its own. Use SearchFilter for that row.
+//
 // Applied=False: renders nothing (zero height, empty)
 // Applied=True:  row, gap 16px, padding 8px 0 8px 8px, height 32px
 //   Left:  "Filters" label (body-unselected #0D2976) + "Clear all" link button

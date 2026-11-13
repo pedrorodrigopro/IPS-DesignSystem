@@ -19,7 +19,8 @@ import { Navbar }        from "../../components/navbar/navbar";
 import { Icon }          from "../../components/icon/icon";
 import { Button }        from "../../components/button/button";
 import { Tile }          from "../../components/tile/tile";
-import { InputSearch } from "../../components/input/input";
+import { SearchFilter } from "../../components/search_filter/search_filter";
+import type { AppliedFilter } from "../../components/filters_applied/filters_applied";
 import { ProgressLinear } from "../../components/progress_bar/progress_bar";
 import { PillWFState, PillSimple } from "../../components/pill/pill";
 import { WorkforceMember } from "../../components/workforce_member/workforce_member";
@@ -498,9 +499,10 @@ function EngRow({ eng, expanded, onToggle }: { eng: EngagementRow; expanded: boo
 
 // ── AuditPlanner screen ───────────────────────────────────────────────────────
 
-function AuditPlannerScreen() {
+function AuditPlannerScreen({ initialFilters = [] }: { initialFilters?: AppliedFilter[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set(["3"])); // smoke test July expanded by default
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<AppliedFilter[]>(initialFilters);
 
   const toggleRow = (id: string) => {
     setExpanded(prev => {
@@ -546,24 +548,27 @@ function AuditPlannerScreen() {
             {STATS.map(s => <StatCounter key={s.label} {...s} />)}
           </div>
 
-          {/* Toolbar */}
-          <Row gap={12} style={{ marginBottom: 16 }}>
-            <div style={{ width: 240 }}>
-              <InputSearch value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" />
-            </div>
-            <span style={labelCss}>8 Roles in 7 Engagements</span>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
-              <Button kind="icon" size="regular" title="Filter">
-                <Icon name="filter" size={16} />
-              </Button>
-              <Button kind="icon" size="regular" title="Bulk select">
-                <Icon name="bulk" size={16} />
-              </Button>
-              <Button kind="icon" size="regular" title="Grid view">
-                <Icon name="table" size={16} />
-              </Button>
-            </div>
-          </Row>
+          {/* Toolbar: search + applied filters + this screen's buttons */}
+          <div style={{ marginBottom: 16 }}>
+            <SearchFilter
+              search={search} onSearchChange={setSearch}
+              count="8 Roles in 7 Engagements"
+              filters={filters} onRemoveFilter={id => setFilters(f => f.filter(x => x.id !== id))} onClearFilters={() => setFilters([])}
+              actions={
+                <div style={{ display: "flex", gap: 4 }}>
+                  <Button kind="icon" size="regular" title="Filter">
+                    <Icon name={filters.length > 0 ? "filter-applied" : "filter"} size={16} />
+                  </Button>
+                  <Button kind="icon" size="regular" title="Bulk select">
+                    <Icon name="bulk" size={16} />
+                  </Button>
+                  <Button kind="icon" size="regular" title="Grid view">
+                    <Icon name="table" size={16} />
+                  </Button>
+                </div>
+              }
+            />
+          </div>
 
           {/* Nested expandable table */}
           <Tile tileStyle="highlight" padding="content">
@@ -630,4 +635,10 @@ type Story = StoryObj;
 export const Default: Story = {
   name: "Default",
   render: () => <AuditPlannerScreen />,
+};
+
+// Filters applied: SearchFilter shows them right next to the search box, in the toolbar row (not in a row of their own)
+export const FiltersApplied: Story = {
+  name: "Filters applied",
+  render: () => <AuditPlannerScreen initialFilters={[{ id: "eng", field: "Engagement", value: "Q4 Financial Audit" }, { id: "state", field: "Workflow state", value: "Shortlisting" }]} />,
 };

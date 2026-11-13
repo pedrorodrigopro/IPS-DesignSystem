@@ -40,6 +40,7 @@ export * from "./header";
 export * from "./actions";
 export * from "./saved_filters";
 export * from "./filters_applied";
+export * from "./search_filter";
 export * from "./role_subtitle";
 export * from "./button_group";
 export * from "./card";

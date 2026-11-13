@@ -27,7 +27,8 @@ import { Checkbox }         from "../../components/checkbox/checkbox";
 import { Alert }            from "../../components/alert/alert";
 import { CVStudioScreen, ZARA } from "../cv_studio/cv_studio";
 import { SkillProfile }     from "../../components/skill/skill";
-import { InputSearch }      from "../../components/input/input";
+import { SearchFilter }     from "../../components/search_filter/search_filter";
+import type { AppliedFilter } from "../../components/filters_applied/filters_applied";
 import { Pagination }       from "../../components/pagination/pagination";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
@@ -232,6 +233,7 @@ type ViewMode = "cards" | "table";
 function Toolbar({
   search, onSearch, sort, count, unit,
   viewMode, onViewMode,
+  filters, onRemoveFilter, onClearFilters,
 }: {
   search: string;
   onSearch: (v: string) => void;
@@ -240,72 +242,69 @@ function Toolbar({
   unit: string;
   viewMode: ViewMode;
   onViewMode: (v: ViewMode) => void;
+  filters?: AppliedFilter[];
+  onRemoveFilter?: (id: string) => void;
+  onClearFilters?: () => void;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-      {/* Search */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-        <InputSearch value={search} onChange={e => onSearch(e.target.value)} placeholder="Search" />
-        {search && (
-          <button onClick={() => onSearch("")} style={{ position: "absolute", right: 8, background: "none", border: "none", cursor: "pointer", display: "flex", padding: 0, color: "var(--palette-blue-2)" }}>
-            <Icon name="cross" size={14} />
-          </button>
-        )}
-      </div>
-
-      {/* Sort dropdown */}
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 4, height: 36, border: "1px solid var(--palette-neutral-0)", borderRadius: "var(--radius-md)", padding: "0 12px", background: "white", cursor: "pointer" }}>
-        <span style={body}>{sort}</span>
-        <Icon name="chevron-down" size={14} style={{ color: "var(--palette-blue-2)" }} />
-      </div>
-
-      {/* Count */}
-      <span style={labelCss}>{count} {unit}</span>
-
-      {/* Right icons */}
-      <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
-        {/* Cards / Table toggle — joined two-button, same pattern as Availability block */}
-        <div style={{ display: "flex" }}>
-          <button
-            onClick={() => onViewMode("cards")}
-            title="Cards view"
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 36, height: 36,
-              border: "1px solid var(--palette-neutral-0)", borderRight: "none",
-              borderRadius: "var(--radius-md) 0 0 var(--radius-md)",
-              background: viewMode === "cards" ? "var(--palette-blue-1)" : "white",
-              color:      viewMode === "cards" ? "white" : "var(--palette-blue-2)",
-              cursor: "pointer",
-            }}>
-            <Icon name="table" size={16} />
-          </button>
-          <button
-            onClick={() => onViewMode("table")}
-            title="Table view"
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 36, height: 36,
-              border: "1px solid var(--palette-neutral-0)",
-              borderRadius: "0 var(--radius-md) var(--radius-md) 0",
-              background: viewMode === "table" ? "var(--palette-blue-1)" : "white",
-              color:      viewMode === "table" ? "white" : "var(--palette-blue-2)",
-              cursor: "pointer",
-            }}>
-            <Icon name="list" size={16} />
-          </button>
-        </div>
-        {/* Placeholder extra icon */}
-        <Button kind="icon" size="regular" title="Grid">
-          <Icon name="menu-horizontal" size={16} />
-        </Button>
-        <Button kind="icon" size="regular" title="Filter">
-          <Icon name="filter" size={16} />
-        </Button>
-        <Button kind="icon" size="regular" title="Download">
-          <Icon name="export" size={16} />
-        </Button>
-      </div>
+    <div style={{ marginBottom: 16 }}>
+      <SearchFilter
+        search={search} onSearchChange={onSearch}
+        leading={
+          /* Sort dropdown */
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, height: 36, border: "1px solid var(--palette-neutral-0)", borderRadius: "var(--radius-md)", padding: "0 12px", background: "white", cursor: "pointer" }}>
+            <span style={body}>{sort}</span>
+            <Icon name="chevron-down" size={14} style={{ color: "var(--palette-blue-2)" }} />
+          </div>
+        }
+        count={`${count} ${unit}`}
+        filters={filters} onRemoveFilter={onRemoveFilter} onClearFilters={onClearFilters}
+        actions={
+          <div style={{ display: "flex", gap: 4 }}>
+            {/* Cards / Table toggle — joined two-button, same pattern as Availability block */}
+            <div style={{ display: "flex" }}>
+              <button
+                onClick={() => onViewMode("cards")}
+                title="Cards view"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 36, height: 36,
+                  border: "1px solid var(--palette-neutral-0)", borderRight: "none",
+                  borderRadius: "var(--radius-md) 0 0 var(--radius-md)",
+                  background: viewMode === "cards" ? "var(--palette-blue-1)" : "white",
+                  color:      viewMode === "cards" ? "white" : "var(--palette-blue-2)",
+                  cursor: "pointer",
+                }}>
+                <Icon name="table" size={16} />
+              </button>
+              <button
+                onClick={() => onViewMode("table")}
+                title="Table view"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 36, height: 36,
+                  border: "1px solid var(--palette-neutral-0)",
+                  borderRadius: "0 var(--radius-md) var(--radius-md) 0",
+                  background: viewMode === "table" ? "var(--palette-blue-1)" : "white",
+                  color:      viewMode === "table" ? "white" : "var(--palette-blue-2)",
+                  cursor: "pointer",
+                }}>
+                <Icon name="list" size={16} />
+              </button>
+            </div>
+            {/* Placeholder extra icon */}
+            <Button kind="icon" size="regular" title="Grid">
+              <Icon name="menu-horizontal" size={16} />
+            </Button>
+            <Button kind="icon" size="regular" title="Filter">
+              <Icon name={filters && filters.length > 0 ? "filter-applied" : "filter"} size={16} />
+            </Button>
+            <Button kind="icon" size="regular" title="Download">
+              <Icon name="export" size={16} />
+            </Button>
+          </div>
+        }
+      />
     </div>
   );
 }
@@ -569,6 +568,7 @@ export function ProfilesDirectoryScreen({
   initialSearch = "",
   initialView = "cards" as ViewMode,
   initialSort = "Most relevant",
+  initialFilters = [],
   onNavigate,
   onOpenProfile,
   onOpenCV,
@@ -576,6 +576,8 @@ export function ProfilesDirectoryScreen({
   initialSearch?: string;
   initialView?: ViewMode;
   initialSort?: string;
+  /** Applied filters shown next to the search box (SearchFilter) */
+  initialFilters?: AppliedFilter[];
   /** Navbar item clicked (e.g. "profile" → back to My Profile) */
   onNavigate?: (id: string) => void;
   /** A card / a table-row name was clicked → that person's profile. Not clickable when omitted. */
@@ -584,6 +586,7 @@ export function ProfilesDirectoryScreen({
   onOpenCV?: (profile: ProfileEntry) => void;
 }) {
   const [search, setSearch]     = useState(initialSearch);
+  const [filters, setFilters]   = useState<AppliedFilter[]>(initialFilters);
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
@@ -667,6 +670,9 @@ export function ProfilesDirectoryScreen({
             unit={unit}
             viewMode={viewMode}
             onViewMode={setViewMode}
+            filters={filters}
+            onRemoveFilter={id => setFilters(f => f.filter(x => x.id !== id))}
+            onClearFilters={() => setFilters([])}
           />
 
           {/* Results */}

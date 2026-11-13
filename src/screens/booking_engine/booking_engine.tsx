@@ -43,7 +43,7 @@ import { MisalignmentSidePanel } from "../../components/side_panel/misalignment_
 import type { MisalignmentSidePanelData, MisalignmentRange } from "../../components/side_panel/misalignment_side_panel";
 import { OverbookingSidePanel } from "../../components/side_panel/overbooking_side_panel";
 import type { OverbookingSidePanelData, OverbookingRange } from "../../components/side_panel/overbooking_side_panel";
-import { FiltersApplied } from "../../components/filters_applied/filters_applied";
+import { SearchFilter } from "../../components/search_filter/search_filter";
 import type { AppliedFilter } from "../../components/filters_applied/filters_applied";
 import type { BookingCellCategory } from "../../components/booking_cell/booking_cell";
 
@@ -1222,6 +1222,13 @@ export function BookingEngineScreen({
   const [wfView,   setWfView]   = useState<WfView>("bookings");
   const [wfMetric, setWfMetric] = useState<WfMetric>("total-hours");
   const [activeMainTab, setActiveMainTab]   = useState("overview");
+  const [search, setSearch] = useState("");
+  // Applied filters: the host controls them when it passes onRemoveFilter (prototypes); otherwise the screen manages them itself,
+  // so the pills always have their remove cross and "Clear all"
+  const [ownFilters, setOwnFilters] = useState<AppliedFilter[]>(filters ?? []);
+  const shownFilters = onRemoveFilter ? (filters ?? []) : ownFilters;
+  const removeFilter = (id: string) => (onRemoveFilter ? onRemoveFilter(id) : setOwnFilters(f => f.filter(x => x.id !== id)));
+  const clearFilters = () => (onClearFilters ? onClearFilters() : setOwnFilters([]));
   const [expanded, setExpanded]             = useState<Set<string>>(new Set(["e2"]));
   const [expandedRoles, setExpandedRoles]   = useState<Set<string>>(new Set(["r2"]));
   const [page, setPage]                     = useState(1);
@@ -1394,27 +1401,25 @@ export function BookingEngineScreen({
           <Navigation orientation="horizontal" tabs={MAIN_TABS} activeId={activeMainTab} onChange={setActiveMainTab} />
         </div>
 
-        {/* ── Row 3 (full width): Search left | filter icons + Engagements dropdown right ── */}
-        <div style={{ display: "flex", alignItems: "center", flexShrink: 0, padding: "8px 24px", gap: 0 }}>
-          <div style={{ width: leftWidth, flexShrink: 0, paddingRight: 8 }}>
-            <InputSearch value="" onChange={() => {}} placeholder="Search" />
-          </div>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-            {/* Filters applied sit in this row, right of the search box (fixed 36px so the row does not grow); icons stay at the right */}
-            {filters && filters.length > 0 && (
-              <div style={{ marginRight: "auto", minWidth: 0, height: 36, display: "flex", alignItems: "center" }}>
-                <FiltersApplied filters={filters} onRemove={onRemoveFilter} onClearAll={onClearFilters} />
-              </div>
-            )}
-            <Button kind="icon" size="regular" title="Filter" onClick={onFilter}><Icon name="filter" size={16} /></Button>
-            <Button kind="icon" size="regular" title="Tag"><Icon name="tag" size={16} /></Button>
-            <Button kind="icon" size="regular" title="Split"><Icon name="split" size={16} /></Button>
-            <Button kind="icon" size="regular" title="Add"><Icon name="add" size={16} /></Button>
-            {panel === "workforce"
-              ? <WorkforceViewSelector wfView={wfView} wfMetric={wfMetric} onWfView={setWfView} onWfMetric={setWfMetric} />
-              : <ProjectsViewSelector view={view} calendar={calendar} onView={setView} onCalendar={setCalendar} />
+        {/* ── Row 3 (full width): Search (as wide as the left column) + applied filters right next to it | filter icons + view selector at the end ── */}
+        <div style={{ display: "flex", alignItems: "center", flexShrink: 0, padding: "8px 24px" }}>
+          <SearchFilter
+            search={search} onSearchChange={setSearch}
+            searchWidth={leftWidth - 8}
+            filters={shownFilters} onRemoveFilter={removeFilter} onClearFilters={clearFilters}
+            actions={
+              <>
+                <Button kind="icon" size="regular" title="Filter" onClick={onFilter}><Icon name={shownFilters.length > 0 ? "filter-applied" : "filter"} size={16} /></Button>
+                <Button kind="icon" size="regular" title="Tag"><Icon name="tag" size={16} /></Button>
+                <Button kind="icon" size="regular" title="Split"><Icon name="split" size={16} /></Button>
+                <Button kind="icon" size="regular" title="Add"><Icon name="add" size={16} /></Button>
+                {panel === "workforce"
+                  ? <WorkforceViewSelector wfView={wfView} wfMetric={wfMetric} onWfView={setWfView} onWfMetric={setWfMetric} />
+                  : <ProjectsViewSelector view={view} calendar={calendar} onView={setView} onCalendar={setCalendar} />
+                }
+              </>
             }
-          </div>
+          />
         </div>
 
         {/* ── Row 4 (full width): Projects/Workforce | Today ← date range → | Custom — all one line ──

@@ -16,7 +16,8 @@ import { Header }        from "../../components/header/header";
 import { Navigation }    from "../../components/navigation/navigation";
 import { Icon }          from "../../components/icon/icon";
 import { Button }        from "../../components/button/button";
-import { InputSearch }   from "../../components/input/input";
+import { SearchFilter }   from "../../components/search_filter/search_filter";
+import type { AppliedFilter } from "../../components/filters_applied/filters_applied";
 import { Table }         from "../../components/table/table";
 import { ProgressLinear } from "../../components/progress_bar/progress_bar";
 import { Pagination }    from "../../components/pagination/pagination";
@@ -130,9 +131,10 @@ const PRIMARY_FRAMEWORKS: FrameworkRow[] = [
 
 // ── Screen component ──────────────────────────────────────────────────────────
 
-function SkillsFrameworksScreen() {
+function SkillsFrameworksScreen({ initialFilters = [] }: { initialFilters?: AppliedFilter[] }) {
   const [activeTab, setActiveTab] = useState("primary");
   const [search, setSearch]       = useState("");
+  const [filters, setFilters]       = useState<AppliedFilter[]>(initialFilters);
   const [sortKey, setSortKey]     = useState<string | undefined>();
   const [sortDir, setSortDir]     = useState<SortDirection>("none");
   const [page, setPage]           = useState(1);
@@ -235,13 +237,12 @@ function SkillsFrameworksScreen() {
           {/* Tabs: Primary / Secondary */}
           <Navigation orientation="horizontal" tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
 
-          {/* Search + count */}
-          <Row gap={12}>
-            <div style={{ width: 240 }}>
-              <InputSearch value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" />
-            </div>
-            <span style={labelCss}>{filtered.length} in total</span>
-          </Row>
+          {/* Search + count (+ applied filters next to the search box) */}
+          <SearchFilter
+            search={search} onSearchChange={setSearch}
+            count={`${filtered.length} in total`}
+            filters={filters} onRemoveFilter={id => setFilters(f => f.filter(x => x.id !== id))} onClearFilters={() => setFilters([])}
+          />
 
           {/* Table — no Tile wrapper, sits directly on page bg */}
           <Table
@@ -293,4 +294,10 @@ type Story = StoryObj;
 export const SkillsFrameworks: Story = {
   name: "Skills Frameworks",
   render: () => <SkillsFrameworksScreen />,
+};
+
+// Filters applied: SearchFilter shows them right next to the search box (after the count), in the same row
+export const SkillsFrameworksFiltersApplied: Story = {
+  name: "Skills Frameworks — filters applied",
+  render: () => <SkillsFrameworksScreen initialFilters={[{ id: "ins", field: "Insights", value: "Below 20%" }, { id: "edited", field: "Last edited", value: "Last 30 days" }]} />,
 };

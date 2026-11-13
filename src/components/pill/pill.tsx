@@ -28,6 +28,7 @@ export type PillSimpleProps = {
   size?: PillSize;
   bg?: string;        // CSS colour override
   color?: string;     // text colour override
+  iconColor?: string; // colour of the left icon only (default: the text colour)
   className?: string;
 };
 
@@ -37,6 +38,7 @@ export const PillSimple = ({
   size = "regular",
   bg,
   color,
+  iconColor,
   className,
 }: PillSimpleProps) => (
   <span
@@ -44,7 +46,7 @@ export const PillSimple = ({
     style={{ ...(bg ? { backgroundColor: bg } : {}), ...(color ? { color } : {}) }}
   >
     {leftIcon && (
-      <Icon name={leftIcon} size={size === "small" ? 14 : 16} className={css.icon} />
+      <Icon name={leftIcon} size={size === "small" ? 14 : 16} className={css.icon} style={iconColor ? { color: iconColor } : undefined} />
     )}
     <span className={css.label}>{label}</span>
   </span>

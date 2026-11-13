@@ -26,7 +26,8 @@ import { Tooltip }      from "../../components/tooltip/tooltip";
 import { Accordion }    from "../../components/accordion/accordion";
 import { Icon }         from "../../components/icon/icon";
 import { Button }       from "../../components/button/button";
-import { InputSearch }  from "../../components/input/input";
+import { SearchFilter } from "../../components/search_filter/search_filter";
+import type { AppliedFilter } from "../../components/filters_applied/filters_applied";
 import { Table }        from "../../components/table/table";
 import { PillWFState, PillSimple } from "../../components/pill/pill";
 import { WorkforceMember } from "../../components/workforce_member/workforce_member";
@@ -44,31 +45,33 @@ const labelStyle: React.CSSProperties = {
 
 // ── Toolbar ───────────────────────────────────────────────────────────────────
 
-function Toolbar({ count, unit, gantt = false }: { count: number; unit: string; gantt?: boolean }) {
+function Toolbar({ count, unit, gantt = false, initialFilters = [] }: { count: number; unit: string; gantt?: boolean; initialFilters?: AppliedFilter[] }) {
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<AppliedFilter[]>(initialFilters);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-      <div style={{ width: 240 }}>
-        <InputSearch value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" />
-      </div>
-      <span style={labelStyle}>{count} {unit}</span>
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-        {gantt && (
-          <>
-            <span style={labelStyle}>Gantt view</span>
-            <div style={{ width: 36, height: 20, borderRadius: 10, background: "var(--palette-neutral-0)", position: "relative", flexShrink: 0 }}>
-              <div style={{ width: 16, height: 16, borderRadius: "50%", background: "white", position: "absolute", left: 2, top: 2, boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-            </div>
-          </>
-        )}
-        <Button kind="icon" size="regular" title="Filter">
-          <Icon name="filter" size={16} />
-        </Button>
-        <button style={{ width: 32, height: 32, border: "1px solid var(--palette-neutral-0)", borderRadius: "var(--radius-md)", background: "var(--palette-blue-1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white" }}>
-          <Icon name="table" size={16} />
-        </button>
-      </div>
-    </div>
+    <SearchFilter
+      search={search} onSearchChange={setSearch}
+      count={`${count} ${unit}`}
+      filters={filters} onRemoveFilter={id => setFilters(f => f.filter(x => x.id !== id))} onClearFilters={() => setFilters([])}
+      actions={
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {gantt && (
+            <>
+              <span style={labelStyle}>Gantt view</span>
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: "var(--palette-neutral-0)", position: "relative", flexShrink: 0 }}>
+                <div style={{ width: 16, height: 16, borderRadius: "50%", background: "white", position: "absolute", left: 2, top: 2, boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+              </div>
+            </>
+          )}
+          <Button kind="icon" size="regular" title="Filter">
+            <Icon name={filters.length > 0 ? "filter-applied" : "filter"} size={16} />
+          </Button>
+          <Button kind="icon" size="regular" title="Table properties">
+            <Icon name="table" size={16} />
+          </Button>
+        </div>
+      }
+    />
   );
 }
 
@@ -204,13 +207,13 @@ const engagementColumns: TableColumn<EngagementRow>[] = [
   },
 ];
 
-function EngagementsTab({ selected, onSelectedChange: setSelected }: { selected: (string | number)[]; onSelectedChange: (ids: (string | number)[]) => void }) {
+function EngagementsTab({ selected, onSelectedChange: setSelected, filters }: { selected: (string | number)[]; onSelectedChange: (ids: (string | number)[]) => void; filters?: AppliedFilter[] }) {
   const [sortKey, setSortKey] = useState<string | undefined>();
   const [sortDir, setSortDir] = useState<SortDirection>("none");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <Toolbar count={319} unit="engagements" />
+      <Toolbar count={filters?.length ? 2 : 319} unit="engagements" initialFilters={filters} />
 
       {/* Group header — Unseen Ownership */}
       <Accordion title="Unseen Ownership" size="body" defaultExpanded />
@@ -303,13 +306,13 @@ const roleColumns: TableColumn<RoleRow>[] = [
   },
 ];
 
-function RolesTab({ selected, onSelectedChange: setSelected }: { selected: (string | number)[]; onSelectedChange: (ids: (string | number)[]) => void }) {
+function RolesTab({ selected, onSelectedChange: setSelected, filters }: { selected: (string | number)[]; onSelectedChange: (ids: (string | number)[]) => void; filters?: AppliedFilter[] }) {
   const [sortKey, setSortKey] = useState<string | undefined>();
   const [sortDir, setSortDir] = useState<SortDirection>("none");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <Toolbar count={374} unit="roles" gantt />
+      <Toolbar count={filters?.length ? 8 : 374} unit="roles" gantt initialFilters={filters} />
       <Tile tileStyle="highlight" padding="content">
         <Table
           columns={roleColumns}
@@ -374,7 +377,7 @@ function BulkBanner({ count, actions, onDismiss }: { count: number; actions: Bul
   );
 }
 
-function WorkflowScreen({ defaultTab = "engagements" }: { defaultTab?: string }) {
+function WorkflowScreen({ defaultTab = "engagements", filters }: { defaultTab?: string; filters?: AppliedFilter[] }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [selectedEngagements, setSelectedEngagements] = useState<(string | number)[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<(string | number)[]>([]);
@@ -407,8 +410,8 @@ function WorkflowScreen({ defaultTab = "engagements" }: { defaultTab?: string })
             onChange={setActiveTab}
           />
 
-          {activeTab === "engagements" && <EngagementsTab selected={selectedEngagements} onSelectedChange={setSelectedEngagements} />}
-          {activeTab === "roles"       && <RolesTab selected={selectedRoles} onSelectedChange={setSelectedRoles} />}
+          {activeTab === "engagements" && <EngagementsTab selected={selectedEngagements} onSelectedChange={setSelectedEngagements} filters={filters} />}
+          {activeTab === "roles"       && <RolesTab selected={selectedRoles} onSelectedChange={setSelectedRoles} filters={filters} />}
 
         </div>
       </Page>
@@ -447,4 +450,15 @@ export const Engagements: Story = {
 export const Roles: Story = {
   name: "Roles",
   render: () => <WorkflowScreen defaultTab="roles" />,
+};
+
+// Filters applied: SearchFilter shows them right next to the search box, in the toolbar row (not in a row of their own)
+export const EngagementsFiltersApplied: Story = {
+  name: "Engagements — filters applied",
+  render: () => <WorkflowScreen defaultTab="engagements" filters={[{ id: "eng", field: "Engagement ID", value: "2 selected" }, { id: "assignee", field: "Assignee", value: "Myself" }]} />,
+};
+
+export const RolesFiltersApplied: Story = {
+  name: "Roles — filters applied",
+  render: () => <WorkflowScreen defaultTab="roles" filters={[{ id: "role", field: "Role ID", value: "8 selected" }]} />,
 };

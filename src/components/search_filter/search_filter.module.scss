@@ -1,0 +1,51 @@
+// SearchFilter — the toolbar row that sits above a list / table.
+//
+//   [ Search ]  [ leading ]  [ count ]  [ Filters  Clear all  (pill)(pill)… ]            [ actions ]
+//
+// Every screen uses this one row; only the optional slots differ (sort dropdown, count text, the buttons at the end).
+// The filters area renders nothing until filters are applied, so the row looks the same with and without filters.
+
+@use "../../styles/text-styles" as ts;
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+.search {
+  flex-shrink: 0;
+}
+
+.leading {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.count {
+  @include ts.label-regular;
+  color: var(--palette-blue-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// FiltersApplied is a stand-alone bar: 8px padding top and bottom, and pills ~37px tall, a little taller than the search box (34px).
+// Negative vertical margins make this area count for less than it really is (the pills just overflow by ~1.5px, invisibly), so ONE line of
+// pills never makes the row taller than it is without filters. Only wrapping onto more lines makes the row grow.
+.filters {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: -10px 0;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
