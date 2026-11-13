@@ -43,6 +43,27 @@ export const TwoOptions: Story = {
   },
 };
 
+// ── Icon-only options ──────────────────────────────────────────────────────────
+// With `icon` an option shows just the icon (the label is its tooltip / accessible name). When every option has one the toggle hugs its content:
+// squares as big as an icon Button (e.g. the note / list view switch of the Role screen's Matches and Shortlist tabs).
+
+export const IconOnly: Story = {
+  name: "Icon only (note / list)",
+  render: () => {
+    const [value, setValue] = useState<string | undefined>("note");
+    return (
+      <Toggle
+        options={[
+          { value: "note", label: "Note view", icon: "note" },
+          { value: "list", label: "List view", icon: "list" },
+        ]}
+        value={value}
+        onChange={setValue}
+      />
+    );
+  },
+};
+
 // ── Three options ──────────────────────────────────────────────────────────────
 
 export const ThreeOptions: Story = {

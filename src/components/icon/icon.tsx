@@ -235,7 +235,7 @@ export type IconName =
   | "car" | "certificate" | "clock" | "close-role" | "collapse" | "compare"
   | "copy" | "cost" | "created" | "department" | "dot" | "dot-big" | "duplicate"
   | "engagement-audit" | "expand" | "expand-all" | "expanded-all"
-  | "export" | "extend" | "face-smile" | "facebook"
+  | "download" | "export" | "extend" | "face-smile" | "facebook"
   | "filter-applied" | "filter2" | "fire" | "flower-spa" | "folder"
   | "ghost" | "head-heart" | "heatmap" | "hierarchical"
   | "hourglass-empty" | "house-laptop" | "house-user"
@@ -392,6 +392,7 @@ const iconMap: Record<IconName, SvgComponent> = {
   "expand": Expand,
   "expand-all": ExpandAll,
   "expanded-all": ExpandedAll,
+  "download": ExportIcon,   // same glyph as "export": an arrow down onto a tray line
   "export": ExportIcon,
   "extend": Extend,
   "face-smile": FaceSmile,

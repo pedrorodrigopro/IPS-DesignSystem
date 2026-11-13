@@ -35,6 +35,13 @@
   pointer-events: none;
 }
 
+// Icon-only options: the field hugs the buttons (squares as big as an icon Button: 16px icon + 8px padding) instead of filling the width
+.field.compact {
+  width: auto;
+
+  .btn { flex: 0 0 auto; }
+}
+
 // ── Label row ──────────────────────────────────────────────────────────────────
 .labelRow {
   display: flex;
@@ -102,6 +109,8 @@
     border-left:   none;
   }
 }
+
+.btn.iconBtn { padding: 8px; }   // icon-only: a square, the same size as an icon Button
 
 // ── Selected state ─────────────────────────────────────────────────────────────
 .btn.selected {

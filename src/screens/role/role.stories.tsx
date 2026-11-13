@@ -29,6 +29,7 @@ import { Avatar }          from "../../components/avatar/avatar";
 import { Icon }            from "../../components/icon/icon";
 import { Button }          from "../../components/button/button";
 import { ButtonGroup }     from "../../components/button_group/button_group";
+import { Toggle }          from "../../components/toggle/toggle";
 import { WorkforceMember } from "../../components/workforce_member/workforce_member";
 import { PillWFState, PillSimple } from "../../components/pill/pill";
 import { SliderNumber }     from "../../components/slider/slider";
@@ -63,11 +64,40 @@ const ROLE_TABS = [
   { id: "history",    label: "History" },
 ];
 
+// Top-right icon-only buttons, in the Header row (PageHeader headerRight)
 const HEADER_ICONS = [
-  "edit", "save", "tag", "share", "manage-roles", "booking", "menu-vertical",
+  "edit", "manage-roles", "owner", "tag", "booking", "share", "menu-vertical",
 ] as const;
-// Readable tooltips for the icon buttons that are not self-explanatory
-const HEADER_ICON_TITLES: Record<string, string> = { "manage-roles": "Manage roles", "booking": "Booking engine", "menu-vertical": "More" };
+const HEADER_ICON_TITLES: Record<string, string> = {
+  "edit": "Edit", "manage-roles": "Manage roles", "owner": "Owner", "tag": "Tag", "booking": "Booking engine", "share": "Share", "menu-vertical": "More",
+};
+
+// Toolbar of the Matches and Shortlist tabs: note / list view toggle (icon-only, note selected), then the icon buttons
+const RESULT_ACTIONS = [
+  { icon: "compare",     title: "Compare" },
+  { icon: "add-profile", title: "Add profile" },
+  { icon: "remove-all",  title: "Remove all" },
+  { icon: "download",    title: "Download" },
+  { icon: "refresh",     title: "Refresh" },
+] as const;
+
+function ResultsActions() {
+  const [view, setView] = useState("note");
+  return (
+    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
+      <Toggle
+        options={[{ value: "note", label: "Note view", icon: "note" }, { value: "list", label: "List view", icon: "list" }]}
+        value={view}
+        onChange={setView}
+      />
+      {RESULT_ACTIONS.map(({ icon, title }) => (
+        <Button key={icon} kind="icon" size="regular" title={title}>
+          <Icon name={icon} size={16} />
+        </Button>
+      ))}
+    </div>
+  );
+}
 
 // ── Typography shortcuts ──────────────────────────────────────────────────────
 
@@ -108,23 +138,22 @@ function RoleShell({ children, activeTab, onTabChange }: {
       <Page navbar={<Navbar activeId="workflow" />} variant="1280">
         <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", paddingBottom: 32 }}>
 
-          {/* Breadcrumbs + H1 + icon actions */}
-          <div>
-            <PageHeader
-              breadcrumbs={breadcrumbs}
-              title="Role: Matches - Ordering"
-              wfState={roleSubtitle.wfState}
-              subtitleItems={roleSubtitle.subtitleItems}
-            />
-            {/* Icon actions overlay — positioned top-right relative to page */}
-            <div style={{ position: "absolute", top: 24, right: 24, display: "flex", gap: 4 }}>
-              {HEADER_ICONS.map(icon => (
-                <Button key={icon} kind="icon" size="regular" title={HEADER_ICON_TITLES[icon] ?? icon}>
-                  <Icon name={icon} size={16} />
-                </Button>
-              ))}
-            </div>
-          </div>
+          {/* Breadcrumbs + H1 + icon actions (the buttons are part of the Header row) */}
+          <PageHeader
+            breadcrumbs={breadcrumbs}
+            title="Role: Matches - Ordering"
+            wfState={roleSubtitle.wfState}
+            subtitleItems={roleSubtitle.subtitleItems}
+            headerRight={
+              <div style={{ display: "flex", gap: 4 }}>
+                {HEADER_ICONS.map(icon => (
+                  <Button key={icon} kind="icon" size="regular" title={HEADER_ICON_TITLES[icon]}>
+                    <Icon name={icon} size={16} />
+                  </Button>
+                ))}
+              </div>
+            }
+          />
 
           {/* Tabs */}
           <Navigation
@@ -426,13 +455,7 @@ function MatchesTab() {
             <Icon name="chevron-down" size={14} />
           </div>
           <span style={{ ...label, marginLeft: 4 }}>1 - {MATCHES.length} of 118 matches</span>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
-            {(["list","menu-horizontal","save","refresh"] as const).map(icon => (
-              <Button key={icon} kind="icon" size="regular" title={HEADER_ICON_TITLES[icon] ?? icon}>
-                <Icon name={icon} size={14} />
-              </Button>
-            ))}
-          </div>
+          <ResultsActions />
         </Row>
         {MATCHES.filter(m => m.name.toLowerCase().includes(search.toLowerCase())).map(m => (
           <Card
@@ -712,35 +735,8 @@ function ShortlistTab() {
           {/* Count */}
           <span style={{ ...label, whiteSpace: "nowrap" }}>{filtered.length} shortlists</span>
 
-          {/* Right actions */}
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
-
-            {/* View toggle — note (selected) and list */}
-            <div style={{ display: "flex", border: "1px solid var(--palette-neutral-0)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-              {([
-                { id: "note", icon: "note",  active: true  },
-                { id: "list", icon: "list",  active: false },
-              ] as { id: string; icon: string; active: boolean }[]).map(({ id, icon, active }) => (
-                <button key={id} title={id} style={{ width: 32, height: 32, border: "none", borderLeft: id !== "note" ? "1px solid var(--palette-neutral-0)" : "none", background: active ? "var(--palette-blue-1)" : "white", color: active ? "white" : "var(--palette-blue-2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                  <Icon name={icon as Parameters<typeof Icon>[0]["name"]} size={14} />
-                </button>
-              ))}
-            </div>
-
-            {/* Icon buttons */}
-            <Button kind="icon" size="regular" title="Compare">
-              <Icon name="compare" size={14} />
-            </Button>
-            <Button kind="icon" size="regular" title="Add profile">
-              <Icon name="add-profile" size={14} />
-            </Button>
-            <Button kind="icon" size="regular" title="Remove all">
-              <Icon name="remove-all" size={14} />
-            </Button>
-            <Button kind="icon" size="regular" title="Refresh">
-              <Icon name="refresh" size={14} />
-            </Button>
-          </div>
+          {/* Right actions: note / list toggle + icon buttons */}
+          <ResultsActions />
         </Row>
 
         {filtered.map(entry => (

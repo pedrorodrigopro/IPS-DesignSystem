@@ -48,16 +48,25 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 }
 
 // ── Header icon buttons (top-right) ───────────────────────────────────────────
+// Passed to PageHeader as `headerRight`, so they sit inside the Header row (same div as the title), icon-only.
 
-const HEADER_ICONS = ["edit", "save", "tag", "calendar", "share", "menu-vertical"] as const;
+const HEADER_ICONS = [
+  { icon: "edit",          title: "Edit" },
+  { icon: "manage-roles",  title: "Manage roles" },
+  { icon: "owner",         title: "Owner" },
+  { icon: "tag",           title: "Tag" },
+  { icon: "booking",       title: "Booking engine" },
+  { icon: "share",         title: "Share" },
+  { icon: "menu-vertical", title: "More" },
+] as const;
 
 function HeaderActions() {
   return (
-    <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 4 }}>
-      {HEADER_ICONS.map(icon => (
-        <button key={icon} style={{ width: 32, height: 32, borderRadius: "var(--radius-md)", border: "1px solid var(--palette-neutral-0)", background: "var(--palette-white-0)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--palette-blue-2)" }}>
+    <div style={{ display: "flex", gap: 4 }}>
+      {HEADER_ICONS.map(({ icon, title }) => (
+        <Button key={icon} kind="icon" size="regular" title={title}>
           <Icon name={icon} size={16} />
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -393,19 +402,17 @@ function EngagementScreen({ engagement, defaultTab = "overview" }: { engagement:
       <Page navbar={<Navbar activeId="workflow" />} variant="1280">
         <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", paddingBottom: 32 }}>
 
-          {/* Page header */}
-          <div style={{ position: "relative" }}>
-            <PageHeader
-              breadcrumbs={[{ label: "Workflow", href: "#" }, { label: `Engagement: ${engagement.title}` }]}
-              title={`Engagement: ${engagement.title}`}
-              subtitleItems={[
-                { label: "ID",      value: engagement.id },
-                { label: "State",   value: engagement.state },
-                { label: "Privacy", value: "Public" },
-              ]}
-            />
-            <HeaderActions />
-          </div>
+          {/* Page header — the icon buttons are part of the Header row (headerRight) */}
+          <PageHeader
+            breadcrumbs={[{ label: "Workflow", href: "#" }, { label: `Engagement: ${engagement.title}` }]}
+            title={`Engagement: ${engagement.title}`}
+            headerRight={<HeaderActions />}
+            subtitleItems={[
+              { label: "ID",      value: engagement.id },
+              { label: "State",   value: engagement.state },
+              { label: "Privacy", value: "Public" },
+            ]}
+          />
 
           {/* Tabs */}
           <Navigation orientation="horizontal" tabs={tabs} activeId={tab} onChange={setTab} />

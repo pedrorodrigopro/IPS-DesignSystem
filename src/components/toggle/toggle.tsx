@@ -25,13 +25,17 @@
 import React, { useState } from "react";
 import classNames from "classnames";
 import { Icon } from "../icon/icon";
+import type { IconName } from "../icon/icon";
 import css from "./toggle.module.scss";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type ToggleOption = {
   value: string;
+  /** Text of the button. With `icon` it becomes the tooltip and the accessible name. */
   label: string;
+  /** Icon-only button: shows this icon instead of the label (when every option has one the toggle hugs its content instead of filling the width) */
+  icon?: IconName;
 };
 
 export type ToggleProps = {
@@ -80,9 +84,10 @@ export function Toggle({
   };
 
   const count = options.length;
+  const iconOnly = count > 0 && options.every(o => o.icon);
 
   return (
-    <div className={classNames(css.field, disabled && css.disabled, className)}>
+    <div className={classNames(css.field, iconOnly && css.compact, disabled && css.disabled, className)}>
       {/* ── Label row ──────────────────────────────────────────────── */}
       {label && (
         <div className={css.labelRow}>
@@ -112,11 +117,14 @@ export function Toggle({
               className={classNames(
                 css.btn,
                 css[position],
-                isSelected ? css.selected : css.unselected
+                isSelected ? css.selected : css.unselected,
+                opt.icon && css.iconBtn
               )}
+              title={opt.icon ? opt.label : undefined}
+              aria-label={opt.icon ? opt.label : undefined}
               onClick={() => handleSelect(opt.value)}
             >
-              {opt.label}
+              {opt.icon ? <Icon name={opt.icon} size={16} /> : opt.label}
             </button>
           );
         })}
