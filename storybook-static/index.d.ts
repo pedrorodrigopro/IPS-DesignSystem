@@ -1154,7 +1154,7 @@ export declare type PillSavedFilterProps = {
     className?: string;
 };
 
-export declare const PillSimple: ({ label, leftIcon, size, bg, color, className, }: PillSimpleProps) => JSX.Element;
+export declare const PillSimple: ({ label, leftIcon, size, bg, color, iconColor, className, }: PillSimpleProps) => JSX.Element;
 
 export declare type PillSimpleProps = {
     label: string;
@@ -1162,6 +1162,7 @@ export declare type PillSimpleProps = {
     size?: PillSize;
     bg?: string;
     color?: string;
+    iconColor?: string;
     className?: string;
 };
 
@@ -1566,6 +1567,30 @@ export declare type SavedFiltersProps = {
     onShare?: (id: string) => void;
     /** Slot for right-side header actions */
     headerRight?: default_2.ReactNode;
+    className?: string;
+};
+
+export declare function SearchFilter({ search, onSearchChange, searchPlaceholder, searchWidth, leading, count, filters, onRemoveFilter, onClearFilters, filtersLabel, actions, className, }: SearchFilterProps): default_2.JSX.Element;
+
+export declare type SearchFilterProps = {
+    /** Search text */
+    search: string;
+    onSearchChange: (value: string) => void;
+    searchPlaceholder?: string;
+    /** Width of the search box. Default 240. */
+    searchWidth?: number | string;
+    /** Content right after the search box, e.g. a sort dropdown */
+    leading?: default_2.ReactNode;
+    /** Count text after the search box, e.g. "874 workforce members" */
+    count?: default_2.ReactNode;
+    /** Applied filters. Empty or undefined: the filters area is not rendered. */
+    filters?: AppliedFilter[];
+    onRemoveFilter?: (id: string) => void;
+    onClearFilters?: () => void;
+    /** Label before "Clear all". Defaults to "Filters". */
+    filtersLabel?: string;
+    /** The buttons at the end of the row (each screen has its own) */
+    actions?: default_2.ReactNode;
     className?: string;
 };
 
