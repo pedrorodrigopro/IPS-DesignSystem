@@ -90,7 +90,11 @@ export function BookingCell({
       <div className={css.spacer} />
 
       {/* Input box */}
-      <div className={classNames(css.input, hovered && !readOnly && !focused && css.inputHovered, focused && css.inputFocused)}>
+      {/* The whole box opens the editor: an empty cell's value span has no size, so it could not be clicked */}
+      <div
+        className={classNames(css.input, hovered && !readOnly && !focused && css.inputHovered, focused && css.inputFocused)}
+        onClick={!readOnly && !editing ? handleFocus : undefined}
+      >
         {editing && !readOnly ? (
           <input
             className={css.inputEl}

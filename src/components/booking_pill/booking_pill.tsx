@@ -10,6 +10,7 @@
 //   role-booked:         rgba(26,175,163,0.8)  / #1AAFA3 2px
 //   role-partial:        rgba(255,255,255,0.4) / #1AAFA3 2px
 //   pending:             rgba(217,220,224,0.8) / #9B5A01 2px dashed 8,8
+//   misaligned:          transparent / orange-3 2px dashed (outline over the weeks whose requested and booked hours differ)
 //   hidden:              rgba(236,236,236,0.8) / none
 //
 // Layout: column, gap -4px, padding 3px 8px (regular) / 0px 8px (small)
@@ -39,6 +40,7 @@ export type BookingPillCategory =
   | "role-booked"
   | "role-partial"
   | "pending"
+  | "misaligned"
   | "hidden"
   | "preview";
 

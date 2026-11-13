@@ -165,8 +165,9 @@ function RollforwardCreatedDemo() {
             date: "Today, 10:45",
             optionItems: [{ id: unseen ? "read" : "unread", label: unseen ? "Mark as read" : "Mark as unread" }],
             onOptionSelect: () => setUnseen(u => !u),
+            filterItems: [{ id: "engagements", label: "Target engagements" }, { id: "roles", label: "Target roles" }],
+            onFilterSelect: id => { setLast(id === "roles" ? "Filter: Target roles" : "Filter: Target engagements"); setUnseen(false); },
             actions: [
-              { label: "Filter target engagements", onClick: () => { setLast("Filter target engagements"); setUnseen(false); } },
               { label: "Manage roles", kind: "primary", onClick: () => { setLast("Manage roles"); setUnseen(false); } },
             ],
           }],
@@ -181,5 +182,5 @@ function RollforwardCreatedDemo() {
 
 export const RollforwardCreated: StoryFn = () => <RollforwardCreatedDemo />;
 RollforwardCreated.parameters = {
-  docs: { description: { story: "A notification with custom `actions` (secondary buttons, primary last), an `optionItems` “Options” menu and `bodyDate` under the message — Figma 2362:258668. The navbar badge follows the unread state." } },
+  docs: { description: { story: "A notification with custom `actions` (secondary buttons, primary last), an `optionItems` “Options” menu, a `filterItems` “Filter” menu (Target engagements / Target roles) and `bodyDate` under the message — Figma 2362:258668. The navbar badge follows the unread state." } },
 };

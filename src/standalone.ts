@@ -25,7 +25,9 @@ export * from "./components";
 
 // Screens that prototypes need to feed with their own data (stories can only be rendered as-is)
 export { ManageRolesScreen, ManageTagsModal, DEFAULT_TAG_OPTIONS, DEFAULT_PEOPLE_OPTIONS } from "./screens/admin/manage_roles";
-export type { ManageRolesScreenProps, ManageRolesGroup, ManageRolesRole, TagRolesResult, TagPrefill } from "./screens/admin/manage_roles";
+export type { ManageRolesScreenProps, ManageRolesGroup, ManageRolesRole, TagRolesResult, TagPrefill, AvailabilityChange } from "./screens/admin/manage_roles";
+export { BookingEngineScreen } from "./screens/booking_engine/booking_engine";
+export type { BookingEngineScreenProps, EngagementEntry, RoleEntry, BookingEntry, GridWeeks, GridCellChange, BookingMisalignment, BookingMisalignmentRange, BookingOverbooking, BookingOverbookingRange } from "./screens/booking_engine/booking_engine";
 
 export { React, createRoot };
 

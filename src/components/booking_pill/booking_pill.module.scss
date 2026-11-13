@@ -137,6 +137,15 @@
   border: 2px dashed #9B5A01;
 }
 
+// misaligned: no fill, 2px dashed orange outline (same shape as every pill: 8px radius). Drawn over the weeks of a profile row
+// whose requested hours and booked hours differ.
+.misaligned {
+  background: transparent;
+  border: 2px dashed var(--palette-orange-3);
+
+  &:hover { filter: none; }
+}
+
 // hidden: rgba(236,236,236,0.8) / no border
 .hidden {
   background: rgba(236, 236, 236, 0.8);

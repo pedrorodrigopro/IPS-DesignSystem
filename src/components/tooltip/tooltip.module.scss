@@ -64,6 +64,17 @@ $min-width:  0;             // bubbles hug their text
   }
 }
 
+// ── Portal mode (Tooltip portal): the bubble is drawn in body inside a fixed box laid over the trigger ──────────────
+.portalAnchor {
+  position: fixed;
+  z-index: 9100;
+  pointer-events: none;
+}
+.bubbleOpen {
+  visibility: visible;
+  opacity: 1;
+}
+
 // ── Helper: centre-align bubble on an axis ─────────────────────────────────────
 // Horizontal centre relative to trigger: left 50%, translateX(-50%)
 // Vertical centre relative to trigger: top 50%, translateY(-50%)

@@ -34,6 +34,7 @@ import { Alert }           from "../../components/alert/alert";
 import { Checkbox }        from "../../components/checkbox/checkbox";
 import { Tooltip }         from "../../components/tooltip/tooltip";
 import { Tile }            from "../../components/tile/tile";
+import { Avatar }          from "../../components/avatar/avatar";
 import { Divider }         from "../../components/divider/divider";
 import { BookingPill }     from "../../components/booking_pill/booking_pill";
 import type { BookingPillCategory } from "../../components/booking_pill/booking_pill";
@@ -180,11 +181,60 @@ function SuggestedWMCell({ role }: { role: RoleRow }) {
   );
 }
 
+// ── Booked workforce member cell — a removable pill: × + avatar + name (neutral-1, fully rounded) ───────────────────────
+
+const BOOKED_W = 240;
+const initialsOf = (name: string) => name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+const BookedUnbookContext = createContext<((role: RoleRow) => void) | undefined>(undefined);
+
+function BookedWMCell({ role }: { role: RoleRow }) {
+  const unbook = useContext(BookedUnbookContext);
+  return (
+    <td style={{ ...tdStyle, padding: "8px", verticalAlign: "top", whiteSpace: "nowrap" }}>
+      {role.booked && (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%", boxSizing: "border-box", padding: "4px 10px 4px 6px", verticalAlign: "middle", borderRadius: "var(--radius-2xl, 32px)", background: "var(--palette-neutral-1)" }}>
+          <button
+            type="button"
+            title={`Remove ${role.booked.name}`}
+            aria-label={`Remove booked workforce member ${role.booked.name}`}
+            onClick={() => unbook?.(role)}
+            style={{ width: 20, height: 20, padding: 0, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-0)", flexShrink: 0 }}
+          >
+            <Icon name="cross" size={16} />
+          </button>
+          <Avatar initials={initialsOf(role.booked.name)} size="small" />
+          <span style={{ ...body, fontWeight: 700, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{role.booked.name}</span>
+          {/* Potential overbooking: the warning sits inside the pill, right after the name */}
+          {role.booked.overbooking && (
+            // portal: the table pane scrolls (overflow), which would cut a normal tooltip off at the cell edge
+            <Tooltip
+              portal
+              placement="up-right"
+              maxWidth={320}
+              content={
+                <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <strong>Potential overbooking</strong>
+                  <span>Weeks affected:</span>
+                  {role.booked.overbooking.weeks.map(w => <span key={w}>{w}</span>)}
+                </span>
+              }
+            >
+              <span aria-label="Potential overbooking" style={{ display: "inline-flex", cursor: "default", flexShrink: 0 }}>
+                <Icon name="warning" size={16} style={{ color: "var(--palette-orange-1)" }} />
+              </span>
+            </Tooltip>
+          )}
+        </span>
+      )}
+    </td>
+  );
+}
+
 // ── Editable hours cell (availability table) — Figma "Input week time rule" 2757:286931 ───────────────────────────────
 // Default: the value, centred. Hover: grey cell (rgba(0,0,0,.04)) with the value in an 8px-radius pill (1px neutral-0 border).
 // Focused (typing): white cell with a 2px navy border (blue-1), the pill turns light blue (primary-3).
 
-function HoursTd({ defaultValue, flag }: { defaultValue?: number; flag?: "error" | "warning" }) {
+function HoursTd({ defaultValue, flag, onChange }: { defaultValue?: number; flag?: "error" | "warning"; onChange?: (hours: number | null) => void }) {
   const [val, setVal] = useState(defaultValue == null ? "" : String(defaultValue));
   const [hover, setHover] = useState(false);
   const [focus, setFocus] = useState(false);
@@ -206,7 +256,7 @@ function HoursTd({ defaultValue, flag }: { defaultValue?: number; flag?: "error"
         value={val}
         inputMode="numeric"
         aria-label="Requested hours"
-        onChange={e => setVal(e.target.value.replace(/\D/g, "").slice(0, 3))}
+        onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 3); setVal(v); onChange?.(v === "" ? null : Number(v)); }}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         style={{
@@ -285,11 +335,17 @@ type RoleRow = {
   availability?: AvailabilityCell[];
   /** Suggested workforce member ("Suggested WM" column of the engagement tables). Missing / null = nobody suggested yet: the cell shows the warning background. */
   suggested?: { name: string; rank?: string } | null;
+  /** Booked workforce member ("Booked WM" column, right after Suggested WM; a confirmed role has one). The column shows as soon as one role of the table carries this field; `null` = nobody booked: empty cell. */
+  booked?: { name: string; /** Potential overbooking: an orange warning icon next to the pill; its tooltip says "Potential overbooking" and lists these weeks */ overbooking?: { weeks: string[] } } | null;
   /** Rank the role asks for: a suggested WM of that rank gets the green check in the Suggest side panel */
   requestedRank?: string;
 };
 
 export type AvailabilityCell = number | { hours: number; flag?: "error" | "warning" } | null;
+
+/** Reported while a requested-hours cell of the availability-rules table is edited (hours = null when the cell is emptied) */
+export type AvailabilityChange = { roleId: string; weekIndex: number; hours: number | null };
+type AvailabilityChangeHandler = (change: AvailabilityChange) => void;
 
 /** Week columns of the availability-rules table (Figma "Manage roles" 2362:258886) */
 export const DEFAULT_AVAILABILITY_WEEKS = [
@@ -362,13 +418,14 @@ function SelectBox({ kind, selection, checked, indeterminate, onChange, header =
   );
 }
 
-function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth }: { roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void }) {
+function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth, onAvailabilityChange }: { roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
   // The merged Engagement column only exists when the roles belong to engagements (not on the template editor)
   const hasEngagement = roles.some(r => r.engagement);
   // What each header checkbox toggles: this table's engagement titles / role ids
+  const showBooked = availability && roles.some(r => r.booked !== undefined);
   const engagementKeys = [...new Set(roles.map(r => r.engagement).filter((e): e is string => !!e))];
   const roleKeys = roles.map(r => r.id);
   const headerState = (kind: SelectKind) => {
@@ -384,6 +441,8 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
     { label: "Workflow state",     mandatory: false, width: 140 },
     // Engagement tables: the workforce member the rollforward suggests (empty = needs attention)
     ...(availability ? [{ label: "Suggested WM", mandatory: false, width: SUGGESTED_W }] : []),
+    // Right next to it: who is booked (roles that are confirmed)
+    ...(showBooked ? [{ label: "Booked WM", mandatory: false, width: BOOKED_W }] : []),
     { label: "Description",        mandatory: true,  width: 180 },
     { label: "# Vacancies",        mandatory: true,  width: 90  },
     { label: "Assignee",           mandatory: false, width: 110 },
@@ -405,7 +464,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
   const rolesTable = (
     <div style={{ overflowX: "auto", ...(availability ? { flex: "1 1 0", minWidth: 0 } : null) }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) + (showBooked ? BOOKED_W : 0) }}>
         <thead>
           <tr style={availability ? { height: HEAD_H } : undefined}>
             {headers.map((h, i) => (
@@ -455,6 +514,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
               )}
               <td style={tdStyle}>{role.wfState && <PillWFState state={role.wfState} />}</td>
               {availability && <SuggestedWMCell role={role} />}
+              {showBooked && <BookedWMCell role={role} />}
               <td style={tdStyle}><EditableTextCell defaultValue={role.description} /></td>
               <td style={tdStyle}><EditableNumberCell defaultValue={role.vacancies} /></td>
               <td style={tdStyle}><InlineSelectCell placeholder="" value={role.assignee} /></td>
@@ -540,7 +600,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
           <Divider type="draggable" isHovered={dragging || hovered} />
         </div>
       </div>
-      <AvailabilityTable roles={roles} weeks={weeks} selection={selection} selectable={selectable} rowActions={rowActions} width={availabilityWidth} />
+      <AvailabilityTable roles={roles} weeks={weeks} selection={selection} selectable={selectable} rowActions={rowActions} width={availabilityWidth} onAvailabilityChange={onAvailabilityChange} />
     </div>
   );
 }
@@ -549,7 +609,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 // A separate table to the right of the roles table; one row per role (same 100px rows), one narrow column per week, the IPS draggable
 // Divider on its left (drag to resize the pane), and the row actions (tick + menu) sticky at its right edge.
 
-function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number }) {
+function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width, onAvailabilityChange }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined } : c);
   return (
     <div style={{ flex: "0 0 auto", width, maxWidth: `calc(100% - ${DIVIDER_W + MIN_LEFT_W}px)`, overflowX: "auto" }}>
@@ -568,7 +628,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
               {weeks.map((w, i) => {
                 const c = norm(role.availability?.[i]);
                 return (
-                  <HoursTd key={w} defaultValue={c?.hours} flag={c?.flag} />
+                  <HoursTd key={w} defaultValue={c?.hours} flag={c?.flag} onChange={hours => onAvailabilityChange?.({ roleId: role.id, weekIndex: i, hours })} />
                 );
               })}
               <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
@@ -584,7 +644,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
 
 // ── Accordion group ───────────────────────────────────────────────────────────
 
-function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags, availability = false, weeks, availabilityWidth, onAvailabilityWidth }: { name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void }) {
+function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags, availability = false, weeks, availabilityWidth, onAvailabilityWidth, onAvailabilityChange }: { name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
@@ -608,7 +668,7 @@ function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", 
       </SB>
 
       {/* Roles table — no extra wrapper, sits directly inside the Tile */}
-      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={onAvailabilityWidth} />}
+      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={onAvailabilityWidth} onAvailabilityChange={onAvailabilityChange} />}
     </Tile>
   );
 }
@@ -815,6 +875,8 @@ export type ManageRolesScreenProps = {
   availability?: boolean;
   /** Week column labels of the availability table (default: six weeks from "5 - 9 Jan 2026") */
   weeks?: string[];
+  /** An hours cell of the availability-rules table was edited (one call per keystroke). The cell keeps its own value; the host decides what to do with it. */
+  onAvailabilityChange?: AvailabilityChangeHandler;
   /** Replaces the default Navbar (e.g. a prototype's navbar with an unread badge) */
   navbar?: React.ReactNode;
   navbarActiveId?: string;
@@ -831,6 +893,8 @@ export type ManageRolesScreenProps = {
   defaultNotify?: string;
   /** Tags already on roles when the screen opens: role id → tag */
   initialTags?: Record<string, string>;
+  /** The × of a Booked WM pill was clicked (the host decides what unbooking means) */
+  onUnbook?: (info: { roleId: string; name: string }) => void;
   /** Candidates of the Suggest side panel (opened by clicking a Suggested WM cell); defaults to a sample list */
   suggestCandidates?: { shortlist?: SuggestCandidate[]; matches?: SuggestCandidate[]; other?: SuggestCandidate[] };
   /** The Suggest side panel's Done: the WMs now suggested for a role */
@@ -846,8 +910,8 @@ export type ManageRolesScreenProps = {
 };
 
 export function ManageRolesScreen({
-  groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks,
-  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged,
+  groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, onAvailabilityChange,
+  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged, onUnbook,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {},
   suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange, tagCommand,
 }: ManageRolesScreenProps) {
@@ -892,7 +956,9 @@ export function ManageRolesScreen({
   const showAvailability = availability ?? selectable;
   const rolesWithSuggestion = groups.flatMap(g => g.roles).filter(r => suggestedFor(r).length > 0).length;
   // Width of the availability pane, shared by every group so dragging one divider resizes them all
-  const [availabilityWidth, setAvailabilityWidth] = useState(DEFAULT_AVAILABILITY_W);
+  // A Booked WM column needs room in the roles table, so the weeks pane opens on two weeks instead of four (drag the divider to widen it)
+  const hasBooked = groups.some(g => g.roles.some(r => r.booked !== undefined));
+  const [availabilityWidth, setAvailabilityWidth] = useState(hasBooked ? WEEK_W * 2 + ACTIONS_W : DEFAULT_AVAILABILITY_W);
 
   // Toggle a set of rows: if every one is already selected they get deselected, otherwise all get selected
   const toggle = (ids: string[], kind: SelectKind) => {
@@ -918,6 +984,7 @@ export function ManageRolesScreen({
   };
 
   return (
+    <BookedUnbookContext.Provider value={onUnbook ? (r => r.booked && onUnbook({ roleId: r.id, name: r.booked.name })) : undefined}>
     <SuggestContext.Provider value={suggestCtx}>
     <div style={{ display: "flex", height: "var(--ips-vh, 100vh)", overflow: "hidden", background: "var(--palette-neutral-2)" }}>
       {navbar ?? <Navbar activeId={navbarActiveId} onSelect={onNavigate} />}
@@ -969,7 +1036,7 @@ export function ManageRolesScreen({
             <div style={{ ...labelCss, margin: header ? "12px 0 16px" : "0 0 16px", flexShrink: 0 }}>{counter}</div>
 
             {groups.map((g, i) => (
-              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} />
+              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} onAvailabilityChange={onAvailabilityChange} />
             ))}
 
             <div style={{ flex: 1, minHeight: 24 }} />
@@ -1014,5 +1081,6 @@ export function ManageRolesScreen({
 
     </div>
     </SuggestContext.Provider>
+    </BookedUnbookContext.Provider>
   );
 }

@@ -80,6 +80,9 @@ export type NotificationItem = {
   /** Entries of the "Options" menu shown before `actions` (the button only appears when this is set) */
   optionItems?:    DropdownItem[];
   onOptionSelect?: (optionId: string) => void;
+  /** Entries of a "Filter" menu (secondary button + chevron-down, same look as "Options") shown after "Options" and before `actions` (the button only appears when this is set) */
+  filterItems?:    DropdownItem[];
+  onFilterSelect?: (filterId: string) => void;
 };
 
 export type NotificationAction = {
@@ -278,6 +281,7 @@ function FiltersBlock({ filters, filterCount, onClear }: {
 function NotificationItemRow({ item }: { item: NotificationItem }) {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   return (
     <div
@@ -360,6 +364,21 @@ function NotificationItemRow({ item }: { item: NotificationItem }) {
                     <div style={{ position: "fixed", inset: 0, zIndex: 10 }} onClick={() => setMenuOpen(false)} />
                     <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 11, marginTop: 4, minWidth: 160 }}>
                       <DropdownActions items={item.optionItems} onSelect={id => { setMenuOpen(false); item.onOptionSelect?.(id); }} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {item.filterItems && (
+              <div style={{ position: "relative" }}>
+                <Button kind="secondary" size="small" onClick={() => setFilterOpen(o => !o)}>
+                  Filter <Icon name="chevron-down" size={14} />
+                </Button>
+                {filterOpen && (
+                  <>
+                    <div style={{ position: "fixed", inset: 0, zIndex: 10 }} onClick={() => setFilterOpen(false)} />
+                    <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 11, marginTop: 4, minWidth: 160 }}>
+                      <DropdownActions items={item.filterItems} onSelect={id => { setFilterOpen(false); item.onFilterSelect?.(id); }} />
                     </div>
                   </>
                 )}

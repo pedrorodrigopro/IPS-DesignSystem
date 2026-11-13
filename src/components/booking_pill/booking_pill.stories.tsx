@@ -21,7 +21,7 @@ const meta: Meta<typeof BookingPill> = {
         "booking-blue", "booking-red", "booking-purple",
         "engagement-booked", "engagement-partial",
         "role-booked", "role-partial",
-        "pending", "hidden", "preview",
+        "pending", "misaligned", "hidden", "preview",
       ],
     },
     size: { control: "select", options: ["regular", "small"] },
@@ -42,6 +42,7 @@ const ALL_CATEGORIES: { category: BookingPillCategory; label: string; hours?: st
   { category: "role-booked",        label: "Senior Auditor",                  hours: "Requested 120h" },
   { category: "role-partial",       label: "Risk Analyst",                    hours: "Requested 80h" },
   { category: "pending",            label: "Pending booking",                 hours: "40h" },
+  { category: "misaligned",         label: "" },
   { category: "preview",            label: "Tech Lead (reassigned)",          hours: "48h" },
   { category: "hidden",             label: "" },
 ];

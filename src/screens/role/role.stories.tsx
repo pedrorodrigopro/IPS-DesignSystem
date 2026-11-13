@@ -64,8 +64,10 @@ const ROLE_TABS = [
 ];
 
 const HEADER_ICONS = [
-  "edit", "save", "tag", "share", "menu-vertical",
+  "edit", "save", "tag", "share", "manage-roles", "booking", "menu-vertical",
 ] as const;
+// Readable tooltips for the icon buttons that are not self-explanatory
+const HEADER_ICON_TITLES: Record<string, string> = { "manage-roles": "Manage roles", "booking": "Booking engine", "menu-vertical": "More" };
 
 // ── Typography shortcuts ──────────────────────────────────────────────────────
 
@@ -117,7 +119,7 @@ function RoleShell({ children, activeTab, onTabChange }: {
             {/* Icon actions overlay — positioned top-right relative to page */}
             <div style={{ position: "absolute", top: 24, right: 24, display: "flex", gap: 4 }}>
               {HEADER_ICONS.map(icon => (
-                <Button key={icon} kind="icon" size="regular" title={icon}>
+                <Button key={icon} kind="icon" size="regular" title={HEADER_ICON_TITLES[icon] ?? icon}>
                   <Icon name={icon} size={16} />
                 </Button>
               ))}
@@ -426,7 +428,7 @@ function MatchesTab() {
           <span style={{ ...label, marginLeft: 4 }}>1 - {MATCHES.length} of 118 matches</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
             {(["list","menu-horizontal","save","refresh"] as const).map(icon => (
-              <Button key={icon} kind="icon" size="regular" title={icon}>
+              <Button key={icon} kind="icon" size="regular" title={HEADER_ICON_TITLES[icon] ?? icon}>
                 <Icon name={icon} size={14} />
               </Button>
             ))}
