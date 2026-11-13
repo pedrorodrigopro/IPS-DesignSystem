@@ -1,0 +1,24 @@
+import{j as e}from"./jsx-runtime-D_zvdyIk.js";import{P as r}from"./profiles_directory-Cvx2YflQ.js";import"./index-DhMLlvMY.js";import"./_commonjsHelpers-CqkleIqs.js";import"./navbar-BPKVQzl8.js";import"./index-Dd5QUkq_.js";import"./avatar-DzCkQh3P.js";import"./icon-v-ZctF2y.js";import"./tile-DxGAws7a.js";import"./button-CreEIUG8.js";import"./checkbox-Dd9w011Z.js";import"./alert-J8G0QdH-.js";import"./cv_studio-CVWwmmxM.js";import"./layout-DR1-_U9c.js";import"./header-BF0ryUYE.js";import"./navigation-LAMgMzd1.js";import"./button_group-CaZ6FzT3.js";import"./index-2UU9FgV2.js";import"./index-D7lG0nq1.js";import"./actions-B1Wf2eIL.js";import"./tooltip-CfgRuyaf.js";import"./divider-CKitOyrn.js";import"./input-Dap90cT3.js";import"./loading-CDoiP5Xh.js";import"./dropdown-DAkVyk4L.js";import"./pp_bubble-DOPJhvqj.js";import"./pp_chat_input-DUtPaZwa.js";import"./pp_suggestion_card-CycbDmzC.js";import"./pp_preview_banner-C1TPj0CD.js";import"./skill-CBW85QGe.js";import"./search_filter-ZU3WK9nr.js";import"./filters_applied-BXkoqCzI.js";import"./pagination-BUWtJv1M.js";const re={title:"Screens/ProfilesDirectory",parameters:{layout:"fullscreen",viewport:{defaultViewport:"screen1440"},docs:{description:{component:"Profiles Directory — 4 variants. Cards: Tile interactive content per profile row, Avatar + name link + skill dots (SkillProfile) + highlighted skill/bio text. Every card and table row has Shortlist (primary) with a secondary “Open CV” under it (Figma CV row 163:49477): in this story it opens CV Studio for that person and Close comes back; inside Screens/MyProfile it goes through the CV flow, and clicking a profile opens its profile with the pending-updates review. Table: Tile highlight content, custom expandable rows — collapsed shows name/counts/Shortlist, expanded shows Skills/Bio/Positions/skill dots on neutral-2 bg. Table: tick profiles (or the header checkbox) and a 600px bulk banner appears horizontally centred in the title row (the row keeps its height) — “Export CV (N)” opens CV Studio for the N selected profiles, Close returns here; ESC or the banner’s cross clears the selection. Profile names use blue-0. Search highlights query matches in yellow. Toolbar has cards/table toggle using primary/icon Button kinds."}}}},i={name:"Cards",render:()=>e.jsx(r,{initialSearch:"",initialView:"cards",initialSort:"Profile name"})},t={name:"Table",render:()=>e.jsx(r,{initialSearch:"",initialView:"table",initialSort:"Profile name"})},a={name:"Searching — Cards",render:()=>e.jsx(r,{initialSearch:"project management",initialView:"cards",initialSort:"Most relevant"})},o={name:"Searching — Table",render:()=>e.jsx(r,{initialSearch:"project management",initialView:"table",initialSort:"Most relevant"})},n={name:"Filters applied",render:()=>e.jsx(r,{initialSearch:"",initialView:"cards",initialSort:"Profile name",initialFilters:[{id:"loc",field:"Location",value:"London"},{id:"skill",field:"Skill",value:"Project management"}]})};var s,l,c;i.parameters={...i.parameters,docs:{...(s=i.parameters)==null?void 0:s.docs,source:{originalSource:`{
+  name: "Cards",
+  render: () => <ProfilesDirectoryScreen initialSearch="" initialView="cards" initialSort="Profile name" />
+}`,...(c=(l=i.parameters)==null?void 0:l.docs)==null?void 0:c.source}}};var m,p,d;t.parameters={...t.parameters,docs:{...(m=t.parameters)==null?void 0:m.docs,source:{originalSource:`{
+  name: "Table",
+  render: () => <ProfilesDirectoryScreen initialSearch="" initialView="table" initialSort="Profile name" />
+}`,...(d=(p=t.parameters)==null?void 0:p.docs)==null?void 0:d.source}}};var h,S,u;a.parameters={...a.parameters,docs:{...(h=a.parameters)==null?void 0:h.docs,source:{originalSource:`{
+  name: "Searching — Cards",
+  render: () => <ProfilesDirectoryScreen initialSearch="project management" initialView="cards" initialSort="Most relevant" />
+}`,...(u=(S=a.parameters)==null?void 0:S.docs)==null?void 0:u.source}}};var g,f,w;o.parameters={...o.parameters,docs:{...(g=o.parameters)==null?void 0:g.docs,source:{originalSource:`{
+  name: "Searching — Table",
+  render: () => <ProfilesDirectoryScreen initialSearch="project management" initialView="table" initialSort="Most relevant" />
+}`,...(w=(f=o.parameters)==null?void 0:f.docs)==null?void 0:w.source}}};var b,P,V;n.parameters={...n.parameters,docs:{...(b=n.parameters)==null?void 0:b.docs,source:{originalSource:`{
+  name: "Filters applied",
+  render: () => <ProfilesDirectoryScreen initialSearch="" initialView="cards" initialSort="Profile name" initialFilters={[{
+    id: "loc",
+    field: "Location",
+    value: "London"
+  }, {
+    id: "skill",
+    field: "Skill",
+    value: "Project management"
+  }]} />
+}`,...(V=(P=n.parameters)==null?void 0:P.docs)==null?void 0:V.source}}};const ie=["Cards","TableView","SearchingCards","SearchingTable","FiltersApplied"];export{i as Cards,n as FiltersApplied,a as SearchingCards,o as SearchingTable,t as TableView,ie as __namedExportsOrder,re as default};
