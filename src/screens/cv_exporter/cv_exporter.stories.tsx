@@ -20,7 +20,7 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          "CV Exporter — preview, edit and export CVs. Three variants: Creating version (one CV, read-only Version field, Close | Save, Export), " +
+          "CV Exporter — preview, edit and export CVs. Three variants: Creating version (one CV, “Data source” select instead of Version, Close | Save, Export), " +
           "Exporting version (one CV, Cancel | Save as a split button whose menu offers “Save to new CV Version”, Export) and Multi exporting (several CVs, no Save); the left module has two tabs " +
           "(ProPilot, Edit fields) under a Translate tile that goes through four states (pick a language, Translate now, progress, Reset). " +
           "Uses Page variant=\"fluid\", Header, InputInline selectors, Tile, Navigation, Input / InputTextarea, PPChatInput, " +
@@ -36,7 +36,7 @@ type Story = StoryObj;
 
 export const CreatingVersion: Story = {
   name: "Creating version",
-  parameters: { docs: { description: { story: "One CV while a new CV version is being created. The Version field is read-only (no chevron, stroke or hover); the footer has a regular Save: Close | Save, Export. Left module in Edit fields mode." } } },
+  parameters: { docs: { description: { story: "One CV while a new CV version is being created. Instead of Version the toolbar has a “Data source” select (Profile fields or an existing CV version: what the new version starts from); the footer has a regular Save: Close | Save, Export. Save opens the “Create CV version” modal. Left module in Edit fields mode." } } },
   render: () => <CVExporterScreen variant="creating-version" cvs={[ZARA]} initialMode="edit" />,
 };
 

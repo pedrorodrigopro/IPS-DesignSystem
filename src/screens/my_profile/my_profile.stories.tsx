@@ -29,7 +29,8 @@ import { Header }                    from "../../components/header/header";
 import { CVExporterScreen, ZARA }      from "../cv_exporter/cv_exporter";
 import type { CV }                   from "../cv_exporter/cv_exporter";
 import cvPhoto                       from "../cv_exporter/assets/cv-photo.jpg";
-import { CVVersionsScreen, INITIAL_CV_VERSIONS } from "../cv_versions/cv_versions";
+import { CVVersionsScreen, INITIAL_CV_VERSIONS, newCVVersion } from "../cv_versions/cv_versions";
+import type { NewVersionInfo } from "../cv_versions/create_version_modal";
 import type { CVVersion }        from "../cv_versions/cv_versions";
 import { ProfilesDirectoryScreen }   from "../profiles_directory/profiles_directory";
 import type { ProfileEntry }         from "../profiles_directory/profiles_directory";
@@ -62,14 +63,17 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Profile ⇄ CV Exporter ⇄ CV Versions (Figma: Export CV revamp)
-//   "Open main CV"      → CV Exporter            (Close → profile)
+//   "Open main CV"      → CV Exporter, Exporting version   (Cancel → profile)
 //   "See all versions"  → CV Versions          (breadcrumb → profile)
-//   CV Versions: "Create CV version" / edit icon → CV Exporter   (Close → CV Versions)
-//   Create CV version  → modal (name, description) → adds the version → CV Exporter
+//   CV Versions: edit icon (an existing version) → CV Exporter, Exporting version   (Cancel → CV Versions)
+//   CV Versions: "Create CV version" → CV Exporter, Creating version (a "Data source" select instead of Version, Close → CV Versions). Save opens the
+//                         "Create CV version" modal (name, description) at the end of the process; Create adds the card and returns to CV Versions
+//                         (the Exporting version's "Save to new CV Version" does the same)
 //   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Exporter
-//                         with every selected CV (Close → directory). Navbar profile item → back to My Profile
+//                         with every selected CV, Multi exporting (no Save; Close → directory). Navbar profile item → back to My Profile
 type CVView = "profile" | "studio" | "versions" | "directory";
 type StudioFrom = "profile" | "versions" | "directory";
+const NEW_VERSION_ID = "__new";      // the draft CV of a version being created (Creating version)
 
 /** Whose profile is open. Zara Bond is the default (and keeps her photo); the others come from the directory. */
 type Person = { name: string; jobTitle: string };
@@ -87,6 +91,7 @@ function useCVFlow() {
   const [studioFrom, setStudioFrom] = useState<StudioFrom>("profile");
   const [versions, setVersions] = useState<CVVersion[]>(INITIAL_CV_VERSIONS);
   const [studioVersion, setStudioVersion] = useState(INITIAL_CV_VERSIONS[0].id);
+  const [studioCreating, setStudioCreating] = useState(false);
   const [person, setPerson] = useState<Person>(ZARA_PERSON);
   // Per-version CVs (a version without an entry shows the person's base CV) and the profile edits still to review
   const [cvs, setCvs] = useState<Record<string, CV>>({});
@@ -106,8 +111,18 @@ function useCVFlow() {
     Object.fromEntries(Object.entries(pb).map(([vid, list]) => [vid, versionId === "all" || vid === versionId ? list.filter(c => c.id !== id) : list]));
 
   return {
-    view, versions, setVersions, person, base, cvs, cvOf, pending, pendingVersions, studioVersion,
-    openStudio: (from: StudioFrom, versionId: string = versions[0].id) => { setStudioFrom(from); setStudioVersion(versionId); setView("studio"); },
+    view, versions, setVersions, person, base, cvs, cvOf, pending, pendingVersions, studioVersion, studioCreating,
+    openStudio: (from: StudioFrom, versionId: string = versions[0].id) => { setStudioFrom(from); setStudioVersion(versionId); setStudioCreating(false); setView("studio"); },
+    /** "Create CV version": the exporter opens as Creating version, on a draft CV (the person's base CV) */
+    startCreating: () => { setStudioFrom("versions"); setStudioVersion(NEW_VERSION_ID); setStudioCreating(true); setCvs(cs => { const { [NEW_VERSION_ID]: _d, ...rest } = cs; return rest; }); setView("studio"); },
+    /** The modal at the end of the process: the new card gets the CV as edited so far, and CV Versions shows it */
+    createVersion: (info: NewVersionInfo, fromId: string) => {
+      const v = newCVVersion(info);
+      setVersions(vs => [...vs, v]);
+      setCvs(cs => ({ ...cs, [v.id]: cs[fromId] ?? base }));
+      setStudioCreating(false);
+      setView("versions");
+    },
     openVersions: () => setView("versions"),
     openDirectory: () => setView("directory"),
     toProfile: () => setView("profile"),
@@ -115,7 +130,7 @@ function useCVFlow() {
     /** A card / name in the directory */
     openProfileFor: (p: ProfileEntry) => { seed(personOf(p)); setView("profile"); },
     /** "Open CV" in the directory → the main CV (first version) in CV Exporter; Close returns to the directory */
-    openCVFor: (p: ProfileEntry) => { seed(personOf(p)); setStudioFrom("directory"); setStudioVersion(versions[0].id); setView("studio"); },
+    openCVFor: (p: ProfileEntry) => { seed(personOf(p)); setStudioFrom("directory"); setStudioVersion(versions[0].id); setStudioCreating(false); setView("studio"); },
     /** CV Exporter reports the CV the user is editing */
     setCV: (versionId: string, cv: CV) => setCvs(cs => ({ ...cs, [versionId]: cv })),
     /** Alert on Profile / CV Versions: write every pending edit into every version, or drop them */
@@ -168,7 +183,12 @@ function CVFlowView({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
     return (
       <CVExporterScreen
         key={vid}
+        variant={flow.studioCreating ? "creating-version" : "exporting-version"}
         cvs={[flow.cvOf(vid)]}
+        versions={flow.versions.map(v => ({ id: v.id, label: v.name }))}
+        initialVersionId={flow.studioCreating ? undefined : vid}
+        dataSources={[{ id: "profile", label: "Profile fields", cv: flow.base }, ...flow.versions.map(v => ({ id: v.id, label: v.name, cv: flow.cvOf(v.id) }))]}
+        onCreateVersion={info => flow.createVersion(info, vid)}
         onClose={flow.closeStudio}
         onNavigate={navbarHandler(flow)}
         onCVChange={(_, cv) => flow.setCV(vid, cv)}
@@ -193,7 +213,7 @@ function CVFlowView({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
       versions={flow.versions}
       onVersionsChange={flow.setVersions}
       onBack={flow.toProfile}
-      onCreate={v => flow.openStudio("versions", v.id)}
+      onCreateStart={flow.startCreating}
       onEdit={v => flow.openStudio("versions", v.id)}
       onNavigate={navbarHandler(flow)}
     />

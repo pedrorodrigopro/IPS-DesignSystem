@@ -18,9 +18,10 @@ import { Tile }         from "../../components/tile/tile";
 import { PageHeader }   from "../../components/page_header/page_header";
 import { Button }       from "../../components/button/button";
 import { Icon }         from "../../components/icon/icon";
-import { Input, InputSearch, InputTextarea } from "../../components/input/input";
+import { InputSearch } from "../../components/input/input";
 import { Alert }        from "../../components/alert/alert";
-import { Modal }        from "../../components/modal/modal";
+import { CreateVersionModal } from "./create_version_modal";
+import type { NewVersionInfo } from "./create_version_modal";
 import { Switch }       from "../../components/switch/switch";
 
 import { CVPreview, SelectMenu, ZARA } from "../cv_exporter/cv_exporter";
@@ -48,6 +49,18 @@ export const INITIAL_CV_VERSIONS: CVVersion[] = [
   { id: "es-banking", name: "Spanish, banking",        description: "Spanish-speaking banking professionals",                   template: "Default", language: "Spanish", editedBy: "John D.", editedAt: "Aug 28, 2026", active: false },
   { id: "es-pm",      name: "Spanish, project manager", description: "Spanish-speaking tailored for project manager roles",      template: "Default", language: "Spanish", editedBy: "John D.", editedAt: "Aug 28, 2026", active: false },
 ];
+
+/** A new card for a version just created (name and description from the "Create CV version" modal) */
+export const newCVVersion = ({ name, description }: NewVersionInfo): CVVersion => ({
+  id: `v-${Date.now()}`,
+  name,
+  description,
+  template: "Default",
+  language: "English",
+  editedBy: "John D.",
+  editedAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+  active: false,
+});
 
 const SORT_OPTIONS = [
   { id: "name",   label: "By name" },
@@ -141,6 +154,7 @@ export function CVVersionsScreen({
   onVersionsChange,
   onBack,
   onCreate,
+  onCreateStart,
   onEdit,
   onNavigate,
   pending,
@@ -165,6 +179,8 @@ export function CVVersionsScreen({
   onBack?: () => void;
   /** A version was created in the "Create CV version" modal (it is already added to the list) */
   onCreate?: (version: CVVersion) => void;
+  /** "Create CV version" was clicked. When given, the screen does not open its own modal: the host starts the creation (e.g. CV Exporter, variant "creating-version", which asks for the name at the end). */
+  onCreateStart?: () => void;
   /** Edit icon on a card */
   onEdit?: (version: CVVersion) => void;
   /** Navbar item clicked (e.g. "profiles") */
@@ -179,24 +195,12 @@ export function CVVersionsScreen({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("name");
 
-  // "Create CV version" modal
+  // "Create CV version" modal (used when the host gives no onCreateStart)
   const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const closeModal = () => { setCreating(false); setNewName(""); setNewDescription(""); };
-  const create = () => {
-    const version: CVVersion = {
-      id: `v-${Date.now()}`,
-      name: newName.trim(),
-      description: newDescription.trim(),
-      template: "Default",
-      language: "English",
-      editedBy: "John D.",
-      editedAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      active: false,
-    };
+  const create = (info: NewVersionInfo) => {
+    const version = newCVVersion(info);
     setVersions(vs => [...vs, version]);
-    closeModal();
+    setCreating(false);
     onCreate?.(version);
   };
 
@@ -214,7 +218,7 @@ export function CVVersionsScreen({
           <PageHeader
             breadcrumbs={[{ label: `Profile: ${personName}`, onClick: onBack }, { label: "CV Versions" }]}
             title="CV Versions"
-            actions={[{ label: "Create CV version", variant: "primary", onClick: () => setCreating(true) }]}
+            actions={[{ label: "Create CV version", variant: "primary", onClick: () => (onCreateStart ? onCreateStart() : setCreating(true)) }]}
           />
 
           {/* Pending profile edits — Figma 886:40981 */}
@@ -264,17 +268,7 @@ export function CVVersionsScreen({
       </Page>
 
       {/* Create CV version — Figma Export CV revamp, "Create CV version" modal */}
-      <Modal
-        open={creating}
-        onClose={closeModal}
-        title="Create CV version"
-        width={512}
-        leftActions={[{ label: "Cancel", variant: "secondary", onClick: closeModal }]}
-        rightActions={[{ label: "Create", variant: "primary", disabled: !newName.trim(), onClick: create }]}
-      >
-        <Input label="Name" value={newName} onChange={e => setNewName(e.target.value)} />
-        <InputTextarea label="Description" rows={4} value={newDescription} onChange={e => setNewDescription(e.target.value)} />
-      </Modal>
+      <CreateVersionModal open={creating} onClose={() => setCreating(false)} onCreate={create} />
     </div>
   );
 }

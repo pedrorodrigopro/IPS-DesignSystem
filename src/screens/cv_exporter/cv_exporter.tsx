@@ -15,9 +15,12 @@
 //                   exporting-version  Cancel | Save (split ButtonGroup: chevron opens "Save to new CV Version" above it), Export
 //                   multi-exporting    Close | split button "Export (3)" (chevron opens "Export current")
 //
-// Variants: "creating-version" (one CV; the Version field is read-only: the version being created), "exporting-version" (one CV, the
+// Variants: "creating-version" (one CV; instead of Version the toolbar has a "Data source" select: Profile fields or an existing CV version),
+// "exporting-version" (one CV, the
 // Version field picks the version to export), "multi-exporting" (several CVs: "3 CVs" title, pager, no Save). Default: one CV =
 // exporting-version, several = multi-exporting.
+// Creating a version: Save (creating-version) or "Save to new CV Version" (exporting-version) opens the "Create CV version" modal (name,
+// description) at the end of the process and reports it through onCreateVersion.
 //
 // Both columns are taller than the visible area by 24px so the footer clips them, as in Figma.
 
@@ -42,6 +45,8 @@ import { PPBubble }        from "../../components/pp_bubble/pp_bubble";
 import { PPChatInput }     from "../../components/pp_chat_input/pp_chat_input";
 import { PPSuggestionCard } from "../../components/pp_suggestion_card/pp_suggestion_card";
 import type { PPSuggestionCardState } from "../../components/pp_suggestion_card/pp_suggestion_card";
+import { CreateVersionModal } from "../cv_versions/create_version_modal";
+import type { NewVersionInfo } from "../cv_versions/create_version_modal";
 import { PPPreviewBanner } from "../../components/pp_preview_banner/pp_preview_banner";
 import { SkillProfile }    from "../../components/skill/skill";
 import { applyChange, summarize } from "../cv_review/cv_review";
@@ -140,6 +145,7 @@ const TEMPLATES: DropdownItem[] = [
   { id: "PF_template_3", label: "PF_template_3", subLabel: "English" },
   { id: "PF_template_4", label: "PF_template_4", subLabel: "Spanish" },
 ];
+const DATA_SOURCES = [{ id: "profile", label: "Profile fields" }, { id: "V1, English Banking", label: "V1, English Banking" }, { id: "V2, English Consulting", label: "V2, English Consulting" }];
 const VERSIONS    = [{ id: "V1, English Banking", label: "V1, English Banking" }, { id: "V2, English Consulting", label: "V2, English Consulting" }];
 const TRANSLATE   = ["Dutch", "English", "Finnish", "French", "German", "Spanish"].map(l => ({ id: l, label: l }));
 
@@ -544,12 +550,20 @@ function LeftModule({
 export type CVExporterVariant = "creating-version" | "exporting-version" | "multi-exporting";
 
 export function CVExporterScreen({
-  cvs, variant, initialMode = "edit", onClose, onNavigate, review, onCVChange,
+  cvs, variant, versions = VERSIONS, initialVersionId, dataSources = DATA_SOURCES, initialMode = "edit", onClose, onNavigate, review, onCVChange, onCreateVersion,
 }: {
   cvs: CV[];
   /** Which export this is (see the header notes). Default: "multi-exporting" for several CVs, otherwise "exporting-version". */
   variant?: CVExporterVariant;
+  /** Versions of the Version field (id + label). Default: two sample versions. */
+  versions?: DropdownItem[];
+  /** The version shown first (default: the first of `versions`) */
+  initialVersionId?: string;
+  /** Creating version: what the new version starts from, as the "Data source" select (default: Profile fields + the sample versions). Giving a `cv` makes the CV shown switch to it. */
+  dataSources?: (DropdownItem & { cv?: CV })[];
   initialMode?: Mode; onClose?: () => void; onNavigate?: (navbarId: string) => void;
+  /** The name and description asked by the "Create CV version" modal, which opens at the end of the process: Save (creating-version) or "Save to new CV Version" (exporting-version) */
+  onCreateVersion?: (info: NewVersionInfo) => void;
   /** Pending profile edits to review for the CV shown (alert + Before / After boxes) */
   review?: StudioReview;
   /** Called with the CV at `index` whenever the user's edits (typing, Use new, Push all, ProPilot Apply) change it */
@@ -563,7 +577,11 @@ export function CVExporterScreen({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [fileType, setFileType] = useState(FILE_TYPES[0].id);
   const [template, setTemplate] = useState(TEMPLATES[0].id);
-  const [version, setVersion] = useState(VERSIONS[0].id);
+  const [version, setVersion] = useState(initialVersionId ?? versions[0]?.id ?? "");
+  const versionLabel = versions.find(v => v.id === version)?.label ?? version;
+  const [source, setSource] = useState(dataSources[0]?.id ?? "");
+  const sourceLabel = dataSources.find(d => d.id === source)?.label ?? source;
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => { setMode(initialMode); }, [initialMode]);
 
@@ -640,7 +658,7 @@ export function CVExporterScreen({
           <div style={{ padding: "0 24px" }}>
             <Header
               size="page"
-              title={multi ? `${cvs.length} CVs` : cv.name}
+              title={multi ? `${cvs.length} ${cvs.length === 1 ? "CV" : "CVs"}` : cv.name}
               subtitle={names}
               rightContent={
                 <div style={{ display: "flex", gap: 10 }}>
@@ -699,11 +717,18 @@ export function CVExporterScreen({
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {creating ? (
-                    // the version being created: nothing to pick, so a plain "Version: value" (no chevron, stroke or hover)
-                    <InputInline inlineLabel="Version" value={version} readOnly />
+                    // the version being created has no name yet: what it starts from is picked instead (the name is asked at the end)
+                    <SelectMenu items={dataSources} selectedId={source} align="right"
+                      onSelect={id => {
+                        setSource(id);
+                        const cvOfSource = dataSources.find(d => d.id === id)?.cv;
+                        if (cvOfSource) setData(d => d.map((c, i) => (i === index ? cvOfSource : c)));
+                      }}>
+                      {toggle => <InputInline inlineLabel="Data source" value={sourceLabel} onClick={toggle} />}
+                    </SelectMenu>
                   ) : (
-                    <SelectMenu items={VERSIONS} selectedId={version} onSelect={setVersion} align="right">
-                      {toggle => <InputInline inlineLabel="Version" value={version} onClick={toggle} />}
+                    <SelectMenu items={versions} selectedId={version} onSelect={setVersion} align="right">
+                      {toggle => <InputInline inlineLabel="Version" value={versionLabel} onClick={toggle} />}
                     </SelectMenu>
                   )}
                 </div>
@@ -719,13 +744,13 @@ export function CVExporterScreen({
           <Actions
             variant="sticky-panel"
             leftActions={[{ label: kind === "exporting-version" ? "Cancel" : "Close", variant: "secondary", onClick: onClose }]}
-            rightActions={creating ? [{ label: "Save", variant: "secondary" }, { label: "Export", variant: "primary" }] : []}
+            rightActions={creating ? [{ label: "Save", variant: "secondary", onClick: () => setCreateOpen(true) }, { label: "Export", variant: "primary" }] : []}
             rightContent={
               multi ? (
                 <SplitButton label={`Export (${cvs.length})`} variant="primary" items={[{ id: "export-current", label: "Export current" }]} />
               ) : !creating ? (
                 <>
-                  <SplitButton label="Save" variant="secondary" items={[{ id: "save-new-version", label: "Save to new CV Version" }]} />
+                  <SplitButton label="Save" variant="secondary" items={[{ id: "save-new-version", label: "Save to new CV Version" }]} onSelect={() => setCreateOpen(true)} />
                   <Button kind="primary" size="regular">Export</Button>
                 </>
               ) : undefined
@@ -733,6 +758,9 @@ export function CVExporterScreen({
           />
         </div>
       </Page>
+
+      {/* The name of the new version is asked at the end of the process, once Save (or "Save to new CV Version") is hit */}
+      <CreateVersionModal open={createOpen} onClose={() => setCreateOpen(false)} onCreate={info => { setCreateOpen(false); onCreateVersion?.(info); }} />
     </div>
   );
 }

@@ -628,11 +628,11 @@ export function ProfilesDirectoryScreen({
   });
   const openCV = (p: ProfileEntry) => (onOpenCV ? onOpenCV(p) : setOpenedCV(p));
   if (openedCV) {
-    return <CVExporterScreen cvs={[cvOf(openedCV)]} onClose={() => setOpenedCV(null)} onNavigate={id => { if (id === "profiles") setOpenedCV(null); else onNavigate?.(id); }} />;
+    return <CVExporterScreen variant="exporting-version" cvs={[cvOf(openedCV)]} onClose={() => setOpenedCV(null)} onNavigate={id => { if (id === "profiles") setOpenedCV(null); else onNavigate?.(id); }} />;
   }
   if (exporting && selected.length > 0) {
     const cvs = selected.map(cvOf);
-    return <CVExporterScreen cvs={cvs} onClose={() => setExporting(false)} onNavigate={id => { if (id === "profiles") setExporting(false); else onNavigate?.(id); }} />;
+    return <CVExporterScreen variant="multi-exporting" cvs={cvs} onClose={() => setExporting(false)} onNavigate={id => { if (id === "profiles") setExporting(false); else onNavigate?.(id); }} />;
   }
 
   return (
