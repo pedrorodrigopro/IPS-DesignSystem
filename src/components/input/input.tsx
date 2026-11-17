@@ -366,6 +366,8 @@ export type InputInlineProps = {
   inlineLabel?: string;
   value?: string;
   mandatory?: boolean;
+  /** Icon at the right of the field. Defaults to the chevron; use "sort" for a sort-by select. */
+  rightIcon?: IconName;
   onClick?: () => void;
   className?: string;
 };
@@ -374,6 +376,7 @@ export const InputInline = ({
   inlineLabel,
   value,
   mandatory = false,
+  rightIcon = "chevron-down",
   onClick,
   className,
 }: InputInlineProps) => (
@@ -384,7 +387,7 @@ export const InputInline = ({
         <span className={css.inlineValue}>{value}</span>
         {mandatory && <MandatoryIcon />}
       </span>
-      <Icon name="chevron-down" size={16} className={css.icon} />
+      <Icon name={rightIcon} size={16} className={css.icon} />
     </button>
   </div>
 );

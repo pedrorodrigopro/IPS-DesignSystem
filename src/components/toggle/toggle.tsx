@@ -49,6 +49,8 @@ export type ToggleProps = {
   mandatory?: boolean;
   /** Disabled state — no interaction possible */
   disabled?: boolean;
+  /** "horizontal" (default): buttons side by side. "vertical": buttons stacked, one above the other (e.g. to line up with two rows of values). */
+  orientation?: "horizontal" | "vertical";
   className?: string;
 };
 
@@ -68,6 +70,7 @@ export function Toggle({
   label,
   mandatory = false,
   disabled = false,
+  orientation = "horizontal",
   className,
 }: ToggleProps) {
   // Uncontrolled fallback
@@ -98,7 +101,7 @@ export function Toggle({
 
       {/* ── Buttons row ────────────────────────────────────────────── */}
       <div
-        className={css.buttons}
+        className={classNames(css.buttons, orientation === "vertical" && css.vertical)}
         role="group"
         aria-label={label}
       >

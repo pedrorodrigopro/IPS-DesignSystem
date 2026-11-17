@@ -114,6 +114,13 @@ export const InlineLabel: StoryFn = () => (
   </div>
 );
 
+// Sort-by select: same field with the sort icon at the right instead of the chevron
+export const InlineLabelSort: StoryFn = () => (
+  <div style={{ width: 283 }}>
+    <InputInline inlineLabel="Sort by" value="Due days" rightIcon="sort" onClick={() => {}} />
+  </div>
+);
+
 // ── All variants ──────────────────────────────────────────────────────────────
 
 export const AllVariants: StoryFn = () => (

@@ -14,6 +14,7 @@
 //   first:  8px 0 0 8px
 //   middle: 0
 //   last:   0 8px 8px 0
+// (orientation="vertical" stacks the buttons: first 8px 8px 0 0, last 0 0 8px 8px, the shared border is the top of the lower one)
 //
 // Border strategy:
 //   first:  1px solid all sides
@@ -67,6 +68,17 @@
   flex-direction: row;
   align-items: flex-end;
   width: 100%;
+}
+
+// Vertical: the buttons are stacked. Same look, the radii and the shared border move to the top / bottom edge.
+.buttons.vertical {
+  flex-direction: column;
+  align-items: stretch;
+
+  .btn { flex: 0 0 auto; }
+  .btn.first  { border-radius: 8px 8px 0 0; border-width: 1px;       border-style: solid; }
+  .btn.middle { border-radius: 0;           border-width: 0 1px 1px; border-style: solid; }
+  .btn.last   { border-radius: 0 0 8px 8px; border-width: 0 1px 1px; border-style: solid; }
 }
 
 // ── Individual button ──────────────────────────────────────────────────────────

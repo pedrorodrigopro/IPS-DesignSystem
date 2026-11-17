@@ -42,11 +42,18 @@ export type TilePadding =
   | "content"   // 16px — regular content within screen containers [default]
   | "screen";   // 24px — top-level screen content tiles
 
+/** Semantic tint: the light shade of a status colour as the background — warning orange-2, error red-2, success green-2, info primary-3, neutral neutral-1 */
+export type TileTint = "warning" | "error" | "success" | "info" | "neutral";
+
 export type TileProps = {
   /** Visual style — controls background, shadow, border */
   tileStyle?: TileStyle;
   /** Padding scale — panel (8px) / content (16px) / screen (24px) */
   padding?: TilePadding;
+  /** Light semantic background instead of the style's own. Keeps the style's shadow and click behaviour. */
+  tint?: TileTint;
+  /** With `tint`: an even lighter shade (the tint mixed with white), for tiles holding a pill in the same colour family so the pill stays visible */
+  softTint?: boolean;
   /** Makes the tile a button element with pointer cursor and hover shadow */
   onClick?: () => void;
   /** Render as a specific HTML element (div by default, button if onClick provided) */
@@ -63,6 +70,8 @@ export type TileProps = {
 export function Tile({
   tileStyle = "highlight",
   padding = "content",
+  tint,
+  softTint = false,
   onClick,
   as: Tag = "div",
   fullWidth = true,
@@ -81,6 +90,8 @@ export function Tile({
           css.tile,
           css[tileStyle.replace("-", "_")],
           css[`padding_${padding}`],
+          tint && css[`tint_${tint}`],
+          tint && softTint && css.tintSoft,
           isInteractive && css.interactive,
           fullWidth && css.fullWidth,
           className
@@ -98,6 +109,8 @@ export function Tile({
         css.tile,
         css[tileStyle.replace("-", "_")],
         css[`padding_${padding}`],
+        tint && css[`tint_${tint}`],
+          tint && softTint && css.tintSoft,
         isInteractive && css.interactive,
         fullWidth && css.fullWidth,
         className

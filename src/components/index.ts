@@ -6,6 +6,7 @@ export * from "./pp_conflict_block";
 export * from "./pp_preview_banner";
 export * from "./pp_suggestion_card";
 export * from "./pp_window";
+export * from "./pp_dock";
 export * from "./pp_thinking";
 export * from "./pp_widget";
 export * from "./accordion";

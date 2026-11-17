@@ -256,3 +256,26 @@ export const AllStates: Story = {
     </div>
   ),
 };
+
+// ── Vertical ───────────────────────────────────────────────────────────────────
+
+export const Vertical: Story = {
+  name: "Vertical",
+  parameters: { docs: { description: { story: "`orientation=\"vertical\"` stacks the buttons, e.g. to line up with two rows of values." } } },
+  render: () => {
+    const [value, setValue] = useState<string | undefined>("rules");
+    return (
+      <div style={{ width: 220 }}>
+        <Toggle
+          orientation="vertical"
+          options={[
+            { value: "rules",   label: "Availability rules" },
+            { value: "actuals", label: "Actuals" },
+          ]}
+          value={value}
+          onChange={setValue}
+        />
+      </div>
+    );
+  },
+};

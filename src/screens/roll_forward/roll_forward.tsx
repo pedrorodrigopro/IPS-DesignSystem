@@ -514,7 +514,7 @@ const SUMMARY_COLUMNS: TableColumn<SummaryRole>[] = [
   { key: "target", header: "Target hours (estimated)", renderCell: r => <span style={body}>{r.target}</span> },
   { key: "source", header: "Source hours", renderCell: r => <span style={body}>{r.source}</span> },
   {
-    key: "delta", header: "Delta (estimated)",
+    key: "delta", header: "Difference",
     renderCell: r => <span style={{ ...body, color: r.delta < 0 ? "var(--palette-red-0)" : "var(--palette-blue-0)" }}>{r.delta}</span>,
   },
 ];

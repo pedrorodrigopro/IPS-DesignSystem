@@ -148,3 +148,28 @@ export const ComposedExample: Story = {
     </div>
   ),
 };
+
+// ── Semantic tint ──────────────────────────────────────────────────────────────
+
+export const Tinted: Story = {
+  name: "Tinted",
+  parameters: { docs: { description: { story: "`tint` swaps the background for the light shade of a status colour (warning orange-2, error red-2, success green-2, info primary-3, neutral neutral-1). The style's shadow and the click behaviour stay; hovering a clickable tinted tile keeps its tint. `softTint` mixes the shade with white, for tiles holding a pill of the same colour family (second row)." } } },
+  render: () => {
+    const tints = ["warning", "error", "success", "info", "neutral"] as const;
+    const text: React.CSSProperties = { fontFamily: "var(--font-family)", fontWeight: 700, color: "var(--palette-blue-0)" };
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 760 }}>
+        {[false, true].map(soft => (
+          <div key={String(soft)} style={{ display: "flex", gap: 16 }}>
+            {tints.map(t => (
+              <Tile key={t} tileStyle="interactive" tint={t} softTint={soft} onClick={() => {}}>
+                <span style={text}>{t}</span>
+                <span style={{ ...text, fontSize: 24 }}>{soft ? "soft" : "regular"}</span>
+              </Tile>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  },
+};

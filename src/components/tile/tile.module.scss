@@ -116,3 +116,23 @@
   border: 1px solid var(--palette-neutral-0); // #CFDAF7
   box-shadow: none;
 }
+
+// ── Semantic tint (the `tint` / `softTint` props) ──────────────────────────────
+// The light shade of a status colour as the background. The rules use two or more classes, so they win over the style's own background,
+// including the interactive hover (the hover keeps the tint and shows its shadow). softTint mixes the shade with white.
+.tile.tint_warning { --tile-tint: var(--palette-orange-2); }   // #FFE8AD
+.tile.tint_error   { --tile-tint: var(--palette-red-2); }      // #FFE2E2
+.tile.tint_success { --tile-tint: var(--palette-green-2); }    // #C8EEDE
+.tile.tint_info    { --tile-tint: var(--palette-primary-3); }  // #E7F9FE
+.tile.tint_neutral { --tile-tint: var(--palette-neutral-1); }  // #E7EAF8
+
+.tile.tint_warning, .tile.tint_error, .tile.tint_success, .tile.tint_info, .tile.tint_neutral,
+.tile.interactive.tint_warning:hover, .tile.interactive.tint_error:hover, .tile.interactive.tint_success:hover,
+.tile.interactive.tint_info:hover, .tile.interactive.tint_neutral:hover {
+  background-color: var(--tile-tint);
+}
+
+.tile.tintSoft,
+.tile.interactive.tintSoft:hover {
+  background-color: color-mix(in srgb, var(--tile-tint) 45%, var(--palette-white-0));
+}

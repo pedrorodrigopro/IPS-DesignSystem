@@ -3,6 +3,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { PrototypeGuide } from "./prototype_guide";
+import { PrototypeRibbon } from "./prototype_ribbon";
 import type { GuideStep } from "./prototype_guide";
 import { Navbar } from "../navbar/navbar";
 import { Page } from "../layout/layout";
@@ -93,3 +94,28 @@ function Demo({ defaultEnabled = false }: { defaultEnabled?: boolean }) {
 
 export const TourOff: Story = { name: "Tour off (default)", render: () => <Demo /> };
 export const TourOn: Story = { name: "Tour on", render: () => <Demo defaultEnabled /> };
+
+// Ribbon only: the same bar with just a Restart button (no tour)
+function RibbonDemo() {
+  const [run, setRun] = useState(0);
+  const [count, setCount] = useState(0);
+  return (
+    <PrototypeRibbon onRestart={() => { setRun(r => r + 1); setCount(0); }}>
+      <div key={run} style={{ minHeight: "var(--ips-vh, 100vh)", display: "flex" }}>
+        <Page navbar={<Navbar activeId="workflow" />} variant="1280">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%" }}>
+            <Header size="page" title="Home" />
+            <Tile tileStyle="highlight" padding="content">
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <Button kind="primary" onClick={() => setCount(c => c + 1)}>Clicked {count} times</Button>
+                <span>Restart (top left) puts everything back.</span>
+              </div>
+            </Tile>
+          </div>
+        </Page>
+      </div>
+    </PrototypeRibbon>
+  );
+}
+
+export const RibbonRestartOnly: Story = { name: "Ribbon: Restart only", render: () => <RibbonDemo /> };
