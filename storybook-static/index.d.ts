@@ -707,12 +707,14 @@ export declare type InputBookingCategoryProps = {
     className?: string;
 };
 
-export declare const InputInline: ({ inlineLabel, value, mandatory, onClick, className, }: InputInlineProps) => JSX.Element;
+export declare const InputInline: ({ inlineLabel, value, mandatory, rightIcon, onClick, className, }: InputInlineProps) => JSX.Element;
 
 export declare type InputInlineProps = {
     inlineLabel?: string;
     value?: string;
     mandatory?: boolean;
+    /** Icon at the right of the field. Defaults to the chevron; use "sort" for a sort-by select. */
+    rightIcon?: IconName;
     onClick?: () => void;
     className?: string;
 };
@@ -1220,6 +1222,26 @@ export declare type PPConflictBlockSeverity = "error" | "warning";
 
 export declare type PPConflictBlockVariant = "dark" | "light";
 
+export declare function PPDock({ children, title, onClose, onFloat, inputValue, onInputChange, onSend, inputPlaceholder, className, }: PPDockProps): default_2.JSX.Element;
+
+export declare type PPDockProps = {
+    /** Chat content (messages, suggestions, PPThinking) */
+    children?: default_2.ReactNode;
+    /** Header title. Default "ProPilot". */
+    title?: string;
+    /** Click on the close button */
+    onClose?: () => void;
+    /** Click on the float button: take the panel out of the layout and show the floating PPWindow (the button is hidden when omitted) */
+    onFloat?: () => void;
+    /** Input row */
+    inputValue?: string;
+    onInputChange?: (value: string) => void;
+    /** Called with the text when send is clicked or Enter is pressed */
+    onSend?: (value: string) => void;
+    inputPlaceholder?: string;
+    className?: string;
+};
+
 export declare const PPNavbarItem: ({ open, onClick, label }: PPNavbarItemProps) => default_2.JSX.Element;
 
 export declare type PPNavbarItemProps = {
@@ -1468,6 +1490,14 @@ export declare type PrototypeGuideProps = {
         label: string;
         onClick: () => void;
     }[];
+    children: default_2.ReactNode;
+};
+
+export declare function PrototypeRibbon({ onRestart, children }: PrototypeRibbonProps): default_2.JSX.Element;
+
+export declare type PrototypeRibbonProps = {
+    /** Called when Restart is clicked: put the prototype back in its starting state */
+    onRestart: () => void;
     children: default_2.ReactNode;
 };
 
@@ -1975,7 +2005,7 @@ export declare type TableRow = Record<string, unknown> & {
     id?: string | number;
 };
 
-export declare function Tile({ tileStyle, padding, onClick, as: Tag, fullWidth, className, children, style, }: TileProps): default_2.JSX.Element;
+export declare function Tile({ tileStyle, padding, tint, softTint, onClick, as: Tag, fullWidth, className, children, style, }: TileProps): default_2.JSX.Element;
 
 export declare type TilePadding = "panel" | "content" | "screen";
 
@@ -1984,6 +2014,10 @@ export declare type TileProps = {
     tileStyle?: TileStyle;
     /** Padding scale — panel (8px) / content (16px) / screen (24px) */
     padding?: TilePadding;
+    /** Light semantic background instead of the style's own. Keeps the style's shadow and click behaviour. */
+    tint?: TileTint;
+    /** With `tint`: an even lighter shade (the tint mixed with white), for tiles holding a pill in the same colour family so the pill stays visible */
+    softTint?: boolean;
     /** Makes the tile a button element with pointer cursor and hover shadow */
     onClick?: () => void;
     /** Render as a specific HTML element (div by default, button if onClick provided) */
@@ -1996,6 +2030,9 @@ export declare type TileProps = {
 };
 
 export declare type TileStyle = "default" | "selected" | "highlight" | "interactive" | "dark" | "object-dark" | "object-light";
+
+/** Semantic tint: the light shade of a status colour as the background — warning orange-2, error red-2, success green-2, info primary-3, neutral neutral-1 */
+declare type TileTint = "warning" | "error" | "success" | "info" | "neutral";
 
 export declare function Toast({ type, message, visible, onClose, className }: ToastProps): default_2.JSX.Element;
 
@@ -2027,7 +2064,7 @@ export declare function ToastProvider({ children }: {
 
 export declare type ToastType = "success" | "warning" | "error";
 
-export declare function Toggle({ options, value, onChange, label, mandatory, disabled, className, }: ToggleProps): default_2.JSX.Element;
+export declare function Toggle({ options, value, onChange, label, mandatory, disabled, orientation, className, }: ToggleProps): default_2.JSX.Element;
 
 export declare type ToggleOption = {
     value: string;
@@ -2048,6 +2085,8 @@ export declare type ToggleProps = {
     mandatory?: boolean;
     /** Disabled state — no interaction possible */
     disabled?: boolean;
+    /** "horizontal" (default): buttons side by side. "vertical": buttons stacked, one above the other (e.g. to line up with two rows of values). */
+    orientation?: "horizontal" | "vertical";
     className?: string;
 };
 
