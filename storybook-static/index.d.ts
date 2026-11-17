@@ -707,7 +707,7 @@ export declare type InputBookingCategoryProps = {
     className?: string;
 };
 
-export declare const InputInline: ({ inlineLabel, value, mandatory, rightIcon, onClick, className, }: InputInlineProps) => JSX.Element;
+export declare const InputInline: ({ inlineLabel, value, mandatory, rightIcon, readOnly, onClick, className, }: InputInlineProps) => JSX.Element;
 
 export declare type InputInlineProps = {
     inlineLabel?: string;
@@ -715,6 +715,8 @@ export declare type InputInlineProps = {
     mandatory?: boolean;
     /** Icon at the right of the field. Defaults to the chevron; use "sort" for a sort-by select. */
     rightIcon?: IconName;
+    /** Read-only: just the "Label: Value" text (no chevron, no stroke, no hover, not focusable) */
+    readOnly?: boolean;
     onClick?: () => void;
     className?: string;
 };
