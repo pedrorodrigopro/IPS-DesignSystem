@@ -24,6 +24,7 @@
 //   Row actions: check icon (sticky) + menu-vertical
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Navbar }          from "../../components/navbar/navbar";
 import { Icon }            from "../../components/icon/icon";
@@ -42,7 +43,7 @@ import { PillSimple, PillWFState } from "../../components/pill/pill";
 import type { WFState }    from "../../components/pill/pill";
 import { Modal }           from "../../components/modal/modal";
 import { InputSelect, InputTextarea } from "../../components/input/input";
-import { DropdownMultiSelection, DropdownSelection } from "../../components/dropdown/dropdown";
+import { DropdownActions, DropdownMultiSelection, DropdownSelection } from "../../components/dropdown/dropdown";
 import { SuggestSidePanel } from "../../components/side_panel/suggest_side_panel";
 import type { SuggestCandidate } from "../../components/side_panel/suggest_side_panel";
 
@@ -191,7 +192,7 @@ function BookedWMCell({ role }: { role: RoleRow }) {
   const unbook = useContext(BookedUnbookContext);
   return (
     <td style={{ ...tdStyle, padding: "8px", verticalAlign: "top", whiteSpace: "nowrap" }}>
-      {role.booked && (
+      {role.booked && isBookedState(role) && (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%", boxSizing: "border-box", padding: "4px 10px 4px 6px", verticalAlign: "middle", borderRadius: "var(--radius-2xl, 32px)", background: "var(--palette-neutral-1)" }}>
           <button
             type="button"
@@ -333,12 +334,15 @@ type RoleRow = {
   /** Requested hours per week for the availability-rules table, one entry per week column (missing / null = empty cell).
    *  `flag` draws a 2px red (error) or orange (warning) top border on the cell. */
   availability?: AvailabilityCell[];
-  /** Suggested workforce member ("Suggested WM" column of the engagement tables). Missing / null = nobody suggested yet: the cell shows the warning background. */
+  /** Suggested workforce member ("Suggested WM" column of the engagement tables). Missing / null = nobody suggested yet: the cell shows the warning background, except on a booked or confirmed role, which always shows someone (its own suggestion, else the booked WM). */
   suggested?: { name: string; rank?: string } | null;
-  /** Booked workforce member ("Booked WM" column, right after Suggested WM; a confirmed role has one). The column shows as soon as one role of the table carries this field; `null` = nobody booked: empty cell. */
+  /** Booked workforce member ("Booked WM" column, right after Suggested WM in every engagement variant): who is booked. The pill only shows when the role's Workflow state is confirmed or booked; in any other state the cell stays empty. */
   booked?: { name: string; /** Potential overbooking: an orange warning icon next to the pill; its tooltip says "Potential overbooking" and lists these weeks */ overbooking?: { weeks: string[] } } | null;
   /** Rank the role asks for: a suggested WM of that rank gets the green check in the Suggest side panel */
   requestedRank?: string;
+  /** Hours booked on the role (confirmed and booked roles). Feeds the read-only **Delta** column of the engagement variants: requested hours (the sum of the
+   *  availability cells, live while they are edited) minus these hours for confirmed and booked roles (negative = red-0, 0h = green-0); every other state has nothing booked, so its delta is the requested hours (always above 0h). */
+  bookedHours?: number;
 };
 
 export type AvailabilityCell = number | { hours: number; flag?: "error" | "warning" } | null;
@@ -369,7 +373,56 @@ const MIN_LEFT_W = 240;        // the roles table always keeps at least this muc
 //   "roles" — green tick in green pill (no edit icon)
 type RowActionsVariant = "dtt" | "roles";
 
-function StickyActions({ variant = "dtt" }: { variant?: RowActionsVariant }) {
+/** Actions in the menu at the end of each row (variant "roles") */
+export type RowMenuAction = "duplicate" | "fill-book" | "tag" | "close" | "delete";
+const ROW_MENU_ITEMS: { id: RowMenuAction; label: string }[] = [
+  { id: "duplicate", label: "Duplicate" }, { id: "fill-book", label: "Fill & Book" }, { id: "tag", label: "Tag" }, { id: "close", label: "Close" }, { id: "delete", label: "Delete" },
+];
+// The screen owns the menu; the buttons only say which row and where they are
+const FreshRowContext = createContext<string | null>(null);
+// Hours the user typed into the availability cells so far (role id → week index → hours), so Delta follows the edits
+const HoursEditsContext = createContext<Record<string, Record<number, number | null>>>({});
+
+const DELTA_W = 88;
+/** Only a confirmed or booked role has someone booked: its Booked WM pill shows, and its Delta is requested − booked */
+const isBookedState = (role: RoleRow) => role.wfState === "confirmed" || role.wfState === "booked";
+/** Delta column. Confirmed and booked roles: requested − booked hours (negative = red-0, 0h = green-0, positive = neutral). Every other role has nothing booked yet, so its delta is simply the requested hours: always above 0h. */
+function deltaHours(role: RoleRow, edits: Record<string, Record<number, number | null>>): number {
+  const cell = (c: AvailabilityCell | undefined) => (c == null ? 0 : typeof c === "number" ? c : c.hours);
+  const requested = (role.availability ?? []).reduce<number>((n, c, i) => n + (edits[role.id] && i in edits[role.id] ? (edits[role.id][i] ?? 0) : cell(c)), 0)
+    + Object.keys(edits[role.id] ?? {}).filter(k => Number(k) >= (role.availability?.length ?? 0)).reduce((n, k) => n + (edits[role.id][Number(k)] ?? 0), 0);
+  if (!isBookedState(role)) return requested;
+  return requested - (role.bookedHours ?? 0);
+}
+const fmtDelta = (d: number) => `${d > 0 ? "+" : ""}${d}h`;
+
+// Read-only, same look as the merged engagement title cell: neutral-2 background, regular weight
+function DeltaCell({ role }: { role: RoleRow }) {
+  const edits = useContext(HoursEditsContext);
+  const d = deltaHours(role, edits);
+  return (
+    <td style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
+      {/* Bold; negative = red-0 (#D42A36), 0h = green-0 (#248E61), positive = neutral */}
+      <span style={{ ...body, fontWeight: 700, lineHeight: "20px", color: d < 0 ? "var(--palette-red-0)" : d === 0 ? "var(--palette-green-0)" : "var(--palette-blue-0)" }}>{fmtDelta(d)}</span>
+    </td>
+  );
+}
+const RowMenuContext = createContext<((role: RoleRow, anchor: HTMLElement) => void) | null>(null);
+// Entry animation of a duplicated row: it slides in from above while a blue tint fades out
+const ROW_ANIM_CSS = `@keyframes mr-row-in { 0% { opacity: 0; transform: translateY(-14px); background-color: var(--palette-primary-3); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+.mr-row-new { animation: mr-row-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }`;
+
+function StickyActions({ variant = "dtt", role }: { variant?: RowActionsVariant; role?: RoleRow }) {
+  const openMenu = useContext(RowMenuContext);
+  const menuBtn = (
+    <button
+      type="button" title="More actions" aria-label="More actions" aria-haspopup="menu"
+      onClick={e => { if (role && openMenu) openMenu(role, e.currentTarget); }}
+      style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)" }}
+    >
+      <Icon name="menu-vertical" size={14} />
+    </button>
+  );
   if (variant === "roles") {
     return (
       <Row gap={4}>
@@ -377,9 +430,7 @@ function StickyActions({ variant = "dtt" }: { variant?: RowActionsVariant }) {
         <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 20, borderRadius: 16, background: "var(--palette-green-2)" }}>
           <Icon name="check" size={14} style={{ color: "var(--palette-green-0)" }} />
         </div>
-        <button style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)" }}>
-          <Icon name="menu-vertical" size={14} />
-        </button>
+        {menuBtn}
       </Row>
     );
   }
@@ -418,14 +469,16 @@ function SelectBox({ kind, selection, checked, indeterminate, onChange, header =
   );
 }
 
-function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth, onAvailabilityChange }: { roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
+function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, engagementTags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth, onAvailabilityChange }: { engagementTags?: Record<string, string>; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
   // The merged Engagement column only exists when the roles belong to engagements (not on the template editor)
   const hasEngagement = roles.some(r => r.engagement);
   // What each header checkbox toggles: this table's engagement titles / role ids
-  const showBooked = availability && roles.some(r => r.booked !== undefined);
+  // Every engagement variant has it (DTT has no availability table); only confirmed / booked roles carry a person, the rest show an empty cell
+  const showBooked = !!availability;
+  const showDelta = !!availability;     // every engagement variant: the rule needs no booked hours (nothing booked = the requested hours)
   const engagementKeys = [...new Set(roles.map(r => r.engagement).filter((e): e is string => !!e))];
   const roleKeys = roles.map(r => r.id);
   const headerState = (kind: SelectKind) => {
@@ -433,12 +486,15 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
     const n = keys.filter(k => selection.selected.has(k)).length;
     return { keys, checked: selection.mode === kind && keys.length > 0 && n === keys.length, indeterminate: selection.mode === kind && n > 0 && n < keys.length };
   };
+  const freshRow = useContext(FreshRowContext);
   const headers = [
     ...(hasEngagement ? [{ label: "Engagement title", mandatory: false, width: 168, checkbox: selectable }] : []),
     { label: "Role title",         mandatory: true,  width: 168, checkbox: selectable },
     // Tag column (set with "Manage tags"); the template editor has no tags
     ...(selectable ? [{ label: "Tag", mandatory: false, width: 140 }] : []),
     { label: "Workflow state",     mandatory: false, width: 140 },
+    // Requested − booked hours of confirmed / booked roles (read-only)
+    ...(showDelta ? [{ label: "Delta", mandatory: false, width: DELTA_W }] : []),
     // Engagement tables: the workforce member the rollforward suggests (empty = needs attention)
     ...(availability ? [{ label: "Suggested WM", mandatory: false, width: SUGGESTED_W }] : []),
     // Right next to it: who is booked (roles that are confirmed)
@@ -464,7 +520,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
   const rolesTable = (
     <div style={{ overflowX: "auto", ...(availability ? { flex: "1 1 0", minWidth: 0 } : null) }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) + (showBooked ? BOOKED_W : 0) }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) + (showBooked ? BOOKED_W : 0) + (showDelta ? DELTA_W : 0) }}>
         <thead>
           <tr style={availability ? { height: HEAD_H } : undefined}>
             {headers.map((h, i) => (
@@ -491,13 +547,17 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
             const first = hasEngagement && (idx === 0 || roles[idx - 1].engagement !== role.engagement);
             const run = first ? roles.filter((x, j) => j >= idx && roles.slice(idx, j + 1).every(y => y.engagement === role.engagement)) : [];
             return (
-            <tr key={role.id} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white", ...(availability ? { height: ROW_H } : null) }}>
+            <tr key={role.id} className={freshRow === role.id ? "mr-row-new" : undefined} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white", ...(availability ? { height: ROW_H } : null) }}>
               {/* Read-only engagement title, merged across the engagement's roles: neutral light background, regular weight, checkbox selects them all */}
               {first && (
                 <td rowSpan={run.length} style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
                   <Row gap={8} style={{ alignItems: "flex-start" }}>
                     {selectable && <SelectBox kind="engagement" selection={selection} checked={!!role.engagement && selection.selected.has(role.engagement)} onChange={() => role.engagement && selection.toggle([role.engagement], "engagement")} />}
-                    <span style={{ ...body, lineHeight: "20px", minWidth: 0 }}>{role.engagement}</span>
+                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
+                      <span style={{ ...body, lineHeight: "20px", minWidth: 0 }}>{role.engagement}</span>
+                      {/* The tag the engagement got (bulk Tag), right below its title */}
+                      {role.engagement && engagementTags[role.engagement] && <PillSimple label={engagementTags[role.engagement]} size="small" leftIcon="tag" />}
+                    </div>
                   </Row>
                 </td>
               )}
@@ -513,6 +573,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
                 </td>
               )}
               <td style={tdStyle}>{role.wfState && <PillWFState state={role.wfState} />}</td>
+              {showDelta && <DeltaCell role={role} />}
               {availability && <SuggestedWMCell role={role} />}
               {showBooked && <BookedWMCell role={role} />}
               <td style={tdStyle}><EditableTextCell defaultValue={role.description} /></td>
@@ -547,7 +608,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
               {/* Sticky actions — filter:drop-shadow works on <td>, box-shadow does not */}
               {!availability && (
                 <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
-                  <StickyActions variant={rowActions} />
+                  <StickyActions variant={rowActions} role={role} />
                 </td>
               )}
             </tr>
@@ -610,6 +671,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 // Divider on its left (drag to resize the pane), and the row actions (tick + menu) sticky at its right edge.
 
 function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width, onAvailabilityChange }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number; onAvailabilityChange?: AvailabilityChangeHandler }) {
+  const freshRow = useContext(FreshRowContext);
   const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined } : c);
   return (
     <div style={{ flex: "0 0 auto", width, maxWidth: `calc(100% - ${DIVIDER_W + MIN_LEFT_W}px)`, overflowX: "auto" }}>
@@ -624,7 +686,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
         </thead>
         <tbody>
           {roles.map(role => (
-            <tr key={role.id} style={{ height: ROW_H, background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
+            <tr key={role.id} className={freshRow === role.id ? "mr-row-new" : undefined} style={{ height: ROW_H, background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
               {weeks.map((w, i) => {
                 const c = norm(role.availability?.[i]);
                 return (
@@ -632,7 +694,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
                 );
               })}
               <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
-                <StickyActions variant={rowActions} />
+                <StickyActions variant={rowActions} role={role} />
               </td>
             </tr>
           ))}
@@ -644,7 +706,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
 
 // ── Accordion group ───────────────────────────────────────────────────────────
 
-function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags, availability = false, weeks, availabilityWidth, onAvailabilityWidth, onAvailabilityChange }: { name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
+function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags, engagementTags, availability = false, weeks, availabilityWidth, onAvailabilityWidth, onAvailabilityChange }: { engagementTags?: Record<string, string>; name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
@@ -668,7 +730,7 @@ function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", 
       </SB>
 
       {/* Roles table — no extra wrapper, sits directly inside the Tile */}
-      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={onAvailabilityWidth} onAvailabilityChange={onAvailabilityChange} />}
+      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engagementTags} availability={availability} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={onAvailabilityWidth} onAvailabilityChange={onAvailabilityChange} />}
     </Tile>
   );
 }
@@ -749,7 +811,7 @@ export type TagRolesResult = { tag: string; note: string; notify: string[] };
 
 export type TagPrefill = { tag: string; notify?: string[] };
 
-export function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, peopleOptions, defaultNotify, prefill }: { open: boolean; count: number; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string; prefill?: TagPrefill }) {
+export function ManageTagsModal({ open, count, unit = "role", onClose, onUpdate, tagOptions, peopleOptions, defaultNotify, prefill }: { open: boolean; count: number; /** What is being tagged: roles (default) or engagements */ unit?: "role" | "engagement"; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string; prefill?: TagPrefill }) {
   const [tag, setTag] = useState("");
   const [tagOpen, setTagOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -772,12 +834,12 @@ export function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, pe
       open={open}
       onClose={onClose}
       title="Manage tags"
-      subtitle={`${count} ${count === 1 ? "role" : "roles"}`}
+      subtitle={`${count} ${count === 1 ? unit : `${unit}s`}`}
       width={500}
       leftActions={[{ label: "Cancel", variant: "secondary", onClick: onClose }]}
       rightActions={[{ label: "Update", variant: "primary", disabled: !tag, onClick: () => onUpdate({ tag, note, notify: notify ? people : [] }) }]}
     >
-      <span style={body}>Pick a tag to add to these roles:</span>
+      <span style={body}>Pick a tag to add to these {unit}s:</span>
 
       <div style={{ position: "relative" }}>
         <InputSelect label="Tag" value={tag} onClick={() => setTagOpen(o => !o)} />
@@ -844,7 +906,8 @@ export function ManageTagsModal({ open, count, onClose, onUpdate, tagOptions, pe
 // ── Bulk buttons — three ghost icon buttons in the bulk banner ────────────────────────────────────────────────────────
 
 type BulkAction = { id: "tag-roles" | "tag" | "owner"; label: string };
-// Engagements selected: tag-roles tags every role inside them. Roles selected: tag tags the picked roles (no tag-roles). Both open "Manage tags".
+// Engagements selected: tag tags the picked engagements (the tag shows right below each engagement title), tag-roles tags every role inside them (Tag column).
+// Roles selected: tag tags the picked roles (no tag-roles). All of them open "Manage tags".
 const ENGAGEMENT_ACTIONS: BulkAction[] = [
   { id: "tag-roles", label: "Tag roles" },
   { id: "tag",       label: "Tag" },
@@ -883,8 +946,14 @@ export type ManageRolesScreenProps = {
   onNavigate?: (navbarId: string) => void;
   onBack?: () => void;
   onSave?: () => void;
-  /** "Manage tags" → Update: the tag was applied to `roles` roles (`roleIds` says which) */
-  onTagged?: (info: { tag: string; roles: number; roleIds: string[]; notified: string[] }) => void;
+  /** "Manage tags" → Update: the tag was applied to `roles` roles (`roleIds` says which). `target` "engagements": it was applied to the picked engagements themselves (`engagements` = their names), not to their roles. */
+  onTagged?: (info: { tag: string; roles: number; roleIds: string[]; notified: string[]; target: "roles" | "engagements"; engagements: string[] }) => void;
+  /** Adds a secondary "Open in Booking Engine" button to the page header, top right. Called with the ids of the roles the screen shows right now (duplicates and deletes included). */
+  onOpenInBookingEngine?: (roleIds: string[]) => void;
+  /** A row menu action was chosen (menu at the end of each row). Duplicate (a new row right below, animated; the copy is reset to Shortlisting with no Booked WM), Tag (opens Manage tags for that role) and Delete (removes the row) are done by the screen; Fill & Book and Close are only reported here. */
+  onRowAction?: (info: { action: RowMenuAction; roleId: string }) => void;
+  /** Tags engagements already have when the screen opens: engagement name → tag (shown right below the engagement title) */
+  initialEngagementTags?: Record<string, string>;
   /** Tags in the "Manage tags" dropdown (default: EM to review, RM to resource, Ready to fill, Needs rework, On hold) */
   tagOptions?: string[];
   /** People in the "Send a notification to" dropdown (default: Megan Taylor, Charlie Parker, Spencer Harmon, Santi Angulo) */
@@ -910,11 +979,23 @@ export type ManageRolesScreenProps = {
 };
 
 export function ManageRolesScreen({
-  groups, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, onAvailabilityChange,
-  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged, onUnbook,
-  tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {},
+  groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, onAvailabilityChange,
+  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged, onUnbook, onRowAction, onOpenInBookingEngine,
+  tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {}, initialEngagementTags = {},
   suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange, tagCommand,
 }: ManageRolesScreenProps) {
+  // Row menu edits: duplicated rows (inserted right below their source) and deleted rows, on top of the groups the host passes
+  const [dups, setDups] = useState<{ id: string; afterId: string; role: RoleRow }[]>([]);
+  const [deleted, setDeleted] = useState<Set<string>>(new Set());
+  const [freshRow, setFreshRow] = useState<string | null>(null);
+  const [hoursEdits, setHoursEdits] = useState<Record<string, Record<number, number | null>>>({});
+  const dupSeq = useRef(0);
+  const trackHours: AvailabilityChangeHandler = c => { setHoursEdits(e => ({ ...e, [c.roleId]: { ...e[c.roleId], [c.weekIndex]: c.hours } })); onAvailabilityChange?.(c); };
+  const groups: ManageRolesGroup[] = groupsIn.map(g => {
+    let roles = [...g.roles];
+    dups.forEach(d => { const i = roles.findIndex(r => r.id === d.afterId); if (i >= 0) roles.splice(i + 1, 0, d.role); });
+    return { ...g, roles: roles.filter(r => !deleted.has(r.id)) };
+  });
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
   // Counter above the groups: "X engagements · Y roles" (engagements = distinct titles; the template editor has none, so it shows roles only)
   const engagementCount = new Set(groups.flatMap(g => g.roles.map(r => r.engagement).filter(Boolean))).size;
@@ -924,18 +1005,25 @@ export function ManageRolesScreen({
   // Engagement and role selection are mutually exclusive: `mode` is the kind that made the current selection
   const [mode, setMode] = useState<SelectKind | null>(null);
   const [tagging, setTagging] = useState(false);
+  const [tagTarget, setTagTarget] = useState<"roles" | "engagements">("roles");   // what the open Manage tags modal tags
+  const [tagRoleIds, setTagRoleIds] = useState<string[] | null>(null);            // Tag from a row menu: just that role (null = the selection)
+  const [menu, setMenu] = useState<{ role: RoleRow; top: number; right: number; up: boolean } | null>(null);
   const [tagPrefill, setTagPrefill] = useState<TagPrefill | undefined>();
   const [tags, setTags] = useState<Record<string, string>>(initialTags);
+  const [engTags, setEngTags] = useState<Record<string, string>>(initialEngagementTags);
   // Suggested WMs: the Suggest side panel writes them here (role id → WMs); roles never opened keep their own `suggested`
   const [suggestedBy, setSuggestedBy] = useState<Record<string, SuggestCandidate[]>>(initialSuggested);
   const [suggestRole, setSuggestRole] = useState<RoleRow | null>(null);
   const allCandidates = [...(suggestCandidates.shortlist ?? []), ...(suggestCandidates.matches ?? []), ...(suggestCandidates.other ?? [])];
-  const suggestedFor = (role: RoleRow): SuggestCandidate[] => {
-    if (suggestedBy[role.id]) return suggestedBy[role.id];
-    if (!role.suggested) return [];
-    const name = role.suggested.name;
+  const candidateOf = (id: string, name: string, rank?: string): SuggestCandidate => {
     const known = allCandidates.find(c => c.name === name);
-    return [known ?? { id: `s-${role.id}`, name, initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), rank: role.suggested.rank }];
+    return known ?? { id, name, initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(), rank };
+  };
+  const suggestedFor = (role: RoleRow): SuggestCandidate[] => {
+    const own = suggestedBy[role.id] ?? (role.suggested ? [candidateOf(`s-${role.id}`, role.suggested.name, role.suggested.rank)] : []);
+    // A booked or confirmed role always has someone in Suggested WM: with no suggestion of its own it shows the person booked on it
+    if (own.length === 0 && isBookedState(role) && role.booked) return [candidateOf(`b-${role.id}`, role.booked.name, role.requestedRank)];
+    return own;
   };
   const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: setSuggestRole };
   // Open / close the panel on command (also applied when the screen mounts with one), and report every change
@@ -950,15 +1038,17 @@ export function ManageRolesScreen({
     if (!tagCommand?.open) return;
     if (tagCommand.select) { setSelected(new Set(tagCommand.select.keys)); setMode(tagCommand.select.kind); }
     setTagPrefill(tagCommand.prefill);
+    setTagTarget("roles");
     setTagging(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tagCommand?.n]);
   const showAvailability = availability ?? selectable;
   const rolesWithSuggestion = groups.flatMap(g => g.roles).filter(r => suggestedFor(r).length > 0).length;
   // Width of the availability pane, shared by every group so dragging one divider resizes them all
-  // A Booked WM column needs room in the roles table, so the weeks pane opens on two weeks instead of four (drag the divider to widen it)
-  const hasBooked = groups.some(g => g.roles.some(r => r.booked !== undefined));
-  const [availabilityWidth, setAvailabilityWidth] = useState(hasBooked ? WEEK_W * 2 + ACTIONS_W : DEFAULT_AVAILABILITY_W);
+  // Booked WM (and Delta) need room in the roles table, so the weeks pane opens on two weeks (one with both) instead of four (drag the divider to widen it)
+  const hasBooked = groups.some(g => g.roles.some(r => r.availability));
+  const hasDelta = hasBooked;
+  const [availabilityWidth, setAvailabilityWidth] = useState(hasBooked && hasDelta ? WEEK_W + ACTIONS_W : hasBooked ? WEEK_W * 2 + ACTIONS_W : DEFAULT_AVAILABILITY_W);
 
   // Toggle a set of rows: if every one is already selected they get deselected, otherwise all get selected
   const toggle = (ids: string[], kind: SelectKind) => {
@@ -977,15 +1067,48 @@ export function ManageRolesScreen({
   const selectedCount = selected.size;
 
   const applyTag = (r: TagRolesResult) => {
-    setTags(prev => ({ ...prev, ...Object.fromEntries(selectedRoles.map(x => [x.id, r.tag])) }));
+    const engagements = tagTarget === "engagements" ? [...selected] : [];
+    const targetRoles = tagRoleIds ? groups.flatMap(g => g.roles).filter(x => tagRoleIds.includes(x.id)) : selectedRoles;
+    if (tagTarget === "engagements") setEngTags(prev => ({ ...prev, ...Object.fromEntries(engagements.map(e => [e, r.tag])) }));
+    else setTags(prev => ({ ...prev, ...Object.fromEntries(targetRoles.map(x => [x.id, r.tag])) }));
     setTagging(false);
-    onTagged?.({ tag: r.tag, roles: selectedRoles.length, roleIds: selectedRoles.map(x => x.id), notified: r.notify });
-    clearSelection();
+    onTagged?.({ tag: r.tag, roles: targetRoles.length, roleIds: targetRoles.map(x => x.id), notified: r.notify, target: tagTarget, engagements });
+    if (!tagRoleIds) clearSelection();
+    setTagRoleIds(null);
+  };
+  const openTagging = (target: "roles" | "engagements") => { setTagTarget(target); setTagRoleIds(null); setTagPrefill(undefined); setTagging(true); };
+
+  // Row menu: opens under its button (above it near the bottom of the screen)
+  const openRowMenu = (role: RoleRow, anchor: HTMLElement) => {
+    const r = anchor.getBoundingClientRect();
+    setMenu(m => (m?.role.id === role.id ? null : { role, top: r.bottom + 4, right: window.innerWidth - r.right, up: r.bottom + 230 > window.innerHeight }));
+  };
+  const onRowMenuAction = (action: RowMenuAction) => {
+    const role = menu!.role;
+    setMenu(null);
+    if (action === "duplicate") {
+      const id = `${role.id}-copy-${++dupSeq.current}`;
+      // A copy starts over: back to Shortlisting, nobody booked (no Booked WM, no booked hours: its Delta is its requested hours, negative)
+      const copy: RoleRow = { ...role, id, wfState: "shortlisting", booked: role.booked === undefined ? undefined : null, bookedHours: role.bookedHours === undefined ? undefined : 0 };
+      setDups(d => [...d, { id, afterId: role.id, role: copy }]);
+      setFreshRow(id);
+      setTimeout(() => setFreshRow(f => (f === id ? null : f)), 1100);
+    } else if (action === "delete") {
+      setDeleted(d => new Set(d).add(role.id));
+      if (selected.has(role.id)) { const next = new Set(selected); next.delete(role.id); setSelected(next); if (!next.size) setMode(null); }
+    } else if (action === "tag") {
+      setTagTarget("roles"); setTagRoleIds([role.id]); setTagPrefill(undefined); setTagging(true);
+    }
+    onRowAction?.({ action, roleId: role.id });
   };
 
   return (
     <BookedUnbookContext.Provider value={onUnbook ? (r => r.booked && onUnbook({ roleId: r.id, name: r.booked.name })) : undefined}>
     <SuggestContext.Provider value={suggestCtx}>
+    <HoursEditsContext.Provider value={hoursEdits}>
+    <FreshRowContext.Provider value={freshRow}>
+    <RowMenuContext.Provider value={rowActions === "roles" ? openRowMenu : null}>
+    <style>{ROW_ANIM_CSS}</style>
     <div style={{ display: "flex", height: "var(--ips-vh, 100vh)", overflow: "hidden", background: "var(--palette-neutral-2)" }}>
       {navbar ?? <Navbar activeId={navbarActiveId} onSelect={onNavigate} />}
 
@@ -1003,7 +1126,7 @@ export function ManageRolesScreen({
                   onDismiss={clearSelection}
                   rightContent={(mode === "role" ? ROLE_ACTIONS : ENGAGEMENT_ACTIONS).map(a => (
                     <Tooltip key={a.id} content={a.label} placement="up-center" maxWidth={240}>
-                      <Button kind="iconGhost" size="regular" onClick={(a.id === "tag-roles" || (a.id === "tag" && mode === "role")) ? () => { setTagPrefill(undefined); setTagging(true); } : undefined}>
+                      <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" || (a.id === "tag" && mode === "role") ? () => openTagging("roles") : a.id === "tag" ? () => openTagging("engagements") : undefined}>
                         <Icon name={a.id} size={16} />
                         <span style={srOnly}>{a.label}</span>
                       </Button>
@@ -1014,9 +1137,14 @@ export function ManageRolesScreen({
             </div>
           )}
 
-          <h1 style={{ fontFamily: "var(--font-family)", fontSize: 28, fontWeight: 700, color: "var(--palette-blue-0)", marginBottom: 8, lineHeight: "125%", flexShrink: 0 }}>
-            {title}
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 8, flexShrink: 0 }}>
+            <h1 style={{ fontFamily: "var(--font-family)", fontSize: 28, fontWeight: 700, color: "var(--palette-blue-0)", lineHeight: "125%" }}>
+              {title}
+            </h1>
+            {onOpenInBookingEngine && (
+              <Button kind="secondary" size="regular" onClick={() => onOpenInBookingEngine(groups.flatMap(g => g.roles).map(r => r.id))}>Open in Booking Engine</Button>
+            )}
+          </div>
 
           <Tile tileStyle="highlight" padding="content" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, marginBottom: 0 }}>
             {header && (
@@ -1036,7 +1164,7 @@ export function ManageRolesScreen({
             <div style={{ ...labelCss, margin: header ? "12px 0 16px" : "0 0 16px", flexShrink: 0 }}>{counter}</div>
 
             {groups.map((g, i) => (
-              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} onAvailabilityChange={onAvailabilityChange} />
+              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engTags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} onAvailabilityChange={trackHours} />
             ))}
 
             <div style={{ flex: 1, minHeight: 24 }} />
@@ -1061,7 +1189,7 @@ export function ManageRolesScreen({
         />
       </div>
 
-      <ManageTagsModal open={tagging} prefill={tagPrefill} count={selectedRoles.length} onClose={() => setTagging(false)} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
+      <ManageTagsModal open={tagging} prefill={tagPrefill} unit={tagTarget === "engagements" ? "engagement" : "role"} count={tagTarget === "engagements" ? selected.size : tagRoleIds ? tagRoleIds.length : selectedRoles.length} onClose={() => { setTagging(false); setTagRoleIds(null); }} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
       <SuggestSidePanel
         open={!!suggestRole}
         onClose={() => setSuggestRole(null)}
@@ -1079,7 +1207,20 @@ export function ManageRolesScreen({
         }}
       />
 
+      {/* Row menu: drawn in body (fixed) so the tables' scroll panes can't clip it */}
+      {menu && createPortal(
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 9500 }} onClick={() => setMenu(null)} onContextMenu={e => { e.preventDefault(); setMenu(null); }} />
+          <div role="menu" aria-label="Row actions" style={{ position: "fixed", zIndex: 9501, right: menu.right, minWidth: 180, ...(menu.up ? { bottom: window.innerHeight - menu.top + 32 } : { top: menu.top }) }}>
+            <DropdownActions items={ROW_MENU_ITEMS} onSelect={id => onRowMenuAction(id as RowMenuAction)} />
+          </div>
+        </>,
+        document.body,
+      )}
     </div>
+    </RowMenuContext.Provider>
+    </FreshRowContext.Provider>
+    </HoursEditsContext.Provider>
     </SuggestContext.Provider>
     </BookedUnbookContext.Provider>
   );

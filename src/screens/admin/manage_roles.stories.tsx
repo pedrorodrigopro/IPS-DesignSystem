@@ -49,8 +49,8 @@ const ENGAGEMENT_GROUPS: ManageRolesGroup[] = [
   {
     name: "GPS Role",
     roles: [
-      role("e1", "ST engagement test", "Role 1", { bookingCategory: { label: "Holiday", category: "booking-blue" }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "error") }),
-      role("e2", "ST engagement test", "Role 2", { bookingCategory: { label: "Confirmed External Customer Project", category: "booking-red" }, availability: wk(1) }),
+      role("e1", "ST engagement test", "Role 1", { wfState: "confirmed", bookedHours: 40, booked: { name: "Leslie Smith" }, bookingCategory: { label: "Holiday", category: "booking-blue" }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "error") }),
+      role("e2", "ST engagement test", "Role 2", { wfState: "booked", bookedHours: 0, booked: { name: "Mary Lee" }, bookingCategory: { label: "Confirmed External Customer Project", category: "booking-red" }, availability: wk(1) }),
     ],
   },
   {
@@ -64,14 +64,14 @@ const ROLLED_FORWARD_GROUPS: ManageRolesGroup[] = [
   {
     name: "Rolled forward roles",
     roles: [
-      role("f1", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Javascript developer", { suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "error") }),
+      role("f1", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Javascript developer", { wfState: "confirmed", bookedHours: 40, booked: { name: "Leslie Smith" }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "error") }),
       role("f2", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Junior Javascript developer", { requestedRank: "Manager", availability: wk(1) }),
       role("f3", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Accessibility consultant", { suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(2, "warning") }),
-      role("f4", "RF_CLONE_2_[2026 Q3] ProFinda IT", "React developer", { suggested: { name: "Spencer Harmon", rank: "Principal Consultant" }, requestedRank: "Manager", availability: wk(1) }),
+      role("f4", "RF_CLONE_2_[2026 Q3] ProFinda IT", "React developer", { wfState: "booked", bookedHours: 80, booked: { name: "Spencer Harmon" }, suggested: { name: "Spencer Harmon", rank: "Principal Consultant" }, requestedRank: "Manager", availability: wk(1) }),
       role("f5", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Javascript developer", { availability: wk(1) }),
       role("f6", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Junior Javascript developer", { suggested: { name: "Santi Angulo", rank: "Consultant" }, availability: wk(1) }),
       role("f7", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Accessibility consultant", { availability: wk(2) }),
-      role("f8", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "React developer", { suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(0) }),
+      role("f8", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "React developer", { wfState: "confirmed", bookedHours: 40, booked: { name: "Mary Lee" }, suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(0) }),
     ],
   },
 ];
@@ -82,7 +82,9 @@ function WithToast(props: React.ComponentProps<typeof ManageRolesScreen>) {
   return (
     <ManageRolesScreen
       {...props}
-      onTagged={({ tag, roles }) => showToast({ type: "success", message: `Tag “${tag}” added to ${roles} ${roles === 1 ? "role" : "roles"}` })}
+      onTagged={({ tag, roles, target, engagements }) => showToast({ type: "success", message: target === "engagements"
+        ? `Tag “${tag}” added to ${engagements.length} ${engagements.length === 1 ? "engagement" : "engagements"}`
+        : `Tag “${tag}” added to ${roles} ${roles === 1 ? "role" : "roles"}` })}
     />
   );
 }
@@ -105,8 +107,7 @@ const meta: Meta = {
           "MultiValue fields with Add link, Switch toggles, sticky actions. " +
           "Roles of an engagement share one merged, read-only Engagement cell. Checkboxes on the header, the Engagement cell and each role " +
           "(engagement and role selection are mutually exclusive) show a 600px bulk banner centred in the header row with three ghost icon " +
-          "buttons: roles selected = tag (opens the “Manage tags” modal, Figma 2738:67102) and owner; engagements selected = tag-roles (opens the same modal for every role inside them), tag and owner. A Tag column after Role title shows the tag a role was given. " +
-          "Engagement variants add a Suggested WM column (an empty one shows the warning background) and a separate availability-rules table to the right (Figma 2362:258886): requested hours per week (editable), one column per week, red/orange top borders for conflicts/warnings, row actions at its right edge. Drag the divider to resize the table; it can take almost the whole width, and the week columns stretch. Edited hours are reported through onAvailabilityChange({ roleId, weekIndex, hours }). " +
+          "buttons: roles selected = tag (opens the “Manage tags” modal, Figma 2738:67102) and owner; engagements selected = tag-roles (opens the same modal for every role inside them: the tag goes in the Tag column), tag (tags the engagements themselves: the tag shows right below each engagement title) and owner. A Tag column after Role title shows the tag a role was given. In the engagement variants a read-only Delta column (same look as the engagement title cell) shows requested minus booked hours (live while the hours are edited) for confirmed and booked roles: negative is red-0, 0h is green-0, positive is neutral; every other state has nothing booked, so its delta is the requested hours (always above 0h). Engagement variants add a Suggested WM column (an empty one shows the warning background), a Booked WM column right next to it (the pill only shows when the Workflow state is confirmed or booked; any other state leaves it empty). A booked or confirmed role always has someone in Suggested WM (its own suggestion, else the person booked on it) and a separate availability-rules table to the right (Figma 2362:258886): requested hours per week (editable), one column per week, red/orange top borders for conflicts/warnings, row actions at its right edge. Drag the divider to resize the table; it can take almost the whole width, and the week columns stretch. Edited hours are reported through onAvailabilityChange({ roleId, weekIndex, hours }). " +
           "Bottom: Actions variant='sticky-screen' — Cancel | Save in the DTT variant, Close | Fill & Book in the engagement variants.",
       },
     },

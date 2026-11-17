@@ -96,6 +96,14 @@
   }
 }
 
+// Info icon after the header text (TableColumn.headerInfo)
+.th .headerInfo {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--palette-blue-0);
+  cursor: default;
+}
+
 .th.sortable {
   cursor: pointer;
   user-select: none;
@@ -376,6 +384,14 @@
     white-space: nowrap;
     min-width: 0;
   }
+}
+
+// ── Cell alignment: top (cellAlign="top") ──────────────────────────────────────
+// Body cells start at the top of the row. The checkbox sits on the first line: standard rows have 16px padding, a first line the height of a
+// regular button is 34px and the checkbox is 24px, so it needs 16 + (34 - 24) / 2 = 21px above it.
+.alignTop {
+  tbody .td { vertical-align: top; }
+  &.standard tbody .checkboxCell { vertical-align: top; padding-top: 21px; }
 }
 
 // ── Header size: label ─────────────────────────────────────────────────────────

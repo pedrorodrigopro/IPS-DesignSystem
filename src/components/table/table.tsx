@@ -40,6 +40,7 @@ import { Icon } from "../icon/icon";
 import { Avatar } from "../avatar/avatar";
 import { PillSimple } from "../pill/pill";
 import { Checkbox } from "../checkbox/checkbox";
+import { Tooltip } from "../tooltip/tooltip";
 import css from "./table.module.scss";
 
 // ── Column definition ─────────────────────────────────────────────────────────
@@ -63,6 +64,8 @@ export type TableColumn<T = Record<string, unknown>> = {
   key: string;
   /** Header label */
   header: string;
+  /** Info icon after the header text; hovering or focusing it shows this text in a tooltip (e.g. what the column means) */
+  headerInfo?: string;
   /** Cell rendering type — controls how row[key] is displayed */
   type?: TableCellType;
   /** Whether header shows sort arrows */
@@ -138,6 +141,8 @@ export type TableProps<T extends TableRow = TableRow> = {
   layout?: "auto" | "fixed";
   /** Header text: "body" (default, 14px) or "label" (12px, for dense tables such as the ones in side panels). Colour is the same. */
   headerSize?: "body" | "label";
+  /** Vertical alignment of the body cells: "middle" (default) or "top" (rows whose cells hold several lines, e.g. two stacked values; the checkbox lines up with the first line). */
+  cellAlign?: "middle" | "top";
   className?: string;
 };
 
@@ -270,6 +275,7 @@ export function Table<T extends TableRow = TableRow>({
   tone = "default",
   layout = "auto",
   headerSize = "body",
+  cellAlign = "middle",
   className,
 }: TableProps<T>) {
   // ── Selection state ──────────────────────────────────────────────────────
@@ -354,6 +360,7 @@ export function Table<T extends TableRow = TableRow>({
         tone === "subtle" && css.subtle,
         layout === "fixed" && css.fixed,
         headerSize === "label" && css.labelHeader,
+        cellAlign === "top" && css.alignTop,
         className
       )}
     >
@@ -398,6 +405,13 @@ export function Table<T extends TableRow = TableRow>({
                 >
                   <span className={css.headerContent}>
                     <span className={css.headerLabel}>{col.header}</span>
+                    {col.headerInfo && (
+                      <Tooltip content={col.headerInfo} placement="up-center" maxWidth={240} portal>
+                        <span className={css.headerInfo} tabIndex={0} role="img" aria-label={col.headerInfo}>
+                          <Icon name="info" size={14} />
+                        </span>
+                      </Tooltip>
+                    )}
                     {col.sortable && <SortIcon direction={dir} />}
                   </span>
                 </th>
@@ -421,7 +435,7 @@ export function Table<T extends TableRow = TableRow>({
                 style={onRowClick ? { cursor: "pointer" } : undefined}
               >
                 {selectable && !compact && (
-                  <td className={classNames(css.td, css.checkboxCell)}>
+                  <td className={classNames(css.td, css.checkboxCell)} onClick={e => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected(row, i)}
                       onChange={() => toggleRow(row, i)}

@@ -418,3 +418,49 @@ export const AllCellTypes: Story = {
     </div>
   ),
 };
+
+// ── Header info (headerInfo) ───────────────────────────────────────────────────
+
+export const HeaderInfo: Story = {
+  name: "Header info",
+  parameters: { docs: { description: { story: "`headerInfo` adds an info icon after the header text; its text shows in a tooltip (drawn in the page body, so a narrow or clipped header never cuts it)." } } },
+  render: () => (
+    <div style={{ padding: 24, width: 520 }}>
+      <Table
+        compact
+        layout="fixed"
+        columns={[
+          { key: "name", header: "Name", type: "text-primary" },
+          { key: "target", header: "Target hours", type: "number", align: "right", width: "130px", headerInfo: "Requested hours for target roles" },
+          { key: "source", header: "Source hours", type: "number", align: "right", width: "130px", headerInfo: "Requested hours for source roles" },
+        ]}
+        rows={[
+          { id: "1", name: "Javascript developer", target: 100, source: 100 },
+          { id: "2", name: "React developer", target: 48, source: 60 },
+        ]}
+      />
+    </div>
+  ),
+};
+
+// ── Top-aligned cells (cellAlign="top") ────────────────────────────────────────
+
+export const CellAlignTop: Story = {
+  name: "Cell align top",
+  parameters: { docs: { description: { story: "`cellAlign=\"top\"` starts the body cells at the top of the row, for cells holding several lines (here two stacked values). The checkbox lines up with the first line." } } },
+  render: () => (
+    <div style={{ padding: 24, width: 640 }}>
+      <Table
+        selectable
+        cellAlign="top"
+        columns={[
+          { key: "name", header: "Name", type: "text-primary" },
+          { key: "two", header: "Two lines", renderCell: () => (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}><span>First line</span><span>Second line</span></div>
+          ) },
+        ]}
+        rows={[{ id: "1", name: "Row one" }, { id: "2", name: "Row two" }]}
+      />
+    </div>
+  ),
+};

@@ -245,13 +245,17 @@ type RoleRow = TableRow & {
   expiry: string;
   start: string;
   dueDays: number;
+  /** Hours the role asks for */
+  requested: number;
+  /** Hours booked on it (only a confirmed or booked role has any) */
+  booked: number;
 };
 
-const ROLES: RoleRow[] = [
+const ROLES_DATA: { id: string; title: string; vacancies: string; state: string; wfState: WFState; expiry: string; start: string; dueDays: number }[] = [
   { id: "r1",  title: "SP-11459 - 1",       vacancies: "1/1", state: "Open", wfState: "new",          expiry: "28-10-2026", start: "19-10-2026 - 21-10-2026", dueDays: 28 },
   { id: "r2",  title: "test",               vacancies: "1/1", state: "Open", wfState: "new",          expiry: "29-10-2026", start: "16-09-2026 - 24-09-2026", dueDays: 29 },
   { id: "r3",  title: "Scranton",           vacancies: "1/1", state: "Open", wfState: "shortlisting", expiry: "28-10-2026", start: "",                        dueDays: 28 },
-  { id: "r4",  title: "Matches - Ordering", vacancies: "1/1", state: "Open", wfState: "shortlisting", expiry: "25-10-2026", start: "28-09-2026 - 11-10-2026", dueDays: 25 },
+  { id: "r4",  title: "Matches - Ordering", vacancies: "0/1", state: "Open", wfState: "booked"      , expiry: "25-10-2026", start: "28-09-2026 - 11-10-2026", dueDays: 25 },
   { id: "r5",  title: "Frisco",             vacancies: "1/1", state: "Open", wfState: "new",          expiry: "25-10-2026", start: "",                        dueDays: 25 },
   { id: "r6",  title: "Senior Sales Rep",   vacancies: "1/1", state: "Open", wfState: "new",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
   { id: "r7",  title: "BRole1 CLONE",       vacancies: "3/3", state: "Open", wfState: "new",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
@@ -262,6 +266,17 @@ const ROLES: RoleRow[] = [
   { id: "r12", title: "ST Role#2",          vacancies: "0/2", state: "Open", wfState: "confirmed",    expiry: "23-10-2026", start: "31-08-2026 - 12-09-2027", dueDays: 23 },
   { id: "r13", title: "ST Role#1",          vacancies: "0/1", state: "Open", wfState: "confirmed",    expiry: "23-10-2026", start: "01-09-2026 - 10-10-2027", dueDays: 23 },
 ];
+
+// Requested hours per role (a different amount each); booked hours only for confirmed and booked roles
+const BOOKED_HOURS: Record<string, number> = { r4: 80, r12: 360, r13: 320 };
+const ROLES: RoleRow[] = ROLES_DATA.map((r, i) => ({ ...r, requested: 40 * (2 + (i % 6)), booked: BOOKED_HOURS[r.id as string] ?? 0 }));
+// r4 asks for 160h and has 80 booked (+80h); r12 asks for 320h and has 360 (-40h); r13 asks for 320h and has 320 (0h)
+ROLES.find(r => r.id === "r4")!.requested = 160;
+ROLES.find(r => r.id === "r12")!.requested = 320;
+ROLES.find(r => r.id === "r13")!.requested = 320;
+
+/** Delta of a role: confirmed and booked roles = requested − booked hours (negative red-0, 0h green-0, positive neutral); any other state has nothing booked yet, so it is the requested hours (always above 0h) */
+const roleDelta = (r: RoleRow) => (r.wfState === "confirmed" || r.wfState === "booked" ? r.requested - r.booked : r.requested);
 
 const roleColumns: TableColumn<RoleRow>[] = [
   { key: "title",     header: "Role Title",               sortable: false, width: "200px", type: "text-primary" },
@@ -277,6 +292,18 @@ const roleColumns: TableColumn<RoleRow>[] = [
   {
     key: "wfState",   header: "Workflow state",           sortable: false, width: "150px",
     renderCell: (row) => <PillWFState state={row.wfState} size="small" />,
+  },
+  {
+    key: "delta",     header: "Delta",                    sortable: false, width: "90px",
+    headerInfo: "Requested − booked hours. A role that is not booked or confirmed has nothing booked yet: its delta is the requested hours",
+    renderCell: (row) => {
+      const d = roleDelta(row);
+      return (
+        <span style={{ fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, color: d < 0 ? "var(--palette-red-0)" : d === 0 ? "var(--palette-green-0)" : "var(--palette-blue-0)" }}>
+          {d > 0 ? "+" : ""}{d}h
+        </span>
+      );
+    },
   },
   { key: "expiry",    header: "Expiry date",              sortable: true,  width: "120px", type: "text-regular" },
   {
@@ -432,7 +459,7 @@ const meta: Meta = {
           "Workflow screen — Engagements and Roles tabs. " +
           "Table wrapped in Tile highlight + content padding (16px). " +
           "Engagements: group header accordion + 19 sample rows with assignee WM cell, pin/menu sticky cols. " +
-          "Roles: Gantt toggle, WFState pills, availability range, due days, menu sticky col. " +
+          "Roles: Gantt toggle, WFState pills, Delta (requested − booked hours for confirmed and booked roles: negative red-0, 0h green-0, positive neutral; any other state shows the requested hours, always above 0h), availability range, due days, menu sticky col. " +
           "Ticking rows shows a 600px bulk banner centred in the header row: Engagements get Manage roles · Tag roles · Roll forward · Share · Move · Change owner; Roles get Tag · Share · Move · Change owner (no Manage roles / Tag roles).",
       },
     },
