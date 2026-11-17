@@ -368,6 +368,8 @@ export type InputInlineProps = {
   mandatory?: boolean;
   /** Icon at the right of the field. Defaults to the chevron; use "sort" for a sort-by select. */
   rightIcon?: IconName;
+  /** Read-only: just the "Label: Value" text (no chevron, no stroke, no hover, not focusable) */
+  readOnly?: boolean;
   onClick?: () => void;
   className?: string;
 };
@@ -377,17 +379,27 @@ export const InputInline = ({
   value,
   mandatory = false,
   rightIcon = "chevron-down",
+  readOnly = false,
   onClick,
   className,
 }: InputInlineProps) => (
   <div className={classNames(css.field, className)}>
-    <button type="button" className={classNames(css.inputBox, css.inlineBox)} onClick={onClick}>
-      <span className={css.inlineFlex}>
-        {inlineLabel && <span className={css.inlineLabel}>{inlineLabel}: </span>}
-        <span className={css.inlineValue}>{value}</span>
-        {mandatory && <MandatoryIcon />}
-      </span>
-      <Icon name={rightIcon} size={16} className={css.icon} />
-    </button>
+    {readOnly ? (
+      <div className={classNames(css.inputBox, css.inlineBox, css.readOnly)}>
+        <span className={css.inlineFlex}>
+          {inlineLabel && <span className={css.inlineLabel}>{inlineLabel}: </span>}
+          <span className={css.inlineValue}>{value}</span>
+        </span>
+      </div>
+    ) : (
+      <button type="button" className={classNames(css.inputBox, css.inlineBox)} onClick={onClick}>
+        <span className={css.inlineFlex}>
+          {inlineLabel && <span className={css.inlineLabel}>{inlineLabel}: </span>}
+          <span className={css.inlineValue}>{value}</span>
+          {mandatory && <MandatoryIcon />}
+        </span>
+        <Icon name={rightIcon} size={16} className={css.icon} />
+      </button>
+    )}
   </div>
 );

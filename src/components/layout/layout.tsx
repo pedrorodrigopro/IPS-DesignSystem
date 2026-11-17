@@ -10,7 +10,7 @@
 //
 //   fluid           — edge-to-edge content (no side padding), 24px top inset;
 //                     the content slot manages its own paddings and scrolling
-//                     (e.g. CV Studio: header row, two columns, full-width footer)
+//                     (e.g. CV Exporter: header row, two columns, full-width footer)
 //
 //   1280            — centered content, max 1280px wide
 //                     padding: 24px top, centering via alignItems:center

@@ -1,7 +1,7 @@
 // CV review — pure logic for "the profile (single source of truth) changed, review it in each CV version".
-// Figma: Export CV revamp 886:40801 (Profile), 886:40981 (CV Versions), 886:41024 (CV Studio). Placeholder content.
+// Figma: Export CV revamp 886:40801 (Profile), 886:40981 (CV Versions), 886:41024 (CV Exporter). Placeholder content.
 
-import type { CV, FieldKey } from "../cv_studio/cv_studio";
+import type { CV, FieldKey } from "../cv_exporter/cv_exporter";
 
 export type ReviewChange =
   | { id: string; kind: "field"; field: FieldKey; label: string; before: string; after: string }
@@ -29,7 +29,7 @@ export function applyChange(cv: CV, change: ReviewChange): CV {
   return skills.includes(change.skill) ? cv : { ...cv, skills: [...skills, change.skill].join(", ") };
 }
 
-/** CV Studio alert text, e.g. "3 fields edited and 1 new custom value added". */
+/** CV Exporter alert text, e.g. "3 fields edited and 1 new custom value added". */
 export function summarize(changes: ReviewChange[]): string {
   const fields = changes.filter(c => c.kind === "field").length;
   const values = changes.filter(c => c.kind === "skill").length;

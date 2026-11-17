@@ -308,6 +308,7 @@
 
 .inlineBox {
   cursor: pointer;
+  &.readOnly { cursor: default; }
   &:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px rgba(12, 20, 87, 1), 0 0 0 2px var(--palette-white-0);

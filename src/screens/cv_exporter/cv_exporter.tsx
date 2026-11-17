@@ -1,4 +1,4 @@
-// CV Studio screen — export one or several CVs (used by the Screens/CVStudio stories and by Screens/MyProfile)
+// CV Exporter screen — export one or several CVs (used by the Screens/CVExporter stories and by Screens/MyProfile)
 // Figma: Export CV revamp (eLJ4mtITbBhHCbONvKtGZU)
 //   Single export:  653:36523   Multi export: 653:37833   Left module (ProPilot): 1440:36072
 //
@@ -10,8 +10,14 @@
 //                     ProPilot    — conversation + PPChatInput
 //                   Right: Tile highlight — toolbar (pager for multi, Version selector), then the scrolling
 //                          CV preview (photo, logo, label/value rows)
-//   Footer          Actions sticky-panel — Close | Save, Export (single)
-//                   multi: split buttons "Save (3)" / "Export (3)"; their chevrons open "Save current" / "Export current"
+//   Footer          Actions sticky-panel, by variant:
+//                   creating-version   Close | Save, Export
+//                   exporting-version  Cancel | Save (split ButtonGroup: chevron opens "Save to new CV Version" above it), Export
+//                   multi-exporting    Close | split button "Export (3)" (chevron opens "Export current")
+//
+// Variants: "creating-version" (one CV; the Version field is read-only: the version being created), "exporting-version" (one CV, the
+// Version field picks the version to export), "multi-exporting" (several CVs: "3 CVs" title, pager, no Save). Default: one CV =
+// exporting-version, several = multi-exporting.
 //
 // Both columns are taller than the visible area by 24px so the footer clips them, as in Figma.
 
@@ -325,7 +331,7 @@ function ReviewSkill({ change, onUse, onDismiss }: {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ProPilot chat items (state lives in CVStudioScreen so the CV preview can react to suggestion hover)
+// ProPilot chat items (state lives in CVExporterScreen so the CV preview can react to suggestion hover)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 type ChatItem =
@@ -535,16 +541,23 @@ function LeftModule({
 // Screen
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-export function CVStudioScreen({
-  cvs, initialMode = "edit", onClose, onNavigate, review, onCVChange,
+export type CVExporterVariant = "creating-version" | "exporting-version" | "multi-exporting";
+
+export function CVExporterScreen({
+  cvs, variant, initialMode = "edit", onClose, onNavigate, review, onCVChange,
 }: {
-  cvs: CV[]; initialMode?: Mode; onClose?: () => void; onNavigate?: (navbarId: string) => void;
+  cvs: CV[];
+  /** Which export this is (see the header notes). Default: "multi-exporting" for several CVs, otherwise "exporting-version". */
+  variant?: CVExporterVariant;
+  initialMode?: Mode; onClose?: () => void; onNavigate?: (navbarId: string) => void;
   /** Pending profile edits to review for the CV shown (alert + Before / After boxes) */
   review?: StudioReview;
   /** Called with the CV at `index` whenever the user's edits (typing, Use new, Push all, ProPilot Apply) change it */
   onCVChange?: (index: number, cv: CV) => void;
 }) {
-  const multi = cvs.length > 1;
+  const kind: CVExporterVariant = variant ?? (cvs.length > 1 ? "multi-exporting" : "exporting-version");
+  const multi = kind === "multi-exporting";
+  const creating = kind === "creating-version";
   const [data, setData] = useState(cvs);
   const [index, setIndex] = useState(0);
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -685,9 +698,14 @@ export function CVStudioScreen({
                   )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <SelectMenu items={VERSIONS} selectedId={version} onSelect={setVersion} align="right">
-                    {toggle => <InputInline inlineLabel="Version" value={version} onClick={toggle} />}
-                  </SelectMenu>
+                  {creating ? (
+                    // the version being created: nothing to pick, so a plain "Version: value" (no chevron, stroke or hover)
+                    <InputInline inlineLabel="Version" value={version} readOnly />
+                  ) : (
+                    <SelectMenu items={VERSIONS} selectedId={version} onSelect={setVersion} align="right">
+                      {toggle => <InputInline inlineLabel="Version" value={version} onClick={toggle} />}
+                    </SelectMenu>
+                  )}
                 </div>
               </div>
               <Divider orientation="horizontal" style={{ margin: "0 -16px" }} />
@@ -700,13 +718,15 @@ export function CVStudioScreen({
           {/* Footer */}
           <Actions
             variant="sticky-panel"
-            leftActions={[{ label: "Close", variant: "secondary", onClick: onClose }]}
-            rightActions={multi ? [] : [{ label: "Save", variant: "secondary" }, { label: "Export", variant: "primary" }]}
+            leftActions={[{ label: kind === "exporting-version" ? "Cancel" : "Close", variant: "secondary", onClick: onClose }]}
+            rightActions={creating ? [{ label: "Save", variant: "secondary" }, { label: "Export", variant: "primary" }] : []}
             rightContent={
               multi ? (
+                <SplitButton label={`Export (${cvs.length})`} variant="primary" items={[{ id: "export-current", label: "Export current" }]} />
+              ) : !creating ? (
                 <>
-                  <SplitButton label={`Save (${cvs.length})`} variant="secondary" items={[{ id: "save-current", label: "Save current" }]} />
-                  <SplitButton label={`Export (${cvs.length})`} variant="primary" items={[{ id: "export-current", label: "Export current" }]} />
+                  <SplitButton label="Save" variant="secondary" items={[{ id: "save-new-version", label: "Save to new CV Version" }]} />
+                  <Button kind="primary" size="regular">Export</Button>
                 </>
               ) : undefined
             }

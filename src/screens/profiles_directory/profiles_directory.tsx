@@ -25,7 +25,7 @@ import { Button }           from "../../components/button/button";
 import { Avatar }           from "../../components/avatar/avatar";
 import { Checkbox }         from "../../components/checkbox/checkbox";
 import { Alert }            from "../../components/alert/alert";
-import { CVStudioScreen, ZARA } from "../cv_studio/cv_studio";
+import { CVExporterScreen, ZARA } from "../cv_exporter/cv_exporter";
 import { SkillProfile }     from "../../components/skill/skill";
 import { SearchFilter }     from "../../components/search_filter/search_filter";
 import type { AppliedFilter } from "../../components/filters_applied/filters_applied";
@@ -582,7 +582,7 @@ export function ProfilesDirectoryScreen({
   onNavigate?: (id: string) => void;
   /** A card / a table-row name was clicked → that person's profile. Not clickable when omitted. */
   onOpenProfile?: (profile: ProfileEntry) => void;
-  /** "Open CV" was clicked. When omitted the screen opens CV Studio for that one profile itself (Close comes back here). */
+  /** "Open CV" was clicked. When omitted the screen opens CV Exporter for that one profile itself (Close comes back here). */
   onOpenCV?: (profile: ProfileEntry) => void;
 }) {
   const [search, setSearch]     = useState(initialSearch);
@@ -618,7 +618,7 @@ export function ProfilesDirectoryScreen({
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedIds.length, exporting]);
 
-  // Bulk selection (table view) → "Export CV" opens CV Studio for the selected profiles; Close comes back here
+  // Bulk selection (table view) → "Export CV" opens CV Exporter for the selected profiles; Close comes back here
   const selected = filtered.filter(p => selectedIds.includes(p.id));
   const cvOf = (p: ProfileEntry) => ({
     ...ZARA,
@@ -628,11 +628,11 @@ export function ProfilesDirectoryScreen({
   });
   const openCV = (p: ProfileEntry) => (onOpenCV ? onOpenCV(p) : setOpenedCV(p));
   if (openedCV) {
-    return <CVStudioScreen cvs={[cvOf(openedCV)]} onClose={() => setOpenedCV(null)} onNavigate={id => { if (id === "profiles") setOpenedCV(null); else onNavigate?.(id); }} />;
+    return <CVExporterScreen cvs={[cvOf(openedCV)]} onClose={() => setOpenedCV(null)} onNavigate={id => { if (id === "profiles") setOpenedCV(null); else onNavigate?.(id); }} />;
   }
   if (exporting && selected.length > 0) {
     const cvs = selected.map(cvOf);
-    return <CVStudioScreen cvs={cvs} onClose={() => setExporting(false)} onNavigate={id => { if (id === "profiles") setExporting(false); else onNavigate?.(id); }} />;
+    return <CVExporterScreen cvs={cvs} onClose={() => setExporting(false)} onNavigate={id => { if (id === "profiles") setExporting(false); else onNavigate?.(id); }} />;
   }
 
   return (

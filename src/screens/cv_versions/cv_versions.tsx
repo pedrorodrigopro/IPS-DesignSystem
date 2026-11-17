@@ -23,8 +23,8 @@ import { Alert }        from "../../components/alert/alert";
 import { Modal }        from "../../components/modal/modal";
 import { Switch }       from "../../components/switch/switch";
 
-import { CVPreview, SelectMenu, ZARA } from "../cv_studio/cv_studio";
-import type { CV } from "../cv_studio/cv_studio";
+import { CVPreview, SelectMenu, ZARA } from "../cv_exporter/cv_exporter";
+import type { CV } from "../cv_exporter/cv_exporter";
 import { pendingVersionsText } from "../cv_review/cv_review";
 import type { ReviewChange } from "../cv_review/cv_review";
 

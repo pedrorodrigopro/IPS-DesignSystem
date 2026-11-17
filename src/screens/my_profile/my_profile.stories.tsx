@@ -26,9 +26,9 @@ import { SkillList, SkillProfile }   from "../../components/skill/skill";
 import { Input, InputSearch, InputSelect } from "../../components/input/input";
 import { DropdownMultiSelection }    from "../../components/dropdown/dropdown";
 import { Header }                    from "../../components/header/header";
-import { CVStudioScreen, ZARA }      from "../cv_studio/cv_studio";
-import type { CV }                   from "../cv_studio/cv_studio";
-import cvPhoto                       from "../cv_studio/assets/cv-photo.jpg";
+import { CVExporterScreen, ZARA }      from "../cv_exporter/cv_exporter";
+import type { CV }                   from "../cv_exporter/cv_exporter";
+import cvPhoto                       from "../cv_exporter/assets/cv-photo.jpg";
 import { CVVersionsScreen, INITIAL_CV_VERSIONS } from "../cv_versions/cv_versions";
 import type { CVVersion }        from "../cv_versions/cv_versions";
 import { ProfilesDirectoryScreen }   from "../profiles_directory/profiles_directory";
@@ -61,12 +61,12 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 // LEFT SIDEBAR — Tile selected content
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-// Profile ⇄ CV Studio ⇄ CV Versions (Figma: Export CV revamp)
-//   "Open main CV"      → CV Studio            (Close → profile)
+// Profile ⇄ CV Exporter ⇄ CV Versions (Figma: Export CV revamp)
+//   "Open main CV"      → CV Exporter            (Close → profile)
 //   "See all versions"  → CV Versions          (breadcrumb → profile)
-//   CV Versions: "Create CV version" / edit icon → CV Studio   (Close → CV Versions)
-//   Create CV version  → modal (name, description) → adds the version → CV Studio
-//   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Studio
+//   CV Versions: "Create CV version" / edit icon → CV Exporter   (Close → CV Versions)
+//   Create CV version  → modal (name, description) → adds the version → CV Exporter
+//   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Exporter
 //                         with every selected CV (Close → directory). Navbar profile item → back to My Profile
 type CVView = "profile" | "studio" | "versions" | "directory";
 type StudioFrom = "profile" | "versions" | "directory";
@@ -114,9 +114,9 @@ function useCVFlow() {
     closeStudio: () => setView(studioFrom),
     /** A card / name in the directory */
     openProfileFor: (p: ProfileEntry) => { seed(personOf(p)); setView("profile"); },
-    /** "Open CV" in the directory → the main CV (first version) in CV Studio; Close returns to the directory */
+    /** "Open CV" in the directory → the main CV (first version) in CV Exporter; Close returns to the directory */
     openCVFor: (p: ProfileEntry) => { seed(personOf(p)); setStudioFrom("directory"); setStudioVersion(versions[0].id); setView("studio"); },
-    /** CV Studio reports the CV the user is editing */
+    /** CV Exporter reports the CV the user is editing */
     setCV: (versionId: string, cv: CV) => setCvs(cs => ({ ...cs, [versionId]: cv })),
     /** Alert on Profile / CV Versions: write every pending edit into every version, or drop them */
     pushAll: () => {
@@ -124,7 +124,7 @@ function useCVFlow() {
       setPending({});
     },
     dismissAll: () => setPending({}),
-    /** CV Studio: "Use new" / "Add" (the Studio already wrote it into its own CV); "all" also writes it into the other versions */
+    /** CV Exporter: "Use new" / "Add" (the Studio already wrote it into its own CV); "all" also writes it into the other versions */
     useChange: (versionId: string, id: string, scope: "this" | "all") => {
       const ch = pending[versionId]?.find(c => c.id === id);
       if (scope === "all" && ch) {
@@ -137,7 +137,7 @@ function useCVFlow() {
       setPending(pb => withoutChange(pb, id, scope === "all" ? "all" : versionId));
     },
     dismissChange: (versionId: string, id: string, scope: "this" | "all") => setPending(pb => withoutChange(pb, id, scope === "all" ? "all" : versionId)),
-    /** CV Studio "Push all" / "Dismiss all": this version is up to date */
+    /** CV Exporter "Push all" / "Dismiss all": this version is up to date */
     clearVersion: (versionId: string) => setPending(pb => ({ ...pb, [versionId]: [] })),
   };
 }
@@ -150,7 +150,7 @@ function navbarHandler(flow: ReturnType<typeof useCVFlow>) {
   };
 }
 
-/** The CV Studio / CV Versions / Profiles Directory screens of the flow, for the person shown on this profile. */
+/** The CV Exporter / CV Versions / Profiles Directory screens of the flow, for the person shown on this profile. */
 function CVFlowView({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
   if (flow.view === "directory") {
     return (
@@ -166,7 +166,7 @@ function CVFlowView({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
   if (flow.view === "studio") {
     const vid = flow.studioVersion;
     return (
-      <CVStudioScreen
+      <CVExporterScreen
         key={vid}
         cvs={[flow.cvOf(vid)]}
         onClose={flow.closeStudio}
@@ -765,7 +765,7 @@ const meta: Meta = {
       description: {
         component:
           "My Profile screen — three-column layout. " +
-          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation); a CV Versions block above Contact opens CV Studio (“Open main CV”) or CV Versions (“See all versions”). Arriving from Profiles Directory (click a profile or “Open CV”) the profile was edited since the CV versions were last updated: an alert on top (Review / Push all edits to all / Dismiss for all) is repeated on CV Versions (plus “Outdated fields” on each card) and in CV Studio (Before / After boxes with Use new / Add / Dismiss, chevrons for “in all versions”). Clicking Experience shows a collapsible Filters box (search + Industry / Company / Client / Skills multi-selects, “Clear filters”) above the position cards. Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
+          "Left: Tile selected content (avatar, progress bar, bio, vertical Navigation); a CV Versions block above Contact opens CV Exporter (“Open main CV”) or CV Versions (“See all versions”). Arriving from Profiles Directory (click a profile or “Open CV”) the profile was edited since the CV versions were last updated: an alert on top (Review / Push all edits to all / Dismiss for all) is repeated on CV Versions (plus “Outdated fields” on each card) and in CV Exporter (Before / After boxes with Use new / Add / Dismiss, chevrons for “in all versions”). Clicking Experience shows a collapsible Filters box (search + Industry / Company / Client / Skills multi-selects, “Clear filters”) above the position cards. Clicking Additional shows the Additional fields (Figma: Education section in Profile, 56:41690): one Tile highlight per field with a Header, iconTertiary edit button and a SkillList without proficiency; Languages as nested Tile object-light cards. " +
           "Centre: Tile highlight content blocks — Skills with expandable framework groups (SkillProfile + Checkbox), Skills Groups carousel (Tile object-light cards), Accreditations. " +
           "Right: Tile highlight content — Organisation Data key-value grid + Availability mini-calendar with booking bars.",
       },
