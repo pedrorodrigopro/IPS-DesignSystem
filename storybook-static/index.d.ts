@@ -1845,7 +1845,7 @@ export declare type SwitchProps = {
     className?: string;
 };
 
-export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, onRowClick, tone, layout, headerSize, className, }: TableProps<T>): default_2.JSX.Element;
+export declare function Table<T extends TableRow = TableRow>({ columns, rows, compact, selectable, selectedRows, onSelectionChange, sortKey, sortDirection, onSort, onRowClick, tone, layout, headerSize, cellAlign, className, }: TableProps<T>): default_2.JSX.Element;
 
 export declare type TableCellType = "text-primary" | "text-regular" | "pill" | "wm" | "number" | "percentage" | "button" | "icon" | "checkbox" | "custom";
 
@@ -1854,6 +1854,8 @@ export declare type TableColumn<T = Record<string, unknown>> = {
     key: string;
     /** Header label */
     header: string;
+    /** Info icon after the header text; hovering or focusing it shows this text in a tooltip (e.g. what the column means) */
+    headerInfo?: string;
     /** Cell rendering type — controls how row[key] is displayed */
     type?: TableCellType;
     /** Whether header shows sort arrows */
@@ -1912,6 +1914,8 @@ export declare type TableProps<T extends TableRow = TableRow> = {
     layout?: "auto" | "fixed";
     /** Header text: "body" (default, 14px) or "label" (12px, for dense tables such as the ones in side panels). Colour is the same. */
     headerSize?: "body" | "label";
+    /** Vertical alignment of the body cells: "middle" (default) or "top" (rows whose cells hold several lines, e.g. two stacked values; the checkbox lines up with the first line). */
+    cellAlign?: "middle" | "top";
     className?: string;
 };
 
