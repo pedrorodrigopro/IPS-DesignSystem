@@ -235,20 +235,36 @@ function BookedWMCell({ role }: { role: RoleRow }) {
 // Default: the value, centred. Hover: grey cell (rgba(0,0,0,.04)) with the value in an 8px-radius pill (1px neutral-0 border).
 // Focused (typing): white cell with a 2px navy border (blue-1), the pill turns light blue (primary-3).
 
-function HoursTd({ defaultValue, flag, onChange }: { defaultValue?: number; flag?: "error" | "warning"; onChange?: (hours: number | null) => void }) {
+// Drag fill: press on a cell and drag over others; the covered rectangle gets a blue outline and, on release, every cell in it takes the value of the cell the drag started from.
+type FillEdges = { top: boolean; bottom: boolean; left: boolean; right: boolean };
+const FILL_BLUE = "var(--palette-primary-0)";
+
+function HoursTd({ defaultValue, flag, onChange, fill, fillEdges, dragging, onDragStart, onDragEnter }: {
+  defaultValue?: number; flag?: "error" | "warning"; onChange?: (hours: number | null) => void;
+  /** A value pushed in from outside (drag fill): `n` changes every time, `v` is the text to show */
+  fill?: { n: number; v: string };
+  /** Edges of the drag rectangle that run along this cell (null = the cell is not inside it) */
+  fillEdges?: FillEdges | null; dragging?: boolean;
+  onDragStart?: () => void; onDragEnter?: () => void;
+}) {
   const [val, setVal] = useState(defaultValue == null ? "" : String(defaultValue));
   const [hover, setHover] = useState(false);
   const [focus, setFocus] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (fill) setVal(fill.v); }, [fill?.n]); // eslint-disable-line react-hooks/exhaustive-deps
+  const edge = (on: boolean, inset: string) => (on ? inset : null);
+  const outline = fillEdges
+    ? [edge(fillEdges.top, `inset 0 2px 0 0 ${FILL_BLUE}`), edge(fillEdges.bottom, `inset 0 -2px 0 0 ${FILL_BLUE}`), edge(fillEdges.left, `inset 2px 0 0 0 ${FILL_BLUE}`), edge(fillEdges.right, `inset -2px 0 0 0 ${FILL_BLUE}`)].filter(Boolean).join(", ")
+    : undefined;
   return (
     <td
-      onMouseEnter={() => setHover(true)}
+      onMouseEnter={() => { setHover(true); onDragEnter?.(); }}
       onMouseLeave={() => setHover(false)}
-      onMouseDown={e => { if (e.target !== input.current) { e.preventDefault(); input.current?.focus(); } }}
+      onMouseDown={e => { if (e.button !== 0) return; onDragStart?.(); if (e.target !== input.current) { e.preventDefault(); input.current?.focus(); } }}
       style={{
-        ...tdStyle, position: "relative", textAlign: "center", cursor: "text",
-        background: focus ? "var(--palette-white-0)" : hover ? "rgba(0, 0, 0, 0.04)" : undefined,
-        boxShadow: focus ? "inset 0 0 0 2px var(--palette-blue-1)" : undefined,
+        ...tdStyle, position: "relative", textAlign: "center", cursor: dragging ? "cell" : "text",
+        background: fillEdges ? "var(--palette-white-0)" : focus ? "var(--palette-white-0)" : hover && !dragging ? "rgba(0, 0, 0, 0.04)" : undefined,
+        boxShadow: outline ?? (focus ? "inset 0 0 0 2px var(--palette-blue-1)" : undefined),
       }}
     >
       {flag && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: flag === "error" ? "var(--palette-red-0)" : "var(--palette-orange-1)" }} />}
@@ -264,8 +280,9 @@ function HoursTd({ defaultValue, flag, onChange }: { defaultValue?: number; flag
           display: "block", width: "100%", height: 24, marginTop: 4, boxSizing: "border-box", textAlign: "center", outline: "none", padding: "0 8px",
           fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, lineHeight: "115%", color: "var(--palette-blue-0)",
           borderRadius: 8, border: "1px solid transparent",
-          background: focus ? "var(--palette-primary-3)" : hover ? "rgba(0, 0, 0, 0.04)" : "transparent",
-          borderColor: focus || hover ? "var(--palette-neutral-0)" : "transparent",
+          background: fillEdges ? "transparent" : focus ? "var(--palette-primary-3)" : hover && !dragging ? "rgba(0, 0, 0, 0.04)" : "transparent",
+          borderColor: !fillEdges && (focus || (hover && !dragging)) ? "var(--palette-neutral-0)" : "transparent",
+          pointerEvents: dragging ? "none" : undefined,
         }}
       />
     </td>
@@ -673,8 +690,44 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width, onAvailabilityChange }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const freshRow = useContext(FreshRowContext);
   const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined } : c);
+
+  // Drag fill. `anchor` = the cell the press started on, `over` = the cell the pointer is on now; once they differ the drag is on.
+  const [anchor, setAnchor] = useState<{ r: number; c: number } | null>(null);
+  const [over, setOver] = useState<{ r: number; c: number } | null>(null);
+  const [fills, setFills] = useState<Record<string, { n: number; v: string }>>({});
+  const edited = useRef<Record<string, number | null>>({});      // what the user typed / filled, by "roleId:week"
+  const fillSeq = useRef(0);
+  const key = (roleId: string, c: number) => `${roleId}:${c}`;
+  const valueAt = (r: number, c: number): number | null => {
+    const k = key(roles[r].id, c);
+    return k in edited.current ? edited.current[k] : (norm(roles[r].availability?.[c])?.hours ?? null);
+  };
+  const active = !!anchor && !!over && (anchor.r !== over.r || anchor.c !== over.c);
+  const rect = active ? { r0: Math.min(anchor!.r, over!.r), r1: Math.max(anchor!.r, over!.r), c0: Math.min(anchor!.c, over!.c), c1: Math.max(anchor!.c, over!.c) } : null;
+  useEffect(() => {
+    if (!anchor) return;
+    const up = () => {
+      if (rect) {
+        const v = valueAt(anchor.r, anchor.c);
+        const next: Record<string, { n: number; v: string }> = {};
+        for (let r = rect.r0; r <= rect.r1; r++) for (let c = rect.c0; c <= rect.c1; c++) {
+          if (r === anchor.r && c === anchor.c) continue;
+          const k = key(roles[r].id, c);
+          edited.current[k] = v;
+          next[k] = { n: ++fillSeq.current, v: v == null ? "" : String(v) };
+          onAvailabilityChange?.({ roleId: roles[r].id, weekIndex: c, hours: v });
+        }
+        setFills(f => ({ ...f, ...next }));
+      }
+      setAnchor(null); setOver(null);
+    };
+    window.addEventListener("mouseup", up);
+    return () => window.removeEventListener("mouseup", up);
+  });
+  useEffect(() => { if (active) { (document.activeElement as HTMLElement | null)?.blur?.(); window.getSelection()?.removeAllRanges(); } }, [active]);
+
   return (
-    <div style={{ flex: "0 0 auto", width, maxWidth: `calc(100% - ${DIVIDER_W + MIN_LEFT_W}px)`, overflowX: "auto" }}>
+    <div style={{ flex: "0 0 auto", width, userSelect: active ? "none" : undefined, maxWidth: `calc(100% - ${DIVIDER_W + MIN_LEFT_W}px)`, overflowX: "auto" }}>
       <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: weeks.length * WEEK_W + ACTIONS_W }}>
         <thead>
           <tr style={{ height: HEAD_H }}>
@@ -685,12 +738,20 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
           </tr>
         </thead>
         <tbody>
-          {roles.map(role => (
+          {roles.map((role, ri) => (
             <tr key={role.id} className={freshRow === role.id ? "mr-row-new" : undefined} style={{ height: ROW_H, background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
               {weeks.map((w, i) => {
                 const c = norm(role.availability?.[i]);
+                const edges: FillEdges | null = rect && ri >= rect.r0 && ri <= rect.r1 && i >= rect.c0 && i <= rect.c1
+                  ? { top: ri === rect.r0, bottom: ri === rect.r1, left: i === rect.c0, right: i === rect.c1 } : null;
                 return (
-                  <HoursTd key={w} defaultValue={c?.hours} flag={c?.flag} onChange={hours => onAvailabilityChange?.({ roleId: role.id, weekIndex: i, hours })} />
+                  <HoursTd
+                    key={w} defaultValue={c?.hours} flag={c?.flag}
+                    onChange={hours => { edited.current[key(role.id, i)] = hours; onAvailabilityChange?.({ roleId: role.id, weekIndex: i, hours }); }}
+                    fill={fills[key(role.id, i)]} fillEdges={edges} dragging={active}
+                    onDragStart={() => { setAnchor({ r: ri, c: i }); setOver({ r: ri, c: i }); }}
+                    onDragEnter={() => { if (anchor) setOver({ r: ri, c: i }); }}
+                  />
                 );
               })}
               <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
