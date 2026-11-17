@@ -1242,7 +1242,7 @@ export declare type PPPreviewBannerProps = {
     className?: string;
 };
 
-export declare function PPSuggestionCard({ action, detail, variant, state, previewHint, children, onAccept, onDismiss, onMouseEnter, onMouseLeave, className, }: PPSuggestionCardProps): default_2.JSX.Element;
+export declare function PPSuggestionCard({ action, detail, variant, state, previewHint, children, acceptLabel, hideDismiss, onAccept, onDismiss, onMouseEnter, onMouseLeave, className, }: PPSuggestionCardProps): default_2.JSX.Element;
 
 export declare type PPSuggestionCardProps = {
     /** Bold action label shown at top */
@@ -1257,7 +1257,11 @@ export declare type PPSuggestionCardProps = {
     previewHint?: string;
     /** Optional content rendered between detail and buttons (e.g. a skill table) */
     children?: default_2.ReactNode;
-    /** Called when Apply is clicked */
+    /** Label of the main button. Default "Apply" (e.g. "Reduce availability"). */
+    acceptLabel?: string;
+    /** Hide the Dismiss button, leaving only the main button. */
+    hideDismiss?: boolean;
+    /** Called when the main (Apply) button is clicked */
     onAccept?: () => void;
     /** Called when Dismiss is clicked */
     onDismiss?: () => void;
@@ -1270,6 +1274,53 @@ export declare type PPSuggestionCardProps = {
 export declare type PPSuggestionCardState = "default" | "accepted" | "dismissed" | "expired";
 
 export declare type PPSuggestionCardVariant = "dark" | "light";
+
+export declare function PPThinking({ label, variant, className }: PPThinkingProps): default_2.JSX.Element;
+
+export declare type PPThinkingProps = {
+    /** Text next to the dots. Default "Preparing your response…". */
+    label?: string;
+    /** Visual variant — "dark" inside the floating glass window, "light" inside the docked panel */
+    variant?: PPThinkingVariant;
+    className?: string;
+};
+
+export declare type PPThinkingVariant = "dark" | "light";
+
+export declare function PPWidget({ title, subtitle, rightContent, columns, children, className }: PPWidgetProps): default_2.JSX.Element;
+
+export declare type PPWidgetProps = {
+    /** Header title. Default "ProPilot suggestions". */
+    title?: string;
+    /** Line under the title */
+    subtitle?: string;
+    /** Content at the right of the header (e.g. a count or a link) */
+    rightContent?: default_2.ReactNode;
+    /** Number of columns the children are laid out in. Default 2. */
+    columns?: number;
+    children?: default_2.ReactNode;
+    className?: string;
+};
+
+export declare function PPWindow({ children, title, onClose, onDock, inputValue, onInputChange, onSend, inputPlaceholder, className, }: PPWindowProps): default_2.JSX.Element;
+
+export declare type PPWindowProps = {
+    /** Chat content (messages, suggestions, PPThinking) */
+    children?: default_2.ReactNode;
+    /** Header title. Default "ProPilot". */
+    title?: string;
+    /** Click on the close button */
+    onClose?: () => void;
+    /** Click on the dock button (the button is hidden when omitted) */
+    onDock?: () => void;
+    /** Input row */
+    inputValue?: string;
+    onInputChange?: (value: string) => void;
+    /** Called with the text when send is clicked or Enter is pressed */
+    onSend?: (value: string) => void;
+    inputPlaceholder?: string;
+    className?: string;
+};
 
 export declare type ProficiencyLevel = "basic" | "intermediate" | "advanced";
 
