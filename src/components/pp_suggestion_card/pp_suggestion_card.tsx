@@ -30,7 +30,11 @@ export type PPSuggestionCardProps = {
   previewHint?: string;
   /** Optional content rendered between detail and buttons (e.g. a skill table) */
   children?: React.ReactNode;
-  /** Called when Apply is clicked */
+  /** Label of the main button. Default "Apply" (e.g. "Reduce availability"). */
+  acceptLabel?: string;
+  /** Hide the Dismiss button, leaving only the main button. */
+  hideDismiss?: boolean;
+  /** Called when the main (Apply) button is clicked */
   onAccept?: () => void;
   /** Called when Dismiss is clicked */
   onDismiss?: () => void;
@@ -47,6 +51,8 @@ export function PPSuggestionCard({
   state = "default",
   previewHint,
   children,
+  acceptLabel = "Apply",
+  hideDismiss = false,
   onAccept,
   onDismiss,
   onMouseEnter,
@@ -102,15 +108,17 @@ export function PPSuggestionCard({
           className={css.applyBtn}
           type="button"
         >
-          Apply
+          {acceptLabel}
         </button>
-        <button
-          onClick={onDismiss}
-          className={classNames(css.dismissBtn, { [css.dismissBtnDark]: variant === "dark" })}
-          type="button"
-        >
-          Dismiss
-        </button>
+        {!hideDismiss && (
+          <button
+            onClick={onDismiss}
+            className={classNames(css.dismissBtn, { [css.dismissBtnDark]: variant === "dark" })}
+            type="button"
+          >
+            Dismiss
+          </button>
+        )}
       </div>
     </div>
   );

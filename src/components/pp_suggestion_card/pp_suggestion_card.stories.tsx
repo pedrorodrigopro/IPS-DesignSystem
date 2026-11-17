@@ -72,3 +72,16 @@ export const AllStatesLight: StoryFn = () => (
     <PPSuggestionCard variant="light" state="dismissed" action="Add Risk Management" detail="Senior Auditor roles require it." />
   </div>
 );
+
+/** Custom main button label, no Dismiss button — e.g. an option with a single call to action */
+export const CustomButton: StoryFn<typeof PPSuggestionCard> = () => (
+  <div style={{ padding: 24, background: GLASS_BG, borderRadius: 12, width: 420 }}>
+    <PPSuggestionCard
+      variant="dark"
+      action="Option 1"
+      detail="Reduce the availability requirements, which will result in 5 matches"
+      acceptLabel="Reduce availability"
+      hideDismiss
+    />
+  </div>
+);

@@ -1,0 +1,63 @@
+// PPWidget — an in-page ProPilot widget: the same glass gradient as the floating PPWindow, but it sits in the layout (not fixed, not draggable).
+// Header (ProPilot mark + title + optional subtitle / right content), then `children` (suggestion cards in the dark variant).
+
+.widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(138deg, rgba(10, 16, 72, 0.85) 0%, rgba(64, 58, 157, 1) 28%, rgba(13, 75, 176, 0.92) 61%, rgba(24, 39, 174, 0.72) 96%);
+  box-shadow: 0px 16px 40px 0px rgba(72, 69, 189, 0.32), inset 0px 1px 0px 1px rgba(255, 255, 255, 0.2);
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-family);
+  font-size: var(--font-size-h6);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-medium);
+  color: white;
+}
+
+.subtitle {
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-big);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
