@@ -107,13 +107,35 @@ const WEEKS = [
   { label: "21 Sep - 27 Sep (W39)", days: ["Mo 21","Tu 22","We 23","Th 24","Fr 25","Sa 26","Su 27"] },
 ];
 
-function GanttHeader({ colW = GANTT_COL_DEFAULT }: { colW?: number }) {
+// The four weeks (28 days) of the Gantt from a given Monday ("YYYY-MM-DD"): header labels with the ISO week number, and the date range text next to the arrows
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DOW = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const p2 = (n: number) => String(n).padStart(2, "0");
+function isoWeek(d: Date): number {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t.getTime() - y0.getTime()) / 86400000 + 1) / 7);
+}
+function ganttWeeksFrom(from: string): { weeks: typeof WEEKS; range: string } {
+  const start = new Date(`${from}T00:00:00Z`);
+  const day = (i: number) => new Date(start.getTime() + i * 86400000);
+  const fmt = (d: Date) => `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`;
+  const weeks = [0, 1, 2, 3].map(w => ({
+    label: `${fmt(day(w * 7))} - ${fmt(day(w * 7 + 6))} (W${isoWeek(day(w * 7))})`,
+    days: DOW.map((n, i) => `${n} ${day(w * 7 + i).getUTCDate()}`),
+  }));
+  const dmy = (d: Date) => `${p2(d.getUTCDate())}-${p2(d.getUTCMonth() + 1)}-${d.getUTCFullYear()}`;
+  return { weeks, range: `${dmy(day(0))} - ${dmy(day(27))}` };
+}
+
+function GanttHeader({ colW = GANTT_COL_DEFAULT, weeks = WEEKS }: { colW?: number; weeks?: typeof WEEKS }) {
   const totalW = colW * GANTT_TOTAL_COLS;
   return (
     <div style={{ background: "white", width: totalW, minWidth: totalW }}>
       {/* Week labels */}
       <div style={{ display: "flex" }}>
-        {WEEKS.map(w => (
+        {weeks.map(w => (
           <div key={w.label} style={{ width: 7 * colW, flexShrink: 0, padding: "4px 8px", borderRight: "1px solid var(--palette-neutral-0)", fontFamily: "var(--font-family)", fontSize: 11, fontWeight: 600, color: "var(--palette-blue-2)" }}>
             {w.label}
           </div>
@@ -121,7 +143,7 @@ function GanttHeader({ colW = GANTT_COL_DEFAULT }: { colW?: number }) {
       </div>
       {/* Day labels */}
       <div style={{ display: "flex" }}>
-        {WEEKS.flatMap(w => w.days).map((d, i) => (
+        {weeks.flatMap(w => w.days).map((d, i) => (
           <div key={i} style={{ width: colW, flexShrink: 0, padding: "2px 4px", borderRight: "1px solid var(--palette-neutral-0)", fontFamily: "var(--font-family)", fontSize: 10, color: "var(--palette-blue-2)", textAlign: "center" }}>
             {d}
           </div>
@@ -1207,7 +1229,9 @@ export type BookingEngineScreenProps = {
   initialExpanded?: { engagements?: string[]; roles?: string[] };
   /** The Filter icon button of the toolbar was clicked (e.g. a prototype applies a filter straight away instead of opening the drawer) */
   onFilter?: () => void;
-  /** Grid: counter at the top-left of the calendar (default "874 projects") */
+  /** Gantt: first Monday ("YYYY-MM-DD") of the 28 days shown: week labels, day labels and the date range follow it (default 31 Aug 2026) */
+  ganttFrom?: string;
+  /** Counter at the top-left of the calendar, Grid and Gantt (default "874 projects") */
   countLabel?: string;
   /** Navbar item clicked */
   onNavigate?: (id: string) => void;
@@ -1216,8 +1240,9 @@ export type BookingEngineScreenProps = {
 
 export function BookingEngineScreen({
   view: initialView = "engagements", calendar: initialCalendar = "gantt", panel: initialPanel = "projects",
-  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, initialExpanded, countLabel, onNavigate, avatarInitials,
+  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, initialExpanded, ganttFrom, countLabel, onNavigate, avatarInitials,
 }: BookingEngineScreenProps) {
+  const gantt = ganttFrom ? ganttWeeksFrom(ganttFrom) : { weeks: WEEKS, range: "31-08-2026 - 27-09-2026" };
   const [panel,    setPanel]    = useState<"projects" | "workforce">(initialPanel);
   const [view,     setView]     = useState<ViewType>(initialView);
   const [calendar, setCalendar] = useState<CalendarType>(initialCalendar);
@@ -1368,7 +1393,7 @@ export function BookingEngineScreen({
     : calendar;
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--palette-neutral-2)", cursor: isDragging ? "col-resize" : undefined }}>
+    <div style={{ display: "flex", height: "var(--ips-vh, 100vh)", overflow: "hidden", background: "var(--palette-neutral-2)", cursor: isDragging ? "col-resize" : undefined }}>
       <Navbar activeId="booking" onSelect={onNavigate} avatarInitials={avatarInitials} />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
@@ -1445,7 +1470,7 @@ export function BookingEngineScreen({
             {/* Date nav group — centred */}
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Button kind="iconTertiary" size="regular" title="Previous"><Icon name="chevron-left" size={16} /></Button>
-              <span style={bodyBold}>31-08-2026 - 27-09-2026</span>
+              <span style={bodyBold}>{gantt.range}</span>
               <Button kind="iconTertiary" size="regular" title="Next"><Icon name="chevron-right" size={16} /></Button>
             </div>
             {/* Custom dropdown — right */}
@@ -1474,14 +1499,14 @@ export function BookingEngineScreen({
                     <span style={{ display: "inline-block", width: "max-content" }}>
                       <InputSelect value="Latest first" />
                     </span>
-                    <span style={{ ...labelCss, whiteSpace: "nowrap", flexShrink: 0 }}>874 projects</span>
+                    <span style={{ ...labelCss, whiteSpace: "nowrap", flexShrink: 0 }}>{countLabel ?? "874 projects"}</span>
                   </Row>
                   <Button kind="secondary" size="small"><Icon name="list" size={14} /></Button>
                 </div>
                 <div style={{ width: 4, flexShrink: 0, background: "var(--palette-neutral-0)" }} />
                 {/* Header gantt area — overflow hidden, synced via scroll */}
                 <div id="gantt-hdr" style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-                  <GanttHeader colW={ganttColW} />
+                  <GanttHeader colW={ganttColW} weeks={gantt.weeks} />
                 </div>
               </div>
 

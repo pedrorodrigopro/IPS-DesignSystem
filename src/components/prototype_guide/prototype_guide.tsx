@@ -64,6 +64,8 @@ export type PrototypeGuideProps = {
   screenLabels?: Record<string, string>;
   /** Initial state of the Tour switch. For stories / tests; prototypes leave it off */
   defaultEnabled?: boolean;
+  /** A counter: every time it changes (to a non-zero value) the tour switches itself off, e.g. when the story the prototype tells is over. The user can switch it on again. */
+  offSignal?: number;
   /** Extra buttons at the right of the tour bar (shown whether or not the tour is on), e.g. a prototype's "Map" */
   barActions?: { label: string; onClick: () => void }[];
   children: React.ReactNode;
@@ -193,11 +195,12 @@ function useModalOpen(on: boolean, stageRef: React.RefObject<HTMLDivElement | nu
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function PrototypeGuide({ screen, steps, screenLabels, defaultEnabled = false, barActions, children }: PrototypeGuideProps) {
+export function PrototypeGuide({ screen, steps, screenLabels, defaultEnabled = false, barActions, offSignal, children }: PrototypeGuideProps) {
   // The tour sequence: every step that is not hotspot-only, in the order given
   const tour = useMemo(() => steps.filter(s => !s.hotspotOnly), [steps]);
 
   const [enabled, setEnabled] = useState(defaultEnabled);
+  useEffect(() => { if (offSignal) setEnabled(false); }, [offSignal]);
   const [activeId, setActiveId] = useState<string | undefined>(() => (tour.find(s => s.screen === screen) ?? tour[0])?.id);
   const [listOpen, setListOpen] = useState(false);
   const pickerId = useId();

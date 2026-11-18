@@ -245,7 +245,6 @@ const NAV_SECTIONS = [
   { id: "summary",        label: "Summary"        },
   { id: "experience",     label: "Experience"     },
   { id: "accomplishments",label: "Accomplishments"},
-  { id: "academic",       label: "Academic"       },
   { id: "additional",     label: "Additional"     },
 ];
 
@@ -760,8 +759,8 @@ function MyProfileScreen() {
             <AdditionalSection />
           ) : activeNav === "experience" ? (
             <ExperienceSection />
-          ) : activeNav === "academic" ? (
-            <AcademicSection />
+          ) : activeNav === "accomplishments" ? (
+            <AccomplishmentsSection />
           ) : (
             <>
               <SkillsSection />
@@ -827,8 +826,8 @@ function MyProfileNarrowScreen() {
             <AdditionalSection />
           ) : activeNav === "experience" ? (
             <ExperienceSection />
-          ) : activeNav === "academic" ? (
-            <AcademicSection />
+          ) : activeNav === "accomplishments" ? (
+            <AccomplishmentsSection />
           ) : (
             <>
               <SkillsSection />
@@ -1217,22 +1216,31 @@ function ExperienceSection() {
   );
 }
 
-// ── Academic ───────────────────────────────────────────────────────────────────
-// Figma: Education section in Profile, node 76:11187 (six screens)
-//   Tile highlight with Header "Academic" and a horizontal Navigation with count badges
-//   (Education, Courses, Lecture experience, Professional associations, Publications,
-//   Honors & Awards). Each tab: section title + primary Add, then two-column cards
-//   (Tile object-light, iconTertiary edit) or an EmptyState when there are no items.
-//   Add / Edit open a SidePanel with Inputs and sticky Cancel / Save actions.
+// ── Accomplishments (the former Academic section, now with Certificates) ───────
+//   Tile highlight with Header "Accomplishments" and a horizontal Navigation with count badges
+//   (Certificates, Education, Courses, Lecture experience, Professional associations, Publications,
+//   Honors & Awards). Each tab: section title + primary Add (named after the tab, e.g. "Add certificate"). Cards in two columns (Tile object-light) or an EmptyState when there are
+//   no items. Certificate cards show date + View certificate link beside the image, title, description and
+//   the skills gained. Add / Edit open a SidePanel with Inputs and sticky Cancel / Save actions.
 
-type AcademicKey = "education" | "courses" | "lecture" | "associations" | "publications" | "honors";
-type AcademicItem = { title: string; sub?: string; start?: string; end?: string; desc?: string };
-type AcademicField = [keyof AcademicItem, string, boolean?];   // key, label, required
+type AcademicKey = "certificates" | "education" | "courses" | "lecture" | "associations" | "publications" | "honors";
+type AcademicItem = { title: string; sub?: string; start?: string; end?: string; desc?: string; date?: string; skills?: string[] };
+type AcademicField = [Exclude<keyof AcademicItem, "skills">, string, boolean?];   // key, label, required
 
 const ACADEMIC_LOREM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pretium sem et vestibulum auctor. Nunc euismod lacus eget justo interdum, vitae venenat…";
 const ACADEMIC_STUDY = "This comprehensive study explores innovative methodologies in computer science, focusing on algorithm optimization and system architecture improvements.";
 
 const ACADEMIC: Record<AcademicKey, { tab: string; add: string; fields: AcademicField[]; items: AcademicItem[] }> = {
+  certificates: {
+    tab: "Certificates", add: "Add certificate",
+    fields: [["title", "Certificate", true], ["date", "Issue date"], ["desc", "Description"]],
+    items: [
+      { title: "Meta Back-End Developer", date: "13 Dec 2021", desc: ACADEMIC_LOREM, skills: ["Accounting Tax", "Accounting Tax"] },
+      { title: "Meta Back-End Developer", date: "13 Dec 2021", desc: ACADEMIC_LOREM, skills: ["Accounting Tax", "Accounting Tax"] },
+      { title: "Meta Back-End Developer", date: "13 Dec 2021", desc: ACADEMIC_LOREM, skills: ["Accounting Tax", "Accounting Tax"] },
+      { title: "Meta Back-End Developer", date: "13 Dec 2021", desc: ACADEMIC_LOREM, skills: ["Accounting Tax", "Accounting Tax"] },
+    ],
+  },
   education: {
     tab: "Education", add: "Add education",
     fields: [["title", "Degree", true], ["sub", "Institution"], ["start", "Start date"], ["end", "End date"], ["desc", "Description"]],
@@ -1283,7 +1291,7 @@ const ACADEMIC: Record<AcademicKey, { tab: string; add: string; fields: Academic
   },
 };
 
-const ACADEMIC_ORDER: AcademicKey[] = ["education", "courses", "lecture", "associations", "publications", "honors"];
+const ACADEMIC_ORDER: AcademicKey[] = ["certificates", "education", "courses", "lecture", "associations", "publications", "honors"];
 
 function AcademicCard({ section, item, onEdit }: { section: AcademicKey; item: AcademicItem; onEdit: () => void }) {
   const mutedBody: React.CSSProperties = { ...body, color: "var(--palette-blue-2)" };
@@ -1299,6 +1307,31 @@ function AcademicCard({ section, item, onEdit }: { section: AcademicKey; item: A
         <Button kind="iconTertiary" size="regular" title="Edit" onClick={onEdit}><Icon name="edit" size={16} /></Button>
       </SB>
       {item.desc && <div style={{ ...body, marginTop: 16 }}>{isPublication ? "Description: " : ""}{item.desc}</div>}
+    </Tile>
+  );
+}
+
+function CertificateCard({ item }: { item: AcademicItem }) {
+  return (
+    <Tile tileStyle="object-light" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", gap: 24, alignItems: "stretch" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16 }}>
+          <span style={h3}>{item.date}</span>
+          <a style={{ ...linkCss, display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <Icon name="open" size={16} />View certificate
+          </a>
+        </div>
+        {/* certificate preview */}
+        <div style={{ flex: "0 0 50%", aspectRatio: "455 / 192", background: "var(--palette-neutral-1)", borderRadius: "var(--radius-sm)" }} />
+      </div>
+      <span style={h3}>{item.title}</span>
+      {item.desc && <div style={body}>{item.desc}</div>}
+      {item.skills && item.skills.length > 0 && (
+        <Row gap={8} style={{ flexWrap: "wrap" }}>
+          <span style={body}>Skills gained:</span>
+          {item.skills.map((label, i) => <SkillProfile key={`${label}-${i}`} label={label} proficiency="advanced" disableTooltip />)}
+        </Row>
+      )}
     </Tile>
   );
 }
@@ -1338,8 +1371,8 @@ function AcademicPanel({ panel, onClose, onSave }: { panel: AcademicPanelState; 
   );
 }
 
-function AcademicSection() {
-  const [tab, setTab] = useState<AcademicKey>("education");
+function AccomplishmentsSection() {
+  const [tab, setTab] = useState<AcademicKey>("certificates");
   const [data, setData] = useState<Record<AcademicKey, AcademicItem[]>>(
     () => Object.fromEntries(ACADEMIC_ORDER.map(k => [k, ACADEMIC[k].items])) as Record<AcademicKey, AcademicItem[]>,
   );
@@ -1360,17 +1393,19 @@ function AcademicSection() {
   return (
     <>
       <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <Header size="content" title="Academic" />
+        <Header size="content" title="Accomplishments" />
         <Navigation orientation="horizontal" tabs={tabs} activeId={tab} onChange={id => setTab(id as AcademicKey)} />
         <SB>
           <span style={{ ...h3, fontSize: 16 }}>{ACADEMIC[tab].tab}</span>
-          <Button kind="primary" size="regular" onClick={() => open(tab, null)}>Add</Button>
+          <Button kind="primary" size="regular" onClick={() => open(tab, null)}>{ACADEMIC[tab].add}</Button>
         </SB>
         {items.length === 0 ? (
           <EmptyState size="small-vertical" title="No items to show" />
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16, alignItems: "start" }}>
-            {items.map((item, i) => <AcademicCard key={`${tab}-${i}`} section={tab} item={item} onEdit={() => open(tab, i)} />)}
+            {items.map((item, i) => tab === "certificates"
+              ? <CertificateCard key={`${tab}-${i}`} item={item} />
+              : <AcademicCard key={`${tab}-${i}`} section={tab} item={item} onEdit={() => open(tab, i)} />)}
           </div>
         )}
       </Tile>
