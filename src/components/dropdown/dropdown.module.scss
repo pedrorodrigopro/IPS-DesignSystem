@@ -108,7 +108,10 @@
   @include ts.label-regular;
   color: var(--palette-blue-2);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; // a long second line is cut when the menu has a fixed width
 }
+
 
 // ── Checkmark slot ────────────────────────────────────────────────────────────
 // 16×16px — matches body-unselected line-height (115% × 14px ≈ 16px)

@@ -87,13 +87,20 @@ function MultiValueCell({ emptyLabel, value }: { emptyLabel: string; value?: str
 
 // ── Editable text cell ────────────────────────────────────────────────────────
 
+// A text field that wraps instead of cropping: it is a textarea that grows with its content (one line high when short), Enter does not add a line break.
 function EditableTextCell({ defaultValue = "" }: { defaultValue?: string }) {
   const [val, setVal] = useState(defaultValue);
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const fit = () => { const t = ref.current; if (t) { t.style.height = "auto"; t.style.height = `${t.scrollHeight}px`; } };
+  useEffect(fit, [val]);
   return (
-    <input
+    <textarea
+      ref={ref}
+      rows={1}
       value={val}
-      onChange={e => setVal(e.target.value)}
-      style={{ width: "100%", height: 32, border: "none", borderBottom: "1px solid transparent", background: "transparent", fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, color: "var(--palette-blue-0)", outline: "none", padding: "0 4px", borderRadius: 0 }}
+      onChange={e => setVal(e.target.value.replace(/\n/g, " "))}
+      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLTextAreaElement).blur(); } }}
+      style={{ display: "block", width: "100%", minHeight: 32, resize: "none", overflow: "hidden", boxSizing: "border-box", border: "none", borderBottom: "1px solid transparent", background: "transparent", fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, lineHeight: "20px", color: "var(--palette-blue-0)", outline: "none", padding: "6px 4px", borderRadius: 0, overflowWrap: "anywhere" }}
       onFocus={e => e.target.style.borderBottomColor = "var(--palette-primary-0)"}
       onBlur={e => e.target.style.borderBottomColor = "transparent"}
     />
@@ -330,6 +337,38 @@ const tdStyle: React.CSSProperties = {
   borderRight: "1px solid var(--palette-neutral-0)",
 };
 
+// ── Sticky table headers ──────────────────────────────────────────────────────
+// The tables sit inside horizontal-scroll wrappers (overflow-x makes them clip vertically too) and inside a Tile with overflow:hidden, so a plain
+// `position: sticky; top: 0` can never stick to the PAGE scroll. Instead, on page scroll we shift the header cells down by however far the table has
+// scrolled past the top of the scroller (clamped so the header never leaves its own table). Both tables get the same offset, so they stay level.
+function useStickyHeader() {
+  const ref = useRef<HTMLTableElement>(null);
+  useEffect(() => {
+    const table = ref.current;
+    if (!table) return;
+    const scroller: HTMLElement | Window = (table.closest("[data-sticky-scroll]") as HTMLElement | null) ?? window;
+    const cells = () => Array.from(table.querySelectorAll<HTMLElement>("thead th"));
+    const update = () => {
+      const head = table.tHead;
+      if (!head) return;
+      const top = scroller instanceof Window ? 0 : scroller.getBoundingClientRect().top;
+      const max = Math.max(0, table.offsetHeight - head.offsetHeight);
+      const offset = Math.min(max, Math.max(0, top - table.getBoundingClientRect().top));
+      cells().forEach(th => {
+        th.style.transform = offset ? `translateY(${offset}px)` : "";
+        th.style.boxShadow = offset ? "0 4px 6px -2px rgba(203,218,247,0.9)" : "";
+      });
+    };
+    update();
+    scroller.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
+    ro?.observe(table);
+    return () => { scroller.removeEventListener("scroll", update); window.removeEventListener("resize", update); ro?.disconnect(); };
+  }, []);
+  return ref;
+}
+
 // ── Role row data ─────────────────────────────────────────────────────────────
 
 type RoleRow = {
@@ -490,6 +529,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useStickyHeader();
   // The merged Engagement column only exists when the roles belong to engagements (not on the template editor)
   const hasEngagement = roles.some(r => r.engagement);
   // What each header checkbox toggles: this table's engagement titles / role ids
@@ -537,11 +577,11 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
   const rolesTable = (
     <div style={{ overflowX: "auto", ...(availability ? { flex: "1 1 0", minWidth: 0 } : null) }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) + (showBooked ? BOOKED_W : 0) + (showDelta ? DELTA_W : 0) }}>
+      <table ref={stickyRef} style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) + (showBooked ? BOOKED_W : 0) + (showDelta ? DELTA_W : 0) }}>
         <thead>
           <tr style={availability ? { height: HEAD_H } : undefined}>
             {headers.map((h, i) => (
-              <th key={i} style={{ ...thStyle, width: h.width, position: h.sticky ? "sticky" : "sticky", right: h.sticky ? 0 : undefined, zIndex: h.sticky ? 2 : 1, ...(availability ? { height: HEAD_H, boxSizing: "border-box" as const } : null) }}>
+              <th key={i} style={{ ...thStyle, width: h.width, position: "sticky", right: h.sticky ? 0 : undefined, zIndex: h.sticky ? 4 : 3, ...(availability ? { height: HEAD_H, boxSizing: "border-box" as const } : null) }}>
                 {"checkbox" in h && h.checkbox
                   ? (() => {
                     const kind: SelectKind = h.mandatory ? "role" : "engagement";
@@ -571,7 +611,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
                   <Row gap={8} style={{ alignItems: "flex-start" }}>
                     {selectable && <SelectBox kind="engagement" selection={selection} checked={!!role.engagement && selection.selected.has(role.engagement)} onChange={() => role.engagement && selection.toggle([role.engagement], "engagement")} />}
                     <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
-                      <span style={{ ...body, lineHeight: "20px", minWidth: 0 }}>{role.engagement}</span>
+                      <span style={{ ...body, lineHeight: "20px", minWidth: 0, overflowWrap: "anywhere" }}>{role.engagement}</span>
                       {/* The tag the engagement got (bulk Tag), right below its title */}
                       {role.engagement && engagementTags[role.engagement] && <PillSimple label={engagementTags[role.engagement]} size="small" leftIcon="tag" />}
                     </div>
@@ -689,6 +729,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
 function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width, onAvailabilityChange }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const freshRow = useContext(FreshRowContext);
+  const stickyRef = useStickyHeader();
   const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined } : c);
 
   // Drag fill. `anchor` = the cell the press started on, `over` = the cell the pointer is on now; once they differ the drag is on.
@@ -728,13 +769,13 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
 
   return (
     <div style={{ flex: "0 0 auto", width, userSelect: active ? "none" : undefined, maxWidth: `calc(100% - ${DIVIDER_W + MIN_LEFT_W}px)`, overflowX: "auto" }}>
-      <table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: weeks.length * WEEK_W + ACTIONS_W }}>
+      <table ref={stickyRef} style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: weeks.length * WEEK_W + ACTIONS_W }}>
         <thead>
           <tr style={{ height: HEAD_H }}>
             {weeks.map(w => (
-              <th key={w} style={{ ...thStyle, height: HEAD_H, boxSizing: "border-box", textAlign: "center", color: "var(--palette-blue-0)", whiteSpace: "normal", lineHeight: "115%" }}>{w}</th>
+              <th key={w} style={{ ...thStyle, position: "sticky", zIndex: 3, height: HEAD_H, boxSizing: "border-box", textAlign: "center", color: "var(--palette-blue-0)", whiteSpace: "normal", lineHeight: "115%" }}>{w}</th>
             ))}
-            <th style={{ ...thStyle, width: ACTIONS_W, height: HEAD_H, boxSizing: "border-box", position: "sticky", right: 0, zIndex: 2, borderRight: "none" }} />
+            <th style={{ ...thStyle, width: ACTIONS_W, height: HEAD_H, boxSizing: "border-box", position: "sticky", right: 0, zIndex: 4, borderRight: "none" }} />
           </tr>
         </thead>
         <tbody>
@@ -862,7 +903,7 @@ export type { RowActionsVariant };
 
 // ── Manage tags modal — Figma "Tag roles" 2738:67102 (two states: empty / filled with "Notify others" on) ──────────────
 
-export const DEFAULT_TAG_OPTIONS = ["EM to review", "RM to resource", "Ready to fill", "Needs rework", "On hold"];
+export const DEFAULT_TAG_OPTIONS = ["EM to review", "RM to review", "Ready to book", "Needs rework", "On hold"];
 export const DEFAULT_PEOPLE_OPTIONS = ["Megan Taylor", "Charlie Parker", "Spencer Harmon", "Santi Angulo"];
 const toItems = (xs: string[]) => xs.map(t => ({ id: t, label: t }));
 const NOTE_MAX = 500;
@@ -999,6 +1040,10 @@ export type ManageRolesScreenProps = {
   availability?: boolean;
   /** Week column labels of the availability table (default: six weeks from "5 - 9 Jan 2026") */
   weeks?: string[];
+  /** Show the "Tag roles" button in the bulk banner when engagements are selected (it tags every role inside them). Default true; off leaves Tag (the engagements) and Owners. */
+  tagRolesButton?: boolean;
+  /** How many week columns the availability pane shows when the screen opens (the divider still resizes it). Default: what the layout picks (one week next to Booked WM and Delta). */
+  weeksVisible?: number;
   /** An hours cell of the availability-rules table was edited (one call per keystroke). The cell keeps its own value; the host decides what to do with it. */
   onAvailabilityChange?: AvailabilityChangeHandler;
   /** Replaces the default Navbar (e.g. a prototype's navbar with an unread badge) */
@@ -1015,7 +1060,7 @@ export type ManageRolesScreenProps = {
   onRowAction?: (info: { action: RowMenuAction; roleId: string }) => void;
   /** Tags engagements already have when the screen opens: engagement name → tag (shown right below the engagement title) */
   initialEngagementTags?: Record<string, string>;
-  /** Tags in the "Manage tags" dropdown (default: EM to review, RM to resource, Ready to fill, Needs rework, On hold) */
+  /** Tags in the "Manage tags" dropdown (default: EM to review, RM to review, Ready to book, Needs rework, On hold) */
   tagOptions?: string[];
   /** People in the "Send a notification to" dropdown (default: Megan Taylor, Charlie Parker, Spencer Harmon, Santi Angulo) */
   peopleOptions?: string[];
@@ -1036,11 +1081,11 @@ export type ManageRolesScreenProps = {
   /** The Suggest side panel opened (role id) or closed (null) */
   onSuggestOpenChange?: (roleId: string | null) => void;
   /** Selects roles / engagements and opens Manage tags from outside, e.g. a prototype's flow map. Applied on mount and whenever `n` changes while `open` is true. */
-  tagCommand?: { n: number; open?: boolean; select?: { kind: "role" | "engagement"; keys: string[] }; prefill?: TagPrefill };
+  tagCommand?: { n: number; open?: boolean; select?: { kind: "role" | "engagement"; keys: string[] }; prefill?: TagPrefill; /** What the modal tags: the roles (default) or the selected engagements themselves */ target?: "roles" | "engagements" };
 };
 
 export function ManageRolesScreen({
-  groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, onAvailabilityChange,
+  groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, weeksVisible, tagRolesButton = true, onAvailabilityChange,
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged, onUnbook, onRowAction, onOpenInBookingEngine,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {}, initialEngagementTags = {},
   suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange, tagCommand,
@@ -1087,6 +1132,12 @@ export function ManageRolesScreen({
     return own;
   };
   const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: setSuggestRole };
+  // The Suggest side panel stores every pick (and removal) at once for the role it is open on
+  const storeSuggested = (list: SuggestCandidate[]) => {
+    if (!suggestRole) return;
+    setSuggestedBy(prev => ({ ...prev, [suggestRole.id]: list }));
+    onSuggestedChange?.({ roleId: suggestRole.id, suggested: list });
+  };
   // Open / close the panel on command (also applied when the screen mounts with one), and report every change
   useEffect(() => {
     if (!suggestCommand) return;
@@ -1099,7 +1150,7 @@ export function ManageRolesScreen({
     if (!tagCommand?.open) return;
     if (tagCommand.select) { setSelected(new Set(tagCommand.select.keys)); setMode(tagCommand.select.kind); }
     setTagPrefill(tagCommand.prefill);
-    setTagTarget("roles");
+    setTagTarget(tagCommand.target ?? "roles");
     setTagging(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tagCommand?.n]);
@@ -1109,7 +1160,7 @@ export function ManageRolesScreen({
   // Booked WM (and Delta) need room in the roles table, so the weeks pane opens on two weeks (one with both) instead of four (drag the divider to widen it)
   const hasBooked = groups.some(g => g.roles.some(r => r.availability));
   const hasDelta = hasBooked;
-  const [availabilityWidth, setAvailabilityWidth] = useState(hasBooked && hasDelta ? WEEK_W + ACTIONS_W : hasBooked ? WEEK_W * 2 + ACTIONS_W : DEFAULT_AVAILABILITY_W);
+  const [availabilityWidth, setAvailabilityWidth] = useState(weeksVisible ? WEEK_W * weeksVisible + ACTIONS_W : hasBooked && hasDelta ? WEEK_W + ACTIONS_W : hasBooked ? WEEK_W * 2 + ACTIONS_W : DEFAULT_AVAILABILITY_W);
 
   // Toggle a set of rows: if every one is already selected they get deselected, otherwise all get selected
   const toggle = (ids: string[], kind: SelectKind) => {
@@ -1174,7 +1225,7 @@ export function ManageRolesScreen({
       {navbar ?? <Navbar activeId={navbarActiveId} onSelect={onNavigate} />}
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px 0", background: "var(--palette-neutral-2)", display: "flex", flexDirection: "column" }}>
+        <div data-sticky-scroll style={{ flex: 1, overflowY: "auto", padding: "24px 32px 0", background: "var(--palette-neutral-2)", display: "flex", flexDirection: "column" }}>
 
           {/* Bulk-selection banner — overlays the page header row (centred, 600px) without growing the layout */}
           {selectable && selected.size > 0 && (
@@ -1185,7 +1236,7 @@ export function ManageRolesScreen({
                   layout="inline"
                   message={`${selectedCount} selected`}
                   onDismiss={clearSelection}
-                  rightContent={(mode === "role" ? ROLE_ACTIONS : ENGAGEMENT_ACTIONS).map(a => (
+                  rightContent={(mode === "role" ? ROLE_ACTIONS : ENGAGEMENT_ACTIONS.filter(a => tagRolesButton || a.id !== "tag-roles")).map(a => (
                     <Tooltip key={a.id} content={a.label} placement="up-center" maxWidth={240}>
                       <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" || (a.id === "tag" && mode === "role") ? () => openTagging("roles") : a.id === "tag" ? () => openTagging("engagements") : undefined}>
                         <Icon name={a.id} size={16} />
@@ -1261,11 +1312,9 @@ export function ManageRolesScreen({
         matches={suggestCandidates.matches}
         other={suggestCandidates.other}
         suggested={suggestRole ? suggestedFor(suggestRole) : []}
-        onDone={list => {
-          if (!suggestRole) return;
-          setSuggestedBy(prev => ({ ...prev, [suggestRole.id]: list }));
-          onSuggestedChange?.({ roleId: suggestRole.id, suggested: list });
-        }}
+        // Every pick is stored at once (no need to press Done; closing the panel keeps it). Done is just another way to close.
+        onChange={storeSuggested}
+        onDone={storeSuggested}
       />
 
       {/* Row menu: drawn in body (fixed) so the tables' scroll panes can't clip it */}

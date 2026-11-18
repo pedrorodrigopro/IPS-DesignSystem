@@ -60,7 +60,7 @@ const meta: Meta = {
           "Suggest side panel — Figma 119:27378. Width: 600px. Suggests the workforce members for a role's open vacancies: " +
           "info alert with the vacancies left, sortable Suggested WM table (empty state \"No suggested WM\"), then Shortlist | Matches | Other resources, " +
           "search and a sortable WM table with a Suggest button per row. A suggested row turns into \"Suggested\" (click to remove). " +
-          "Suggest is disabled once every vacancy is suggested. Done returns the list through `onDone`.",
+          "Suggest is disabled once every vacancy is suggested. Every pick and removal is reported at once through `onChange` (the screen stores it, so closing the panel keeps it); Done returns the same list through `onDone` and closes.",
       },
     },
   },
