@@ -6,7 +6,7 @@
 //   Group header: Accordion above table (no Tile — sits directly on page bg)
 //
 // Columns:
-//   Engagements: Title | Roles | State | Start date | Tier | Assignee | Dishes | Duration | ⋮ sticky
+//   Engagements: Title | Roles | State | Start date | Tier | Assignee | Duration | ⋮ sticky
 //   Roles:       Title | Tag | Vacancies | State | WF State | Expiry | Availability | Due in days | ⋮ sticky
 //
 // Bulk selection: ticking rows shows a 600px bulk banner centred in the page header row with ghost icon buttons.
@@ -85,30 +85,29 @@ type EngagementRow = TableRow & {
   tier: string;
   assigneeName: string;
   assigneeInitials: string;
-  dishes: string;
   duration: string;
 };
 
 const ENGAGEMENTS: EngagementRow[] = [
-  { id: "e1",  title: "engagement_test_1",                roles: "0/0", state: "Closed", startDate: "",           tier: "1A", assigneeName: "test user",      assigneeInitials: "TU", dishes: "",                   duration: ""          },
-  { id: "e2",  title: "A. Eng #1 [Staging]",             roles: "0/3", state: "Open",   startDate: "",           tier: "",   assigneeName: "Alex (empty PG)", assigneeInitials: "AP", dishes: "",                   duration: ""          },
-  { id: "e3",  title: "A. Eng #1 [Staging]",             roles: "0/3", state: "Open",   startDate: "",           tier: "",   assigneeName: "Alex (empty PG)", assigneeInitials: "AP", dishes: "",                   duration: ""          },
-  { id: "e4",  title: "Abbott LLC",                      roles: "1/1", state: "Open",   startDate: "01-05-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "3447 days" },
-  { id: "e5",  title: "Accessibility",                   roles: "0/3", state: "Draft",  startDate: "",           tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "Supper and breakfast", duration: ""        },
-  { id: "e6",  title: "Adams LLC",                       roles: "1/1", state: "Open",   startDate: "01-10-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "2580 days" },
-  { id: "e7",  title: "Adams-Schultz",                   roles: "1/1", state: "Open",   startDate: "01-04-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "3120 days" },
-  { id: "e8",  title: "Altenwerth-Haag",                 roles: "0/1", state: "Open",   startDate: "01-04-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "2651 days" },
-  { id: "e9",  title: "Ankunding, Lehner and Wehner",    roles: "1/1", state: "Open",   startDate: "01-08-2025", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "1886 days" },
-  { id: "e10", title: "Ankunding-Schumm",                roles: "1/1", state: "Open",   startDate: "01-09-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "2407 days" },
-  { id: "e11", title: "Aufderhar, Baumbach and Reinger", roles: "1/1", state: "Open",   startDate: "01-07-2025", tier: "",   assigneeName: "Spencer Harmon", assigneeInitials: "SH", dishes: "",                   duration: "2673 days" },
-  { id: "e12", title: "Aufderhar, Romaguera and Renner", roles: "0/1", state: "Open",   startDate: "01-07-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "1496 days" },
-  { id: "e13", title: "Bailey Inc",                      roles: "1/1", state: "Open",   startDate: "01-10-2025", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "2924 days" },
-  { id: "e14", title: "Balistreri-Schmeler",             roles: "1/1", state: "Open",   startDate: "01-08-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "464 days"  },
-  { id: "e15", title: "Bartoletti Group",                roles: "1/1", state: "Open",   startDate: "01-01-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "2426 days" },
-  { id: "e16", title: "Bartoletti Inc",                  roles: "1/1", state: "Open",   startDate: "01-09-2028", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "1648 days" },
-  { id: "e17", title: "Bartoletti-Kertzmann",            roles: "1/1", state: "Open",   startDate: "01-09-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "2190 days" },
-  { id: "e18", title: "Bashirian and Sons",              roles: "0/1", state: "Open",   startDate: "01-06-2026", tier: "",   assigneeName: "",                assigneeInitials: "",   dishes: "",                   duration: "1729 days" },
-  { id: "e19", title: "Baumbach Group",                  roles: "0/1", state: "Open",   startDate: "01-03-2028", tier: "",   assigneeName: "Santi Angulo",   assigneeInitials: "SA", dishes: "",                   duration: "2756 days" },
+  { id: "e1",  title: "engagement_test_1",                roles: "0/0", state: "Closed", startDate: "",           tier: "1A", assigneeName: "test user",      assigneeInitials: "TU", duration: ""          },
+  { id: "e2",  title: "A. Eng #1 [Staging]",             roles: "0/3", state: "Open",   startDate: "",           tier: "",   assigneeName: "Alex (empty PG)", assigneeInitials: "AP", duration: ""          },
+  { id: "e3",  title: "A. Eng #1 [Staging]",             roles: "0/3", state: "Open",   startDate: "",           tier: "",   assigneeName: "Alex (empty PG)", assigneeInitials: "AP", duration: ""          },
+  { id: "e4",  title: "Abbott LLC",                      roles: "1/1", state: "Open",   startDate: "01-05-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "3447 days" },
+  { id: "e5",  title: "Accessibility",                   roles: "0/3", state: "Draft",  startDate: "",           tier: "",   assigneeName: "",                assigneeInitials: "", duration: ""        },
+  { id: "e6",  title: "Adams LLC",                       roles: "1/1", state: "Open",   startDate: "01-10-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "2580 days" },
+  { id: "e7",  title: "Adams-Schultz",                   roles: "1/1", state: "Open",   startDate: "01-04-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "3120 days" },
+  { id: "e8",  title: "Altenwerth-Haag",                 roles: "0/1", state: "Open",   startDate: "01-04-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "2651 days" },
+  { id: "e9",  title: "Ankunding, Lehner and Wehner",    roles: "1/1", state: "Open",   startDate: "01-08-2025", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "1886 days" },
+  { id: "e10", title: "Ankunding-Schumm",                roles: "1/1", state: "Open",   startDate: "01-09-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "2407 days" },
+  { id: "e11", title: "Aufderhar, Baumbach and Reinger", roles: "1/1", state: "Open",   startDate: "01-07-2025", tier: "",   assigneeName: "Spencer Harmon", assigneeInitials: "SH", duration: "2673 days" },
+  { id: "e12", title: "Aufderhar, Romaguera and Renner", roles: "0/1", state: "Open",   startDate: "01-07-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "1496 days" },
+  { id: "e13", title: "Bailey Inc",                      roles: "1/1", state: "Open",   startDate: "01-10-2025", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "2924 days" },
+  { id: "e14", title: "Balistreri-Schmeler",             roles: "1/1", state: "Open",   startDate: "01-08-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "464 days"  },
+  { id: "e15", title: "Bartoletti Group",                roles: "1/1", state: "Open",   startDate: "01-01-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "2426 days" },
+  { id: "e16", title: "Bartoletti Inc",                  roles: "1/1", state: "Open",   startDate: "01-09-2028", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "1648 days" },
+  { id: "e17", title: "Bartoletti-Kertzmann",            roles: "1/1", state: "Open",   startDate: "01-09-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "2190 days" },
+  { id: "e18", title: "Bashirian and Sons",              roles: "0/1", state: "Open",   startDate: "01-06-2026", tier: "",   assigneeName: "",                assigneeInitials: "", duration: "1729 days" },
+  { id: "e19", title: "Baumbach Group",                  roles: "0/1", state: "Open",   startDate: "01-03-2028", tier: "",   assigneeName: "Santi Angulo",   assigneeInitials: "SA", duration: "2756 days" },
 ];
 
 const engagementColumns: TableColumn<EngagementRow>[] = [
@@ -166,13 +165,6 @@ const engagementColumns: TableColumn<EngagementRow>[] = [
         initials={row.assigneeInitials}
       />
     ) : null,
-  },
-  {
-    key: "dishes",
-    header: "Dishes",
-    sortable: false,
-    width: "160px",
-    type: "text-regular",
   },
   {
     key: "duration",
@@ -257,26 +249,27 @@ const ROLES_DATA: { id: string; title: string; vacancies: string; state: string;
   { id: "r3",  title: "Scranton",           vacancies: "1/1", state: "Open", wfState: "shortlisting", expiry: "28-10-2026", start: "",                        dueDays: 28 },
   { id: "r4",  title: "Matches - Ordering", vacancies: "0/1", state: "Open", wfState: "booked"      , expiry: "25-10-2026", start: "28-09-2026 - 11-10-2026", dueDays: 25 },
   { id: "r5",  title: "Frisco",             vacancies: "1/1", state: "Open", wfState: "new",          expiry: "25-10-2026", start: "",                        dueDays: 25 },
-  { id: "r6",  title: "Senior Sales Rep",   vacancies: "1/1", state: "Open", wfState: "new",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
+  { id: "r6",  title: "Senior Sales Rep",   vacancies: "0/1", state: "Open", wfState: "confirmed",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
   { id: "r7",  title: "BRole1 CLONE",       vacancies: "3/3", state: "Open", wfState: "new",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
-  { id: "r8",  title: "BRole2",             vacancies: "2/2", state: "Open", wfState: "new",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
+  { id: "r8",  title: "BRole2",             vacancies: "0/2", state: "Open", wfState: "booked",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
   { id: "r9",  title: "BRole1",             vacancies: "3/3", state: "Open", wfState: "new",          expiry: "24-10-2026", start: "",                        dueDays: 24 },
-  { id: "r10", title: "mlr-100",            vacancies: "1/1", state: "Open", wfState: "new",          expiry: "24-10-2026", start: "28-09-2026 - 30-09-2026", dueDays: 24 },
+  { id: "r10", title: "mlr-100",            vacancies: "0/1", state: "Open", wfState: "booked",          expiry: "24-10-2026", start: "28-09-2026 - 30-09-2026", dueDays: 24 },
   { id: "r11", title: "ST Role#3",          vacancies: "1/1", state: "Open", wfState: "new",          expiry: "23-10-2026", start: "31-08-2026 - 12-09-2027", dueDays: 23 },
   { id: "r12", title: "ST Role#2",          vacancies: "0/2", state: "Open", wfState: "confirmed",    expiry: "23-10-2026", start: "31-08-2026 - 12-09-2027", dueDays: 23 },
   { id: "r13", title: "ST Role#1",          vacancies: "0/1", state: "Open", wfState: "confirmed",    expiry: "23-10-2026", start: "01-09-2026 - 10-10-2027", dueDays: 23 },
 ];
 
-// Requested hours per role (a different amount each); booked hours only for confirmed and booked roles
-const BOOKED_HOURS: Record<string, number> = { r4: 80, r12: 360, r13: 320 };
-const ROLES: RoleRow[] = ROLES_DATA.map((r, i) => ({ ...r, requested: 40 * (2 + (i % 6)), booked: BOOKED_HOURS[r.id as string] ?? 0 }));
-// r4 asks for 160h and has 80 booked (+80h); r12 asks for 320h and has 360 (-40h); r13 asks for 320h and has 320 (0h)
-ROLES.find(r => r.id === "r4")!.requested = 160;
-ROLES.find(r => r.id === "r12")!.requested = 320;
-ROLES.find(r => r.id === "r13")!.requested = 320;
+// Requested hours per role. Only confirmed and booked roles have hours booked: mostly exactly what they request (0h), some less (negative), one more (positive)
+const HOURS: Record<string, [requested: number, booked: number]> = {
+  r4: [160, 160], r6: [240, 280], r8: [240, 160], r10: [160, 160], r12: [320, 320], r13: [320, 280],
+};
+const ROLES: RoleRow[] = ROLES_DATA.map((r, i) => {
+  const [requested, booked] = HOURS[r.id] ?? [40 * (2 + (i % 6)), 0];
+  return { ...r, requested, booked };
+});
 
-/** Delta of a role: confirmed and booked roles = requested − booked hours (negative red-0, 0h green-0, positive neutral); any other state has nothing booked yet, so it is the requested hours (always above 0h) */
-const roleDelta = (r: RoleRow) => (r.wfState === "confirmed" || r.wfState === "booked" ? r.requested - r.booked : r.requested);
+/** Delta of a role = booked − requested hours. A role that is not booked nor confirmed has nothing booked, so its delta is always negative (minus the requested hours). Confirmed and booked roles are 0h when fully booked, positive when booked above the request, negative when below. Negative uses the red-0 token, 0h green-0. */
+const roleDelta = (r: RoleRow) => r.booked - r.requested;
 
 const roleColumns: TableColumn<RoleRow>[] = [
   { key: "title",     header: "Role Title",               sortable: false, width: "200px", type: "text-primary" },
@@ -295,12 +288,12 @@ const roleColumns: TableColumn<RoleRow>[] = [
   },
   {
     key: "delta",     header: "Delta",                    sortable: false, width: "90px",
-    headerInfo: "Requested − booked hours. A role that is not booked or confirmed has nothing booked yet: its delta is the requested hours",
+    headerInfo: "Booked − requested hours. A role that is not booked nor confirmed has nothing booked yet, so its delta is negative",
     renderCell: (row) => {
       const d = roleDelta(row);
       return (
         <span style={{ fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, color: d < 0 ? "var(--palette-red-0)" : d === 0 ? "var(--palette-green-0)" : "var(--palette-blue-0)" }}>
-          {d > 0 ? "+" : ""}{d}h
+          {d > 0 ? "+" : d < 0 ? "-" : ""}{Math.abs(d)}h
         </span>
       );
     },
@@ -459,7 +452,7 @@ const meta: Meta = {
           "Workflow screen — Engagements and Roles tabs. " +
           "Table wrapped in Tile highlight + content padding (16px). " +
           "Engagements: group header accordion + 19 sample rows with assignee WM cell, pin/menu sticky cols. " +
-          "Roles: Gantt toggle, WFState pills, Delta (requested − booked hours for confirmed and booked roles: negative red-0, 0h green-0, positive neutral; any other state shows the requested hours, always above 0h), availability range, due days, menu sticky col. " +
+          "Roles: Gantt toggle, WFState pills, Delta (booked − requested hours: negative red-0, 0h green-0, positive neutral; a role that is not booked nor confirmed has nothing booked, so it is always negative; confirmed and booked roles are mostly 0h or negative), availability range, due days, menu sticky col. " +
           "Ticking rows shows a 600px bulk banner centred in the header row: Engagements get Manage roles · Tag roles · Roll forward · Share · Move · Change owner; Roles get Tag · Share · Move · Change owner (no Manage roles / Tag roles).",
       },
     },
