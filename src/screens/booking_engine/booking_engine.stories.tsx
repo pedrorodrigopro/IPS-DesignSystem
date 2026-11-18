@@ -103,7 +103,7 @@ export const ProjectsRolesGridMisalignment: Story = {
     docs: {
       description: {
         story:
-          "The Grid with data of its own: one role, filtered (Filters applied). The role row can be editable cells (roleRow=\"cells\") or a green role pill " +
+          "The Grid with data of its own: one role, filtered (Filters applied). The role row can be editable cells (roleRow=\"cells\") or a green role pill (BookingPill, role-booked: the role's name and \"Requested 560h\") " +
           "over the weeks that have requested hours (roleRow=\"pill\"). A misaligned role and profile show the calendar-misaligned icon at the start of the " +
           "second line of their card (click it to open the Misalignments panel: all requested hours vs all booked hours, and the first and last week requested vs booked; Show scrolls the grid to the first misaligned week), and the profile row gets a dashed orange pill outline over the misaligned weeks. onCellChange reports edited cells.",
       },
@@ -113,6 +113,44 @@ export const ProjectsRolesGridMisalignment: Story = {
     <BookingEngineScreen
       view="roles" calendar="grid" engagements={MIS_ENGAGEMENTS} weeks={MIS_WEEKS} roleRow="pill" countLabel="1 role"
       filters={[{ id: "role", field: "Role", value: "ST Role#2" }]}
+    />
+  ),
+};
+
+// ── Pills by level: role pills (regular / partial) and booking pills ────────────────────────────────────────────
+
+const PILL_ENGAGEMENTS: EngagementEntry[] = [{
+  id: "e9", name: "ST engagement test", state: "new", resourcingBy: "23-10-2026", assignee: "Fake Surname", dueDays: "23 days", startDate: "-", rolesBooked: "1/2 Roles booked",
+  roles: [
+    {
+      id: "p1", name: "ST Role#2", state: "confirmed", roleId: "415009", expiry: "23-10-2026", assignee: "Bartosz Kowalski",
+      weekHours: Array.from({ length: 17 }, (_, i) => (i < 12 ? 40 : 0)),
+      bookings: [{ name: "Bartosz Kowalski", hours: "480h booked", weekHours: Array.from({ length: 17 }, (_, i) => (i < 12 ? 40 : 0)) }],
+    },
+    {
+      id: "p2", name: "ST Role#3", state: "shortlisting", roleId: "415010", expiry: "23-10-2026", assignee: "-",
+      weekHours: Array.from({ length: 17 }, (_, i) => (i >= 4 && i < 14 ? 40 : 0)),
+      bookings: [],
+    },
+  ],
+}];
+
+export const ProjectsRolesGridPills: Story = {
+  name: "Projects / Roles / Grid / Pills by level",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Which pill goes on which level (roleRow=\"pill\"). The role row takes Role pills only: the regular one (role-booked, teal) when the role is Confirmed or Booked, so someone is booked on it, " +
+          "and the partial one (role-partial, light with a teal outline) otherwise. A vacancy / profile row takes Booking pills only (the colour follows the booking category). " +
+          "Neither takes Engagement pills, and an Engagement row never takes Role or Booking pills.",
+      },
+    },
+  },
+  render: () => (
+    <BookingEngineScreen
+      view="roles" calendar="grid" engagements={PILL_ENGAGEMENTS} weeks={MIS_WEEKS} roleRow="pill" countLabel="2 roles"
+      initialExpanded={{ engagements: ["e9"], roles: ["p1"] }}
     />
   ),
 };

@@ -162,10 +162,12 @@ const GANTT_COL_MIN = 24;
 const GANTT_COL_MAX = 96;
 const GANTT_COL_DEFAULT = 48;
 
-function GanttRow({ height = 60, pills, colW }: {
+function GanttRow({ height = 60, pills, colW, rolePillText = true }: {
   height?: number;
   pills?: { category: BookingPillCategory; label: string; hours?: string; startCol: number; spanCols: number }[];
   colW?: number;
+  /** Role pills show the role's title and requested hours (the BookingPill "Role" story), never a plain bar. Pass false only to hide the text. */
+  rolePillText?: boolean;
 }) {
   const totalCols = GANTT_TOTAL_COLS;
   const cw = colW ?? GANTT_COL_DEFAULT;
@@ -187,20 +189,18 @@ function GanttRow({ height = 60, pills, colW }: {
         }}>
           <BookingPill
             category={pill.category}
-            // Engagement and role pills show no text — only profile booking pills do
+            // Engagement pills show no text; role pills show the role title and requested hours; booking pills show the person and hours
             label={
               pill.category === "engagement-booked" ||
               pill.category === "engagement-partial" ||
-              pill.category === "role-booked" ||
-              pill.category === "role-partial"
+              (!rolePillText && (pill.category === "role-booked" || pill.category === "role-partial"))
                 ? ""
                 : pill.label
             }
             hours={
               pill.category === "engagement-booked" ||
               pill.category === "engagement-partial" ||
-              pill.category === "role-booked" ||
-              pill.category === "role-partial"
+              (!rolePillText && (pill.category === "role-booked" || pill.category === "role-partial"))
                 ? undefined
                 : pill.hours
             }
@@ -214,6 +214,18 @@ function GanttRow({ height = 60, pills, colW }: {
 // ── Data — pills attached to each row so expand/collapse always aligns ────────
 
 type GanttPill = { category: BookingPillCategory; label: string; hours?: string; startCol: number; spanCols: number };
+
+// Which pill goes on which level:
+//   engagement row  Engagement pills (engagement-booked / engagement-partial)
+//   role row        Role pills only: role-booked (regular) when the role is Confirmed or Booked (someone is booked on it), otherwise role-partial
+//   vacancy / profile row  Booking pills only (booking-blue / -red / -purple, the colour follows the booking category)
+// A pill of another family on a row is turned into the one that belongs there, so no level ever shows another level's pill.
+const isBookedState = (s: WFState) => s === "confirmed" || s === "booked";
+const rolePillCategory = (s: WFState): BookingPillCategory => (isBookedState(s) ? "role-booked" : "role-partial");
+// A role pill is labelled with the role's title (and carries the hours it requests: "Requested 160h")
+const rolePills = (role: { name: string; state: WFState; ganttPills?: GanttPill[] }) => role.ganttPills?.map(p => ({ ...p, label: role.name, category: rolePillCategory(role.state) }));
+const BOOKING_FAMILY: BookingPillCategory[] = ["booking-blue", "booking-red", "booking-purple", "pending"];
+const bookingPills = (booking: { name: string; ganttPills?: GanttPill[] }) => booking.ganttPills?.map(p => (BOOKING_FAMILY.includes(p.category) ? p : { ...p, label: booking.name, hours: p.hours?.replace(/^Requested /, ""), category: "booking-blue" as BookingPillCategory }));
 
 /** One range of weeks in the Misalignments panel; `weekStart` (index of its first week column) lets "Show" scroll the Grid to it */
 export type BookingMisalignmentRange = MisalignmentRange & { weekStart?: number };
@@ -252,7 +264,7 @@ const ENGAGEMENTS: EngagementEntry[] = [
     roles: [
       { id: "e1r1", name: "Smoke Role A", state: "new",       roleId: "415020", expiry: "17-10-2026", assignee: "-", ganttPills: [], bookings: [] },
       { id: "e1r2", name: "Smoke Role B", state: "shortlisting", roleId: "415021", expiry: "17-10-2026", assignee: "Rutu Shah", ganttPills: [
-          { category: "booking-blue", label: "Rutu Shah - Smoke B", hours: "40h", startCol: 0, spanCols: 14 },
+          { category: "role-partial", label: "Smoke Role B", hours: "Requested 40h", startCol: 0, spanCols: 14 },
         ],
         bookings: [{ name: "Rutu Shah", hours: "40h booked", ganttPills: [{ category: "booking-blue", label: "Rutu Shah - Smoke B", hours: "40h", startCol: 0, spanCols: 14 }] }],
       },
@@ -271,9 +283,9 @@ const ENGAGEMENTS: EngagementEntry[] = [
       {
         id: "r2", name: "ST Role#2", state: "confirmed", roleId: "415009", expiry: "23-10-2026", assignee: "Santiago A CV Upload",
         ganttPills: [
-          { category: "role-partial", label: "ST Role#2",     hours: "26% (10h)", startCol: 7,  spanCols: 7 },
-          { category: "role-partial", label: "ST Role#2",     hours: "26% (10h)", startCol: 14, spanCols: 7 },
-          { category: "role-partial", label: "ST Role#2",     hours: "42% (10h)", startCol: 21, spanCols: 7 },
+          { category: "role-partial", label: "ST Role#2",     hours: "Requested 10h", startCol: 7,  spanCols: 7 },
+          { category: "role-partial", label: "ST Role#2",     hours: "Requested 10h", startCol: 14, spanCols: 7 },
+          { category: "role-partial", label: "ST Role#2",     hours: "Requested 10h", startCol: 21, spanCols: 7 },
         ],
         bookings: [
           { name: "Bartosz Bartosz", hours: "666h booked", warning: true, ganttPills: [
@@ -283,17 +295,17 @@ const ENGAGEMENTS: EngagementEntry[] = [
             { category: "booking-blue", label: "Bartosz Bartosz",  hours: "40h", startCol: 21, spanCols: 7 },
           ]},
           { name: "Fake Surname", hours: "540h booked", ganttPills: [
-            { category: "role-booked", label: "ST Role#2 - Fake Surname", hours: "100% (16h)", startCol: 0,  spanCols: 5 },
-            { category: "role-booked", label: "ST Role#2 - Fake Surname", hours: "100% (24h)", startCol: 7,  spanCols: 5 },
-            { category: "role-booked", label: "ST Role#2 - Fake Surname", hours: "100% (24h)", startCol: 14, spanCols: 5 },
-            { category: "role-booked", label: "ST Role#2 - Fake Surname", hours: "100% (24h)", startCol: 21, spanCols: 5 },
+            { category: "booking-blue", label: "Fake Surname", hours: "16h", startCol: 0,  spanCols: 5 },
+            { category: "booking-blue", label: "Fake Surname", hours: "24h", startCol: 7,  spanCols: 5 },
+            { category: "booking-blue", label: "Fake Surname", hours: "24h", startCol: 14, spanCols: 5 },
+            { category: "booking-blue", label: "Fake Surname", hours: "24h", startCol: 21, spanCols: 5 },
           ]},
         ],
       },
       {
         id: "r3", name: "ST Role#1", state: "confirmed", roleId: "415008", expiry: "23-10-2026", assignee: "Krystal Hansen",
         ganttPills: [
-          { category: "role-booked", label: "ST Role#1", hours: "100% (24h)", startCol: 0,  spanCols: 28 },
+          { category: "role-booked", label: "ST Role#1", hours: "Requested 24h", startCol: 0,  spanCols: 28 },
         ],
         bookings: [
           { name: "Krystal Hansen", hours: "2185h booked", ganttPills: [
@@ -310,7 +322,7 @@ const ENGAGEMENTS: EngagementEntry[] = [
       { id: "e3r1", name: "QA Engineer",          state: "new", roleId: "414001", expiry: "30-06-2028", assignee: "-",                    ganttPills: [], bookings: [] },
       { id: "e3r2", name: "Data Analyst",          state: "new", roleId: "414002", expiry: "30-06-2028", assignee: "-",                    ganttPills: [], bookings: [] },
       { id: "e3r3", name: "Tech Lead",             state: "shortlisting", roleId: "414003", expiry: "30-06-2028", assignee: "A. I Poane",  ganttPills: [
-          { category: "booking-purple", label: "Tech Lead vacancy", hours: "160h", startCol: 3, spanCols: 18 },
+          { category: "role-partial", label: "Tech Lead", hours: "Requested 160h", startCol: 3, spanCols: 18 },
         ], bookings: [
           { name: "A. I Poane", hours: "160h booked", ganttPills: [{ category: "booking-purple", label: "A. I Poane", hours: "160h", startCol: 3, spanCols: 18 }] },
         ],
@@ -321,7 +333,7 @@ const ENGAGEMENTS: EngagementEntry[] = [
     id: "e4", name: "Wyoming", state: "new", resourcingBy: "15-05-2027", assignee: "-", dueDays: "226 days", startDate: "-", rolesBooked: "1/5 Roles booked",
     ganttPills: [{ category: "engagement-booked", label: "Wyoming", hours: "100%", startCol: 7, spanCols: 14 }],
     roles: [
-      { id: "e4r1", name: "Senior Consultant",   state: "confirmed",  roleId: "413001", expiry: "15-05-2027", assignee: "Steve Talos",     ganttPills: [{ category: "role-booked", label: "Senior Consultant", hours: "100%", startCol: 7, spanCols: 14 }],
+      { id: "e4r1", name: "Senior Consultant",   state: "confirmed",  roleId: "413001", expiry: "15-05-2027", assignee: "Steve Talos",     ganttPills: [{ category: "role-booked", label: "Senior Consultant", hours: "Requested 80h", startCol: 7, spanCols: 14 }],
         bookings: [{ name: "Steve Talos", hours: "320h booked", ganttPills: [{ category: "booking-blue", label: "Steve Talos", hours: "320h", startCol: 7, spanCols: 14 }] }] },
       { id: "e4r2", name: "Business Analyst",    state: "shortlisting", roleId: "413002", expiry: "15-05-2027", assignee: "-",               ganttPills: [], bookings: [] },
       { id: "e4r3", name: "Project Coordinator", state: "new",          roleId: "413003", expiry: "15-05-2027", assignee: "-",               ganttPills: [], bookings: [] },
@@ -331,7 +343,7 @@ const ENGAGEMENTS: EngagementEntry[] = [
     id: "e5", name: "Esse aggero spes brevis", state: "new", resourcingBy: "11-10-2026", assignee: "Shelli Bergnaum", dueDays: "11 days", startDate: "-", rolesBooked: "1/2 Roles booked",
     ganttPills: [{ category: "engagement-booked", label: "Esse aggero", hours: "50%", startCol: 0, spanCols: 10 }],
     roles: [
-      { id: "e5r1", name: "Lead Auditor",    state: "confirmed", roleId: "412001", expiry: "11-10-2026", assignee: "Shelli Bergnaum", ganttPills: [{ category: "role-booked", label: "Lead Auditor", hours: "100%", startCol: 0, spanCols: 10 }],
+      { id: "e5r1", name: "Lead Auditor",    state: "confirmed", roleId: "412001", expiry: "11-10-2026", assignee: "Shelli Bergnaum", ganttPills: [{ category: "role-booked", label: "Lead Auditor", hours: "Requested 60h", startCol: 0, spanCols: 10 }],
         bookings: [{ name: "Shelli Bergnaum", hours: "80h booked", ganttPills: [{ category: "booking-blue", label: "Shelli Bergnaum", hours: "80h", startCol: 0, spanCols: 10 }] }] },
       { id: "e5r2", name: "Audit Support",   state: "new",       roleId: "412002", expiry: "11-10-2026", assignee: "-",               ganttPills: [], bookings: [] },
     ],
@@ -340,7 +352,7 @@ const ENGAGEMENTS: EngagementEntry[] = [
     id: "e6", name: "SP-9540", state: "new", resourcingBy: "11-10-2026", assignee: "-", dueDays: "10 days", startDate: "-", rolesBooked: "1/2 Roles booked",
     ganttPills: [{ category: "booking-red", label: "SP-9540 overbooked", hours: "120%", startCol: 14, spanCols: 7 }],
     roles: [
-      { id: "e6r1", name: "Risk Analyst",    state: "confirmed",   roleId: "411001", expiry: "11-10-2026", assignee: "Vic Fenets",  ganttPills: [{ category: "role-booked", label: "Risk Analyst", hours: "100%", startCol: 14, spanCols: 7 }],
+      { id: "e6r1", name: "Risk Analyst",    state: "confirmed",   roleId: "411001", expiry: "11-10-2026", assignee: "Vic Fenets",  ganttPills: [{ category: "role-booked", label: "Risk Analyst", hours: "Requested 40h", startCol: 14, spanCols: 7 }],
         bookings: [{ name: "Vic Fenets", hours: "56h booked", ganttPills: [{ category: "booking-blue", label: "Vic Fenets", hours: "56h", startCol: 14, spanCols: 7 }] }] },
       { id: "e6r2", name: "Compliance Lead", state: "shortlisting", roleId: "411002", expiry: "11-10-2026", assignee: "-",           ganttPills: [], bookings: [] },
     ],
@@ -349,7 +361,7 @@ const ENGAGEMENTS: EngagementEntry[] = [
     id: "e7", name: "Pasadena - Test", state: "new", resourcingBy: "16-10-2026", assignee: "Vic Fenets", dueDays: "15 days", startDate: "-", rolesBooked: "1/2 Roles booked",
     ganttPills: [{ category: "engagement-booked", label: "Pasadena Test", hours: "60%", startCol: 3, spanCols: 21 }],
     roles: [
-      { id: "e7r1", name: "Senior Dev",      state: "confirmed", roleId: "410001", expiry: "16-10-2026", assignee: "Vic Fenets",  ganttPills: [{ category: "role-booked",   label: "Senior Dev",  hours: "100%", startCol: 3, spanCols: 21 }],
+      { id: "e7r1", name: "Senior Dev",      state: "confirmed", roleId: "410001", expiry: "16-10-2026", assignee: "Vic Fenets",  ganttPills: [{ category: "role-booked",   label: "Senior Dev",  hours: "Requested 120h", startCol: 3, spanCols: 21 }],
         bookings: [{ name: "Vic Fenets", hours: "168h booked", ganttPills: [{ category: "booking-blue", label: "Vic Fenets", hours: "168h", startCol: 3, spanCols: 21 }] }] },
       { id: "e7r2", name: "UX Designer",     state: "new",       roleId: "410002", expiry: "16-10-2026", assignee: "-",           ganttPills: [], bookings: [] },
     ],
@@ -462,7 +474,7 @@ function buildRows(
         key: role.id,
         bg: "var(--palette-neutral-2)",
         indent: 20,
-        rightPills: role.ganttPills,
+        rightPills: rolePills(role),
         leftContent: (
           <Row gap={0} style={{ width: "100%", minWidth: 0, alignItems: "flex-start", paddingTop: 4 }}>
             {/* Chevron — top-aligned */}
@@ -494,7 +506,7 @@ function buildRows(
           key: `${role.id}-b${bi}`,
           bg: "var(--palette-neutral-2)",
           indent: 40,
-          rightPills: booking.ganttPills,
+          rightPills: bookingPills(booking),
           leftContent: (
             <Row gap={6} style={{ width: "100%", minWidth: 0, alignItems: "flex-start", paddingTop: 4 }}>
               {/* Profile icon — primary text colour, top-aligned */}
@@ -541,7 +553,7 @@ function buildRolesRows(
         key: role.id,
         bg: "white",
         indent: 4,
-        rightPills: role.ganttPills,
+        rightPills: rolePills(role),
         leftContent: (
           <Row gap={0} style={{ width: "100%", minWidth: 0, alignItems: "flex-start", paddingTop: 4 }}>
             <button onClick={() => onToggleRole(role.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 4px 0", color: "var(--palette-blue-0)", display: "flex", alignItems: "flex-start", flexShrink: 0, transform: roleExpanded ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}>
@@ -567,7 +579,7 @@ function buildRolesRows(
           key: `roles-${role.id}-b${bi}`,
           bg: "var(--palette-neutral-2)",
           indent: 28,
-          rightPills: booking.ganttPills,
+          rightPills: bookingPills(booking),
           leftContent: (
             <Row gap={6} style={{ width: "100%", minWidth: 0, alignItems: "flex-start", paddingTop: 4 }}>
               <Icon name="profile" size={14} style={{ color: "var(--palette-blue-0)", flexShrink: 0, marginTop: 2 }} />
@@ -716,7 +728,7 @@ type GridRow = {
   custom?:  boolean;                  // the row brings its own hours (weekHours): empty weeks show blank cells
   roleId?:  string;                   // for onCellChange
   bookingIndex?: number | null;       // null = the role row
-  pills?:   { start: number; len: number }[];   // role row as a green role pill over these weeks (roleRow="pill")
+  pills?:   { start: number; len: number; label: string; hours: string; category: BookingPillCategory }[];   // role row as green role pills over these weeks (roleRow="pill"): the role's name and the hours it requests there
   dashed?:  number[];                 // week columns with the misalignment dashed line
 };
 
@@ -752,12 +764,16 @@ function buildGridRows(
 ): GridRow[] {
   const rows: GridRow[] = [];
   const weeksOf = (hours: number[]) => Array.from({ length: n }, (_, i) => hours[i] ?? 0);
-  const runsOf = (hours: number[]) => {
-    const runs: { start: number; len: number }[] = []; let start = -1;
+  const runsOf = (hours: number[], name: string, state: WFState) => {
+    const runs: { start: number; len: number; label: string; hours: string; category: BookingPillCategory }[] = []; let start = -1;
     for (let i = 0; i <= n; i++) {
       const on = i < n && (hours[i] ?? 0) > 0;
       if (on && start < 0) start = i;
-      if (!on && start >= 0) { runs.push({ start, len: i - start }); start = -1; }
+      if (!on && start >= 0) {
+        const total = hours.slice(start, i).reduce((a, h) => a + (h ?? 0), 0);
+        runs.push({ start, len: i - start, label: name, hours: `Requested ${total}h`, category: rolePillCategory(state) });   // role-booked (regular) when Confirmed / Booked, otherwise role-partial   // as the BookingPill "Role" story: name + "Requested 160h"
+        start = -1;
+      }
     }
     return runs;
   };
@@ -782,7 +798,7 @@ function buildGridRows(
         values: role.weekHours ? weeksOf(role.weekHours) : Array.from({ length: n }, () => 10),
         deadline: role.weekHours ? undefined : 11,
         roleId: role.id, bookingIndex: null, custom: !!role.weekHours,
-        pills: role.weekHours && roleRow === "pill" ? runsOf(role.weekHours) : undefined,
+        pills: role.weekHours && roleRow === "pill" ? runsOf(role.weekHours, role.name, role.state) : undefined,
       });
 
       if (!expandedRoles.has(role.id)) return;
@@ -904,7 +920,7 @@ function GridCalendar({
                   ))}
                   {row.pills.map(r => (
                     <div key={r.start} style={{ position: "absolute", left: r.start * CELL_W, width: r.len * CELL_W, top: "50%", transform: "translateY(-50%)", padding: "0 2px", boxSizing: "border-box", pointerEvents: "none" }}>
-                      <BookingPill category="role-booked" label="" />
+                      <BookingPill category={r.category} label={r.label} hours={r.hours} />
                     </div>
                   ))}
                 </>
@@ -1233,6 +1249,8 @@ export type BookingEngineScreenProps = {
   ganttFrom?: string;
   /** Counter at the top-left of the calendar, Grid and Gantt (default "874 projects") */
   countLabel?: string;
+  /** Gantt: the role row's pill shows the role's title with its requested hours below (e.g. "Requested 80h"), as in the BookingPill Role story. Default: true; false hides the text */
+  rolePillText?: boolean;
   /** Navbar item clicked */
   onNavigate?: (id: string) => void;
   avatarInitials?: string;
@@ -1240,7 +1258,7 @@ export type BookingEngineScreenProps = {
 
 export function BookingEngineScreen({
   view: initialView = "engagements", calendar: initialCalendar = "gantt", panel: initialPanel = "projects",
-  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, initialExpanded, ganttFrom, countLabel, onNavigate, avatarInitials,
+  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, initialExpanded, ganttFrom, countLabel, rolePillText, onNavigate, avatarInitials,
 }: BookingEngineScreenProps) {
   const gantt = ganttFrom ? ganttWeeksFrom(ganttFrom) : { weeks: WEEKS, range: "31-08-2026 - 27-09-2026" };
   const [panel,    setPanel]    = useState<"projects" | "workforce">(initialPanel);
@@ -1535,7 +1553,7 @@ export function BookingEngineScreen({
                 </div>
                 <div style={{ flexShrink: 0 }}>
                   {flatRows.map(row => (
-                    <GanttRow key={row.key} height={ROW_H} pills={row.rightPills} colW={ganttColW} />
+                    <GanttRow key={row.key} height={ROW_H} pills={row.rightPills} colW={ganttColW} rolePillText={rolePillText} />
                   ))}
                 </div>
               </div>
