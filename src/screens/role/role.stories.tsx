@@ -128,10 +128,12 @@ function Placeholder({ text, height = 120 }: { text: string; height?: number }) 
 
 // ── Shared screen shell ───────────────────────────────────────────────────────
 
-function RoleShell({ children, activeTab, onTabChange }: {
+function RoleShell({ children, activeTab, onTabChange, wfState = roleSubtitle.wfState }: {
   children: React.ReactNode;
   activeTab: string;
   onTabChange: (id: string) => void;
+  /** Workflow state shown in the header (default: new) */
+  wfState?: WFState;
 }) {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
@@ -142,7 +144,7 @@ function RoleShell({ children, activeTab, onTabChange }: {
           <PageHeader
             breadcrumbs={breadcrumbs}
             title="Role: Matches - Ordering"
-            wfState={roleSubtitle.wfState}
+            wfState={wfState}
             subtitleItems={roleSubtitle.subtitleItems}
             headerRight={
               <div style={{ display: "flex", gap: 4 }}>
@@ -247,7 +249,13 @@ function ActivitySidebar() {
 
 // ── Overview tab ──────────────────────────────────────────────────────────────
 
-function OverviewTab() {
+// Requested / booked hours of the role (Availability block). Delta = booked − requested: a role that is not booked nor confirmed has nothing booked,
+// so its delta is negative; a booked or confirmed one is 0h when fully booked, negative below the request, positive above. Negative = red-0, 0h = green-0.
+const deltaColor = (d: number) => (d < 0 ? "var(--palette-red-0)" : d === 0 ? "var(--palette-green-0)" : "var(--palette-blue-0)");
+const fmtDelta = (d: number) => `${d > 0 ? "+" : d < 0 ? "-" : ""}${Math.abs(d)}h`;
+
+function OverviewTab({ requested = 300, booked = 150 }: { requested?: number; booked?: number }) {
+  const delta = booked - requested;
   return (
     <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
       <ActivitySidebar />
@@ -276,6 +284,13 @@ function OverviewTab() {
           <div style={body}>28-09-2026 - 11-10-2026</div>
           <div style={label}>(M: 8, T: 8, W: 8, T: 6.5, F: 7.5, S: 0, S: 0)</div>
           <div style={label}>matching at least 40%</div>
+          {/* Requested, booked and delta hours of the role */}
+          <Divider orientation="horizontal" style={{ margin: "8px 0" }} />
+          <div style={label}>Booked / Requested hours</div>
+          <Row gap={12} style={{ alignItems: "baseline" }}>
+            <span style={{ fontFamily: "var(--font-family)", fontSize: "var(--font-size-h4)", fontWeight: "var(--font-weight-regular)", color: "var(--palette-blue-0)", lineHeight: "125%" }}>{booked}/{requested}h</span>
+            <span style={{ ...body, fontWeight: 700, color: deltaColor(delta) }}>Δ {fmtDelta(delta)}</span>
+          </Row>
         </Tile>
 
         {/* Chats — panel padding, no internal header chrome */}
@@ -788,10 +803,11 @@ type Story = StoryObj;
 
 export const Overview: Story = {
   name: "Overview",
+  parameters: { docs: { description: { story: "A Booked role: the Availability block ends with its requested and booked hours and the Delta (booked − requested): 150/300h, Δ -150h." } } },
   render: () => {
     const [tab, setTab] = useState("overview");
     return (
-      <RoleShell activeTab={tab} onTabChange={setTab}>
+      <RoleShell activeTab={tab} onTabChange={setTab} wfState="booked">
         {tab === "overview"  && <OverviewTab />}
         {tab === "matches"   && <MatchesTab />}
         {tab === "vacancies" && <VacanciesTab />}
@@ -804,6 +820,15 @@ export const Overview: Story = {
         )}
       </RoleShell>
     );
+  },
+};
+
+export const OverviewNotBooked: Story = {
+  name: "Overview — not booked",
+  parameters: { docs: { description: { story: "A role that is not booked nor confirmed has nothing booked, so its Delta is always negative (red-0): 0/300h, Δ -300h." } } },
+  render: () => {
+    const [tab, setTab] = useState("overview");
+    return <RoleShell activeTab={tab} onTabChange={setTab}><OverviewTab booked={0} /></RoleShell>;
   },
 };
 
