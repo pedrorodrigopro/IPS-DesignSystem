@@ -63,10 +63,10 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Profile ⇄ CV Exporter ⇄ CV Versions (Figma: Export CV revamp)
-//   "Open main CV"      → CV Exporter, Exporting version   (Cancel → profile)
+//   "Open main CV"      → CV Exporter, Exporting version   (Close → profile)
 //   "See all versions"  → CV Versions          (breadcrumb → profile)
-//   CV Versions: edit icon (an existing version) → CV Exporter, Exporting version   (Cancel → CV Versions)
-//   CV Versions: "Create CV version" → CV Exporter, Creating version (a "Data source" select instead of Version, Close → CV Versions). Save opens the
+//   CV Versions: click a card (an existing version) → CV Exporter, Exporting version   (Close → CV Versions)
+//   CV Versions: "Create CV version" → CV Exporter, Creating version (a "Fields source" select instead of Version, Cancel → CV Versions). Save to new version opens the
 //                         "Create CV version" modal (name, description) at the end of the process; Create adds the card and returns to CV Versions
 //                         (the Exporting version's "Save to new CV Version" does the same)
 //   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Exporter
@@ -113,6 +113,8 @@ function useCVFlow() {
   return {
     view, versions, setVersions, person, base, cvs, cvOf, pending, pendingVersions, studioVersion, studioCreating,
     openStudio: (from: StudioFrom, versionId: string = versions[0].id) => { setStudioFrom(from); setStudioVersion(versionId); setStudioCreating(false); setView("studio"); },
+    /** "Duplicate" on a CV Versions card: the copy starts with the CV of the original */
+    copyCV: (fromId: string, toId: string) => setCvs(cs => ({ ...cs, [toId]: cs[fromId] ?? base })),
     /** "Create CV version": the exporter opens as Creating version, on a draft CV (the person's base CV) */
     startCreating: () => { setStudioFrom("versions"); setStudioVersion(NEW_VERSION_ID); setStudioCreating(true); setCvs(cs => { const { [NEW_VERSION_ID]: _d, ...rest } = cs; return rest; }); setView("studio"); },
     /** The modal at the end of the process: the new card gets the CV as edited so far, and CV Versions shows it */
@@ -185,9 +187,9 @@ function CVFlowView({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
         key={vid}
         variant={flow.studioCreating ? "creating-version" : "exporting-version"}
         cvs={[flow.cvOf(vid)]}
-        versions={flow.versions.map(v => ({ id: v.id, label: v.name }))}
+        versions={flow.versions.map(v => ({ id: v.id, label: v.name, subLabel: v.description }))}
         initialVersionId={flow.studioCreating ? undefined : vid}
-        dataSources={[{ id: "profile", label: "Profile fields", cv: flow.base }, ...flow.versions.map(v => ({ id: v.id, label: v.name, cv: flow.cvOf(v.id) }))]}
+        dataSources={[{ id: "profile", label: "Default", subLabel: "Profile fields, before any version", cv: flow.base }, ...flow.versions.map(v => ({ id: v.id, label: v.name, subLabel: v.description, cv: flow.cvOf(v.id) }))]}
         onCreateVersion={info => flow.createVersion(info, vid)}
         onClose={flow.closeStudio}
         onNavigate={navbarHandler(flow)}
@@ -215,6 +217,7 @@ function CVFlowView({ flow }: { flow: ReturnType<typeof useCVFlow> }) {
       onBack={flow.toProfile}
       onCreateStart={flow.startCreating}
       onEdit={v => flow.openStudio("versions", v.id)}
+      onDuplicate={(orig, copy) => flow.copyCV(orig.id, copy.id)}
       onNavigate={navbarHandler(flow)}
     />
   );

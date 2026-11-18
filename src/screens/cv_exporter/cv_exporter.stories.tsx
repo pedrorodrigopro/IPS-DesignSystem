@@ -20,8 +20,8 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          "CV Exporter — preview, edit and export CVs. Three variants: Creating version (one CV, “Data source” select instead of Version, Close | Save, Export), " +
-          "Exporting version (one CV, Cancel | Save as a split button whose menu offers “Save to new CV Version”, Export) and Multi exporting (several CVs, no Save); the left module has two tabs " +
+          "CV Exporter — preview, edit and export CVs. Three variants: Creating version (one CV, “Fields source” select instead of Version, Cancel | Save to new version, Export), " +
+          "Exporting version (one CV, Close | Save as a split button whose menu offers “Save to new CV Version”, Export) and Multi exporting (several CVs, no Save); the left module has two tabs " +
           "(ProPilot, Edit fields) under a Translate tile that goes through four states (pick a language, Translate now, progress, Reset). " +
           "Uses Page variant=\"fluid\", Header, InputInline selectors, Tile, Navigation, Input / InputTextarea, PPChatInput, " +
           "ButtonGroup and Actions sticky-panel. Edits in the fields update the preview live. With pending profile edits (Screens/MyProfile → Profiles Directory → a profile) an alert and Before / After boxes ask whether to use the new values in this version or in all versions. " +
@@ -36,13 +36,13 @@ type Story = StoryObj;
 
 export const CreatingVersion: Story = {
   name: "Creating version",
-  parameters: { docs: { description: { story: "One CV while a new CV version is being created. Instead of Version the toolbar has a “Data source” select (Profile fields or an existing CV version: what the new version starts from); the footer has a regular Save: Close | Save, Export. Save opens the “Create CV version” modal. Left module in Edit fields mode." } } },
+  parameters: { docs: { description: { story: "One CV while a new CV version is being created. There is no Version select. A “Fields source” select in the header (before File type and Template) picks what the new version starts from: Default (the profile fields) or an existing version, each with its description on a second line. The footer reads Cancel | Save to new version, Export; Save opens the “Create CV version” modal. Left module in Edit fields mode." } } },
   render: () => <CVExporterScreen variant="creating-version" cvs={[ZARA]} initialMode="edit" />,
 };
 
 export const ExportingVersion: Story = {
   name: "Exporting version",
-  parameters: { docs: { description: { story: "One CV (Figma 653:36523). The Version field picks the version to export; the footer reads Cancel | Save▾, Export. Save is a ButtonGroup: its chevron opens a menu above it with “Save to new CV Version”. Left module in Edit fields mode." } } },
+  parameters: { docs: { description: { story: "One CV (Figma 653:36523). The Version field picks the version to export; the Version select lists each version with its description truncated on a second line, and an info icon beside it shows the full description of the selected version in a tooltip; the footer reads Close | Save▾, Export. Save is a ButtonGroup: its chevron opens a menu above it with “Save to new CV Version”. Left module in Edit fields mode." } } },
   render: () => <CVExporterScreen variant="exporting-version" cvs={[ZARA]} initialMode="edit" />,
 };
 

@@ -17,8 +17,8 @@ const meta: Meta = {
       description: {
         component:
           "CV Versions — every saved version of a person's CV, as cards with a live thumbnail, template, language and last editor. " +
-          "Breadcrumbs lead back to the profile; “Create CV version” opens a modal (name, description) and adds the new card; in Screens/MyProfile the button instead opens CV Exporter (Creating version), whose Save asks for the name in that same modal at the end, and the edit icons open CV Exporter (Exporting version). " +
-          "Search and sort work, the switch toggles a version on or off, and the bin removes a card. " +
+          "Breadcrumbs lead back to the profile; “Create CV version” opens a modal (name, description) and adds the new card; in Screens/MyProfile the button instead opens CV Exporter (Creating version), whose Save asks for the name in that same modal at the end, and clicking a card opens CV Exporter (Exporting version). " +
+          "Cards are clickable (shadow at rest, hover effect) and open the version; the switch toggles a version on or off and the menu button offers Duplicate and Delete. Search and sort work. " +
           "The three versions are the ones in the Figma; all use the same placeholder CV.",
       },
     },

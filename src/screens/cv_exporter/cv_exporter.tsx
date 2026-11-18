@@ -11,11 +11,11 @@
 //                   Right: Tile highlight — toolbar (pager for multi, Version selector), then the scrolling
 //                          CV preview (photo, logo, label/value rows)
 //   Footer          Actions sticky-panel, by variant:
-//                   creating-version   Close | Save, Export
-//                   exporting-version  Cancel | Save (split ButtonGroup: chevron opens "Save to new CV Version" above it), Export
+//                   creating-version   Cancel | Save to new version, Export
+//                   exporting-version  Close | Save (split ButtonGroup: chevron opens "Save to new CV Version" above it), Export
 //                   multi-exporting    Close | split button "Export (3)" (chevron opens "Export current")
 //
-// Variants: "creating-version" (one CV; instead of Version the toolbar has a "Data source" select: Profile fields or an existing CV version),
+// Variants: "creating-version" (one CV; no Version select: a "Fields source" select next to File type and Template picks what the new version starts from),
 // "exporting-version" (one CV, the
 // Version field picks the version to export), "multi-exporting" (several CVs: "3 CVs" title, pager, no Save). Default: one CV =
 // exporting-version, several = multi-exporting.
@@ -36,6 +36,7 @@ import { Button }          from "../../components/button/button";
 import { ButtonGroup }     from "../../components/button_group/button_group";
 import { Actions }         from "../../components/actions/actions";
 import { Divider }         from "../../components/divider/divider";
+import { Tooltip }         from "../../components/tooltip/tooltip";
 import { Icon }            from "../../components/icon/icon";
 import { Input, InputInline, InputSelect, InputTextarea } from "../../components/input/input";
 import { LoadingIcon }    from "../../components/loading/loading";
@@ -145,8 +146,13 @@ const TEMPLATES: DropdownItem[] = [
   { id: "PF_template_3", label: "PF_template_3", subLabel: "English" },
   { id: "PF_template_4", label: "PF_template_4", subLabel: "Spanish" },
 ];
-const DATA_SOURCES = [{ id: "profile", label: "Profile fields" }, { id: "V1, English Banking", label: "V1, English Banking" }, { id: "V2, English Consulting", label: "V2, English Consulting" }];
-const VERSIONS    = [{ id: "V1, English Banking", label: "V1, English Banking" }, { id: "V2, English Consulting", label: "V2, English Consulting" }];
+const SAMPLE_VERSIONS: DropdownItem[] = [
+  { id: "V1, English Banking", label: "V1, English Banking", subLabel: "English-speaking banking professionals" },
+  { id: "V2, English Consulting", label: "V2, English Consulting", subLabel: "English-speaking consulting professionals" },
+];
+// Fields source (Creating version): the default profile fields, or what an existing version already holds
+const DATA_SOURCES: DropdownItem[] = [{ id: "profile", label: "Default", subLabel: "Profile fields, before any version" }, ...SAMPLE_VERSIONS.map(({ id, label, subLabel }) => ({ id, label, subLabel }))];
+const VERSIONS    = SAMPLE_VERSIONS;
 const TRANSLATE   = ["Dutch", "English", "Finnish", "French", "German", "Spanish"].map(l => ({ id: l, label: l }));
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -160,12 +166,14 @@ const bodyBold: React.CSSProperties = { ...body, fontWeight: 700 };
 
 /** Opens an IPS selection dropdown under whatever trigger is passed; closes on outside click. */
 export function SelectMenu({
-  items, selectedId, onSelect, align = "left", children,
+  items, selectedId, onSelect, align = "left", menuWidth, children,
 }: {
   items: DropdownItem[];
   selectedId: string;
   onSelect: (id: string) => void;
   align?: "left" | "right";
+  /** Fixed width of the menu (px): long second lines of the items are cut with an ellipsis. Default: as wide as the trigger at least. */
+  menuWidth?: number;
   children: (toggle: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -175,7 +183,7 @@ export function SelectMenu({
       {open && (
         <>
           <div style={{ position: "fixed", inset: 0, zIndex: 20 }} onClick={() => setOpen(false)} />
-          <div style={{ position: "absolute", top: "100%", [align]: 0, zIndex: 21, marginTop: 4, minWidth: "100%" }}>
+          <div style={{ position: "absolute", top: "100%", [align]: 0, zIndex: 21, marginTop: 4, minWidth: "100%", ...(menuWidth ? { width: menuWidth } : null) }}>
             <DropdownSelection items={items} selectedId={selectedId} onSelect={id => { onSelect(id); setOpen(false); }} />
           </div>
         </>
@@ -559,7 +567,7 @@ export function CVExporterScreen({
   versions?: DropdownItem[];
   /** The version shown first (default: the first of `versions`) */
   initialVersionId?: string;
-  /** Creating version: what the new version starts from, as the "Data source" select (default: Profile fields + the sample versions). Giving a `cv` makes the CV shown switch to it. */
+  /** Creating version: what the new version starts from, as the "Fields source" select in the header (default: Default = the profile fields, then the sample versions; the items' description is the second line). Giving a `cv` makes the CV shown switch to it. */
   dataSources?: (DropdownItem & { cv?: CV })[];
   initialMode?: Mode; onClose?: () => void; onNavigate?: (navbarId: string) => void;
   /** The name and description asked by the "Create CV version" modal, which opens at the end of the process: Save (creating-version) or "Save to new CV Version" (exporting-version) */
@@ -579,6 +587,7 @@ export function CVExporterScreen({
   const [template, setTemplate] = useState(TEMPLATES[0].id);
   const [version, setVersion] = useState(initialVersionId ?? versions[0]?.id ?? "");
   const versionLabel = versions.find(v => v.id === version)?.label ?? version;
+  const versionDescription = versions.find(v => v.id === version)?.subLabel;
   const [source, setSource] = useState(dataSources[0]?.id ?? "");
   const sourceLabel = dataSources.find(d => d.id === source)?.label ?? source;
   const [createOpen, setCreateOpen] = useState(false);
@@ -662,6 +671,16 @@ export function CVExporterScreen({
               subtitle={names}
               rightContent={
                 <div style={{ display: "flex", gap: 10 }}>
+                  {creating && (
+                    <SelectMenu items={dataSources} selectedId={source} align="right" menuWidth={300}
+                      onSelect={id => {
+                        setSource(id);
+                        const cvOfSource = dataSources.find(d => d.id === id)?.cv;
+                        if (cvOfSource) setData(d => d.map((c, i) => (i === index ? cvOfSource : c)));
+                      }}>
+                      {toggle => <InputInline inlineLabel="Fields source" value={sourceLabel} onClick={toggle} />}
+                    </SelectMenu>
+                  )}
                   <SelectMenu items={FILE_TYPES} selectedId={fileType} onSelect={setFileType} align="right">
                     {toggle => <InputInline inlineLabel="File type" value={fileType} onClick={toggle} />}
                   </SelectMenu>
@@ -701,6 +720,9 @@ export function CVExporterScreen({
               <div style={{ position: "absolute", top: 0, left: multi ? 140 : 16, right: 260, height: 0, pointerEvents: "none" }}>
                 <PPPreviewBanner visible={!!preview} label={preview ? `Adapted to ${preview.industry}` : undefined} />
               </div>
+              {/* Creating version: no toolbar row (no Version select, no pager), the CV starts at the top of the card */}
+              {!creating && (
+                <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {multi && (
@@ -716,24 +738,22 @@ export function CVExporterScreen({
                   )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {creating ? (
-                    // the version being created has no name yet: what it starts from is picked instead (the name is asked at the end)
-                    <SelectMenu items={dataSources} selectedId={source} align="right"
-                      onSelect={id => {
-                        setSource(id);
-                        const cvOfSource = dataSources.find(d => d.id === id)?.cv;
-                        if (cvOfSource) setData(d => d.map((c, i) => (i === index ? cvOfSource : c)));
-                      }}>
-                      {toggle => <InputInline inlineLabel="Data source" value={sourceLabel} onClick={toggle} />}
-                    </SelectMenu>
-                  ) : (
-                    <SelectMenu items={versions} selectedId={version} onSelect={setVersion} align="right">
-                      {toggle => <InputInline inlineLabel="Version" value={versionLabel} onClick={toggle} />}
-                    </SelectMenu>
+                  {/* each item shows its description truncated on a second line; the info icon shows the full description of the selected version */}
+                  <SelectMenu items={versions} selectedId={version} onSelect={setVersion} align="right" menuWidth={300}>
+                    {toggle => <InputInline inlineLabel="Version" value={versionLabel} onClick={toggle} />}
+                  </SelectMenu>
+                  {versionDescription && (
+                    <Tooltip content={versionDescription} placement="up-right" maxWidth={280} portal>
+                      <span tabIndex={0} role="img" aria-label={`Version description: ${versionDescription}`} style={{ display: "inline-flex", color: "var(--palette-blue-0)", cursor: "default" }}>
+                        <Icon name="info" size={20} />
+                      </span>
+                    </Tooltip>
                   )}
                 </div>
               </div>
               <Divider orientation="horizontal" style={{ margin: "0 -16px" }} />
+                </>
+              )}
               <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 8px 24px" }}>
                 <CVPreview cv={preview ? { ...cv, ...preview.fields } : cv} highlight={preview ? INDUSTRY_FIELDS : undefined} />
               </div>
@@ -743,8 +763,8 @@ export function CVExporterScreen({
           {/* Footer */}
           <Actions
             variant="sticky-panel"
-            leftActions={[{ label: kind === "exporting-version" ? "Cancel" : "Close", variant: "secondary", onClick: onClose }]}
-            rightActions={creating ? [{ label: "Save", variant: "secondary", onClick: () => setCreateOpen(true) }, { label: "Export", variant: "primary" }] : []}
+            leftActions={[{ label: creating ? "Cancel" : "Close", variant: "secondary", onClick: onClose }]}
+            rightActions={creating ? [{ label: "Save to new version", variant: "secondary", onClick: () => setCreateOpen(true) }, { label: "Export", variant: "primary" }] : []}
             rightContent={
               multi ? (
                 <SplitButton label={`Export (${cvs.length})`} variant="primary" items={[{ id: "export-current", label: "Export current" }]} />

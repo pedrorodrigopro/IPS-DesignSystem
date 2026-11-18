@@ -4,8 +4,8 @@
 // Layout (Page variant="full": 24px padding, 24px gap):
 //   PageHeader     breadcrumbs "Profile: <name> / CV Versions", title, primary "Create CV version"
 //   Toolbar row    InputSearch (283px) · sort selector ("By name") · "N versions" · filter icon button (right)
-//   Cards grid     3 columns, gap 16. Tile highlight per version:
-//                    header  Switch · name (bold) · edit icon button · delete icon button
+//   Cards grid     3 columns, gap 16. Tile interactive per version (shadow at rest, hover effect): the whole card is clickable (opens the version):
+//                    header  Switch · name (bold) · menu icon button (dropdown: Duplicate, Delete)
 //                    content live thumbnail of the CV (CVPreview, scaled) | title, Template, Language, Last edited by
 //
 // Used by the Screens/CVVersions story and by Screens/MyProfile ("See all versions").
@@ -18,6 +18,7 @@ import { Tile }         from "../../components/tile/tile";
 import { PageHeader }   from "../../components/page_header/page_header";
 import { Button }       from "../../components/button/button";
 import { Icon }         from "../../components/icon/icon";
+import { DropdownActions } from "../../components/dropdown/dropdown";
 import { InputSearch } from "../../components/input/input";
 import { Alert }        from "../../components/alert/alert";
 import { CreateVersionModal } from "./create_version_modal";
@@ -49,6 +50,15 @@ export const INITIAL_CV_VERSIONS: CVVersion[] = [
   { id: "es-banking", name: "Spanish, banking",        description: "Spanish-speaking banking professionals",                   template: "Default", language: "Spanish", editedBy: "John D.", editedAt: "Aug 28, 2026", active: false },
   { id: "es-pm",      name: "Spanish, project manager", description: "Spanish-speaking tailored for project manager roles",      template: "Default", language: "Spanish", editedBy: "John D.", editedAt: "Aug 28, 2026", active: false },
 ];
+
+/** A copy of a version (the "Duplicate" menu action): same settings, "(copy)" after the name, off until switched on */
+export const duplicateOf = (v: CVVersion): CVVersion => ({
+  ...v,
+  id: `v-${Date.now()}`,
+  name: `${v.name} (copy)`,
+  active: false,
+  editedAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+});
 
 /** A new card for a version just created (name and description from the "Create CV version" modal) */
 export const newCVVersion = ({ name, description }: NewVersionInfo): CVVersion => ({
@@ -112,34 +122,52 @@ function Meta({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
+const VERSION_MENU = [{ id: "duplicate", label: "Duplicate" }, { id: "delete", label: "Delete" }];
+
 function VersionCard({
-  version, cv, outdated, onToggle, onEdit, onDelete,
-}: { version: CVVersion; cv: CV; outdated?: boolean; onToggle: (on: boolean) => void; onEdit: () => void; onDelete: () => void }) {
+  version, cv, outdated, onToggle, onOpen, onDuplicate, onDelete,
+}: { version: CVVersion; cv: CV; outdated?: boolean; onToggle: (on: boolean) => void; onOpen: () => void; onDuplicate: () => void; onDelete: () => void }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  // clicks on the switch and the menu belong to them, not to the card
+  const own = (e: React.SyntheticEvent) => e.stopPropagation();
   return (
-    <Tile tileStyle="highlight" padding="content" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* Profile edits not yet applied to this version — Figma 886:40981 */}
-      {outdated && (
-        <Tile tileStyle="selected" padding="panel" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 8 }}>
-          <Icon name="info" size={20} />
-          <span style={value}>Outdated fields</span>
-        </Tile>
-      )}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <Switch checked={version.active} onChange={onToggle} showLabel={false} />
-        <span style={{ ...bodyBold, flex: 1, minWidth: 0 }}>{version.name}</span>
-        <Button kind="icon" size="regular" title="Edit version" onClick={onEdit}><Icon name="edit" size={16} /></Button>
-        <Button kind="icon" size="regular" title="Delete version" onClick={onDelete}><Icon name="remove" size={16} /></Button>
-      </div>
-      <div style={{ display: "flex", gap: 12 }}>
-        <Thumbnail cv={cv} />
-        <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-          {version.description && <span style={{ ...value, lineHeight: "150%" }}>{version.description}</span>}
-          <Meta title="Template">{version.template}</Meta>
-          <Meta title="Language">{version.language}</Meta>
-          <Meta title="Last edited by">{version.editedBy} · {version.editedAt}</Meta>
+    // the card is clickable: Tile "interactive" = shadow at rest and a hover effect (Tile as a button cannot hold the switch and the menu button)
+    <div role="group" aria-label={version.name} tabIndex={0} style={{ cursor: "pointer", borderRadius: "var(--radius-md)" }}
+      onClick={onOpen} onKeyDown={e => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(); } }}>
+      <Tile tileStyle="interactive" padding="content" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Profile edits not yet applied to this version — Figma 886:40981 */}
+        {outdated && (
+          <Tile tileStyle="selected" padding="panel" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 8 }}>
+            <Icon name="info" size={20} />
+            <span style={value}>Outdated fields</span>
+          </Tile>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span onClick={own}><Switch checked={version.active} onChange={onToggle} showLabel={false} /></span>
+          <span style={{ ...bodyBold, flex: 1, minWidth: 0 }}>{version.name}</span>
+          <div style={{ position: "relative" }} onClick={own}>
+            <Button kind="iconTertiary" size="regular" title="Menu" onClick={() => setMenuOpen(o => !o)}><Icon name="menu-vertical" size={16} /></Button>
+            {menuOpen && (
+              <>
+                <div style={{ position: "fixed", inset: 0, zIndex: 20 }} onClick={() => setMenuOpen(false)} />
+                <div style={{ position: "absolute", top: "100%", right: 0, zIndex: 21, marginTop: 4 }}>
+                  <DropdownActions items={VERSION_MENU} onSelect={id => { setMenuOpen(false); if (id === "duplicate") onDuplicate(); else onDelete(); }} />
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </Tile>
+        <div style={{ display: "flex", gap: 12 }}>
+          <Thumbnail cv={cv} />
+          <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+            {version.description && <span style={{ ...value, lineHeight: "150%" }}>{version.description}</span>}
+            <Meta title="Template">{version.template}</Meta>
+            <Meta title="Language">{version.language}</Meta>
+            <Meta title="Last edited by">{version.editedBy} · {version.editedAt}</Meta>
+          </div>
+        </div>
+      </Tile>
+    </div>
   );
 }
 
@@ -156,6 +184,7 @@ export function CVVersionsScreen({
   onCreate,
   onCreateStart,
   onEdit,
+  onDuplicate,
   onNavigate,
   pending,
   cvs,
@@ -181,8 +210,10 @@ export function CVVersionsScreen({
   onCreate?: (version: CVVersion) => void;
   /** "Create CV version" was clicked. When given, the screen does not open its own modal: the host starts the creation (e.g. CV Exporter, variant "creating-version", which asks for the name at the end). */
   onCreateStart?: () => void;
-  /** Edit icon on a card */
+  /** A card was clicked (the whole card is clickable): open that version */
   onEdit?: (version: CVVersion) => void;
+  /** Menu action "Duplicate": the copy is already added to the list, right after the original */
+  onDuplicate?: (original: CVVersion, copy: CVVersion) => void;
   /** Navbar item clicked (e.g. "profiles") */
   onNavigate?: (navbarId: string) => void;
 }) {
@@ -259,7 +290,12 @@ export function CVVersionsScreen({
                 cv={cvs?.[v.id] ?? cv}
                 outdated={isOutdated(v.id)}
                 onToggle={on => setVersions(vs => vs.map(x => (x.id === v.id ? { ...x, active: on } : x)))}
-                onEdit={() => onEdit?.(v)}
+                onOpen={() => onEdit?.(v)}
+                onDuplicate={() => {
+                  const copy = duplicateOf(v);
+                  setVersions(vs => { const i = vs.findIndex(x => x.id === v.id); return [...vs.slice(0, i + 1), copy, ...vs.slice(i + 1)]; });
+                  onDuplicate?.(v, copy);
+                }}
                 onDelete={() => setVersions(vs => vs.filter(x => x.id !== v.id))}
               />
             ))}
