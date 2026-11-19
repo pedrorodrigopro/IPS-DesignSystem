@@ -33,6 +33,7 @@ import { Toggle }          from "../../components/toggle/toggle";
 import { WorkforceMember } from "../../components/workforce_member/workforce_member";
 import { PillWFState, PillSimple } from "../../components/pill/pill";
 import { SliderNumber }     from "../../components/slider/slider";
+import { ProgressLinear }  from "../../components/progress_bar/progress_bar";
 import { InputSearch }     from "../../components/input/input";
 import { Card }            from "../../components/card/card";
 import type { SkillGroup } from "../../components/card/card";
@@ -357,9 +358,41 @@ const MATCHES: MatchEntry[] = [
   { name: "Frank Sinatra",        initials: "FS", title: "Senior Ruby Developer, Operations",  match: 70, avail: 100 },
 ];
 
+// ── Vacancies booked block (top of the Matches and Shortlist sidebars) ─────────
+// The datapoints of the Overview's Availability block, per vacancy: who is booked, booked / requested hours and a progress bar, with the role's
+// total Delta (booked − requested) at the right of the title. Delta: negative red-0, 0h green-0, positive neutral. The bar is green-0 once the
+// vacancy is fully booked, orange-3 while hours are missing.
+
+type VacancyBooking = { people: string[]; requested: number; booked: number };
+const VAC_NOT_BOOKED: VacancyBooking[] = [{ people: [], requested: 300, booked: 0 }];
+const VAC_PARTIAL:    VacancyBooking[] = [{ people: ["Charlie Parker"], requested: 300, booked: 150 }];
+const VAC_FULL:       VacancyBooking[] = [{ people: ["Charlie Parker", "Sarah Mitchell"], requested: 300, booked: 300 }];
+
+function VacanciesBooked({ vacancies }: { vacancies: VacancyBooking[] }) {
+  const delta = vacancies.reduce((n, v) => n + v.booked - v.requested, 0);
+  const bookedCount = vacancies.filter(v => v.people.length > 0).length;
+  return (
+    <Tile tileStyle="highlight" padding="content">
+      <Between style={{ alignItems: "baseline" }}>
+        <span style={{ ...bodyBold, fontSize: "var(--font-size-h5)", lineHeight: "125%" }}>Vacancies booked {bookedCount}/{vacancies.length}</span>
+        <span style={{ ...bodyBold, fontSize: "var(--font-size-h5)", lineHeight: "125%", color: deltaColor(delta) }}>Δ {fmtDelta(delta)}</span>
+      </Between>
+      {vacancies.map((v, i) => (
+        <div key={i} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <Between style={{ alignItems: "flex-start", gap: 12 }}>
+            <span style={body}>Vacancy #{i + 1}{v.people.length > 0 ? `: ${v.people.join(", ")}` : ""}</span>
+            <span style={{ ...body, whiteSpace: "nowrap" }}>{v.booked}/{v.requested}h</span>
+          </Between>
+          <ProgressLinear value={Math.round((v.booked / v.requested) * 100)} color={v.booked >= v.requested ? "var(--palette-green-0)" : "var(--palette-orange-3)"} />
+        </div>
+      ))}
+    </Tile>
+  );
+}
+
 // ── Matches tab ───────────────────────────────────────────────────────────────
 
-function MatchesTab() {
+function MatchesTab({ vacancies = VAC_NOT_BOOKED }: { vacancies?: VacancyBooking[] }) {
   const [avail, setAvail] = useState(40);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [search, setSearch] = useState("");
@@ -369,6 +402,8 @@ function MatchesTab() {
 
       {/* Left filter sidebar — two Tile selected content blocks */}
       <div style={{ width: 296, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+
+        <VacanciesBooked vacancies={vacancies} />
 
         {/* Top block — Role details / Matches distribution / Match attributes
             Tile selected + content (16px), Divider between each accordion */}
@@ -627,7 +662,7 @@ function shortlistStep(status: CardStatus): import("../../components/card/card")
   return "shortlisted-reviewer";
 }
 
-function ShortlistTab() {
+function ShortlistTab({ vacancies = VAC_PARTIAL }: { vacancies?: VacancyBooking[] }) {
   const [statuses, setStatuses] = useState<Record<string, CardStatus>>(
     Object.fromEntries(SHORTLIST.map(e => [e.id, "shortlisted"]))
   );
@@ -646,6 +681,8 @@ function ShortlistTab() {
 
       {/* ── Left sidebar ────────────────────────────────────────────────── */}
       <div style={{ width: 296, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+
+        <VacanciesBooked vacancies={vacancies} />
 
         {/* Role details + Match attributes */}
         <Tile tileStyle="selected" padding="content">
@@ -809,7 +846,7 @@ export const Overview: Story = {
     return (
       <RoleShell activeTab={tab} onTabChange={setTab} wfState="booked">
         {tab === "overview"  && <OverviewTab />}
-        {tab === "matches"   && <MatchesTab />}
+        {tab === "matches"   && <MatchesTab vacancies={VAC_PARTIAL} />}
         {tab === "vacancies" && <VacanciesTab />}
         {tab === "history"   && <HistoryTab />}
         {tab === "shortlist"  && <ShortlistTab />}
@@ -836,9 +873,19 @@ export const OverviewNotBooked: Story = {
 
 export const Matches: Story = {
   name: "Matches",
+  parameters: { docs: { description: { story: "A role that is not booked yet: the Vacancies booked block shows 0/1 vacancies booked, Δ -300h and an empty bar." } } },
   render: () => {
     const [tab, setTab] = useState("matches");
     return <RoleShell activeTab={tab} onTabChange={setTab}><MatchesTab /></RoleShell>;
+  },
+};
+
+export const MatchesBooked: Story = {
+  name: "Matches — booked",
+  parameters: { docs: { description: { story: "A Booked role: 1/1 vacancies booked, 150/300h, Δ -150h in red-0, orange bar (hours still missing)." } } },
+  render: () => {
+    const [tab, setTab] = useState("matches");
+    return <RoleShell activeTab={tab} onTabChange={setTab} wfState="booked"><MatchesTab vacancies={VAC_PARTIAL} /></RoleShell>;
   },
 };
 
@@ -860,8 +907,18 @@ export const History: Story = {
 
 export const Shortlist: Story = {
   name: "Shortlist",
+  parameters: { docs: { description: { story: "A Booked role: the Vacancies booked block shows 1/1 vacancies booked, 150/300h, Δ -150h in red-0 and an orange bar (hours still missing)." } } },
   render: () => {
     const [tab, setTab] = useState("shortlist");
-    return <RoleShell activeTab={tab} onTabChange={setTab}><ShortlistTab /></RoleShell>;
+    return <RoleShell activeTab={tab} onTabChange={setTab} wfState="booked"><ShortlistTab /></RoleShell>;
+  },
+};
+
+export const ShortlistFullyBooked: Story = {
+  name: "Shortlist — fully booked",
+  parameters: { docs: { description: { story: "A Confirmed role, fully booked: both people are listed on the vacancy, 300/300h, Δ 0h in green-0 and a green bar." } } },
+  render: () => {
+    const [tab, setTab] = useState("shortlist");
+    return <RoleShell activeTab={tab} onTabChange={setTab} wfState="confirmed"><ShortlistTab vacancies={VAC_FULL} /></RoleShell>;
   },
 };
