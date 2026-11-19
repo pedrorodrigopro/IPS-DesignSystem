@@ -8,12 +8,12 @@
 //                   Left: "Translate to" tile (4 states) + a tile with Navigation tabs (ProPilot | Edit fields):
 //                     Edit fields — the CV fields (Input / InputTextarea)
 //                     ProPilot    — conversation + PPChatInput
-//                   Right: Tile highlight — toolbar (pager for multi, Version selector), then the scrolling
+//                   Right: Tile highlight — toolbar row only for multi (pager, Version selector), then the scrolling
 //                          CV preview (photo, logo, label/value rows)
 //   Footer          Actions sticky-panel, by variant:
 //                   creating-version   Cancel | Save to new version, Export
 //                   exporting-version  Close | Save (split ButtonGroup: chevron opens "Save to new CV Version" above it), Export
-//                   multi-exporting    Close | split button "Export (3)" (chevron opens "Export current")
+//                   multi-exporting    Cancel | split button "Export (3)" (chevron opens "Export current")
 //
 // Variants: "creating-version" (one CV; no Version select: a "Fields source" select next to File type and Template picks what the new version starts from),
 // "exporting-version" (one CV, the
@@ -656,6 +656,22 @@ export function CVExporterScreen({
 
   const previewItem = mode === "propilot" ? items.find(i => i.kind === "suggestion" && i.id === previewing && i.state === "default") : undefined;
   const preview = previewItem?.kind === "suggestion" ? { industry: previewItem.industry, fields: adaptCV(cv, previewItem.industry) } : undefined;
+  // Version select + info icon (the full description of the selected version in a tooltip). Exporting version: first item of the top row, left of File type
+  const versionControl = (tip: "down-left" | "up-right") => (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      {/* each item shows its description truncated on a second line */}
+      <SelectMenu items={versions} selectedId={version} onSelect={setVersion} align="right" menuWidth={300}>
+        {toggle => <InputInline inlineLabel="Version" value={versionLabel} onClick={toggle} />}
+      </SelectMenu>
+      {versionDescription && (
+        <Tooltip content={versionDescription} placement={tip} maxWidth={280} portal>
+          <span tabIndex={0} role="img" aria-label={`Version description: ${versionDescription}`} style={{ display: "inline-flex", color: "var(--palette-blue-0)", cursor: "default" }}>
+            <Icon name="info" size={20} />
+          </span>
+        </Tooltip>
+      )}
+    </div>
+  );
   const names = multi ? cvs.slice(0, 3).map(c => c.name).join(", ") + (cvs.length > 3 ? `, +${cvs.length - 3}` : "") : undefined;
 
   return (
@@ -670,7 +686,8 @@ export function CVExporterScreen({
               title={multi ? `${cvs.length} ${cvs.length === 1 ? "CV" : "CVs"}` : cv.name}
               subtitle={names}
               rightContent={
-                <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  {kind === "exporting-version" && versionControl("up-right")}
                   {creating && (
                     <SelectMenu items={dataSources} selectedId={source} align="right" menuWidth={300}
                       onSelect={id => {
@@ -717,11 +734,11 @@ export function CVExporterScreen({
               style={{ position: "relative", flex: 1, minWidth: 0, height: "calc(100% + 24px)", display: "flex", flexDirection: "column", gap: 16 }}
             >
               {/* Centred in the header row's free space (after the pager, before the Version select) so it never covers either */}
-              <div style={{ position: "absolute", top: 0, left: multi ? 140 : 16, right: 260, height: 0, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", top: 0, left: multi ? 140 : 16, right: multi ? 260 : 16, height: 0, pointerEvents: "none" }}>
                 <PPPreviewBanner visible={!!preview} label={preview ? `Adapted to ${preview.industry}` : undefined} />
               </div>
-              {/* Creating version: no toolbar row (no Version select, no pager), the CV starts at the top of the card */}
-              {!creating && (
+              {/* Toolbar row (pager + Version) only for several CVs; Creating and Exporting version have no row: the CV starts at the top of the card */}
+              {multi && (
                 <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -737,19 +754,7 @@ export function CVExporterScreen({
                     </>
                   )}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {/* each item shows its description truncated on a second line; the info icon shows the full description of the selected version */}
-                  <SelectMenu items={versions} selectedId={version} onSelect={setVersion} align="right" menuWidth={300}>
-                    {toggle => <InputInline inlineLabel="Version" value={versionLabel} onClick={toggle} />}
-                  </SelectMenu>
-                  {versionDescription && (
-                    <Tooltip content={versionDescription} placement="up-right" maxWidth={280} portal>
-                      <span tabIndex={0} role="img" aria-label={`Version description: ${versionDescription}`} style={{ display: "inline-flex", color: "var(--palette-blue-0)", cursor: "default" }}>
-                        <Icon name="info" size={20} />
-                      </span>
-                    </Tooltip>
-                  )}
-                </div>
+                {versionControl("up-right")}
               </div>
               <Divider orientation="horizontal" style={{ margin: "0 -16px" }} />
                 </>
@@ -763,7 +768,7 @@ export function CVExporterScreen({
           {/* Footer */}
           <Actions
             variant="sticky-panel"
-            leftActions={[{ label: creating ? "Cancel" : "Close", variant: "secondary", onClick: onClose }]}
+            leftActions={[{ label: creating || multi ? "Cancel" : "Close", variant: "secondary", onClick: onClose }]}
             rightActions={creating ? [{ label: "Save to new version", variant: "secondary", onClick: () => setCreateOpen(true) }, { label: "Export", variant: "primary" }] : []}
             rightContent={
               multi ? (

@@ -70,7 +70,7 @@ function SB({ children, style }: { children: React.ReactNode; style?: React.CSSP
 //                         "Create CV version" modal (name, description) at the end of the process; Create adds the card and returns to CV Versions
 //                         (the Exporting version's "Save to new CV Version" does the same)
 //   Navbar "Profiles" (any screen) → Profiles Directory (table). Tick profiles → bulk banner → "Export CV (N)" → CV Exporter
-//                         with every selected CV, Multi exporting (no Save; Close → directory). Navbar profile item → back to My Profile
+//                         with every selected CV, Multi exporting (no Save; Cancel → directory). Navbar profile item → back to My Profile
 type CVView = "profile" | "studio" | "versions" | "directory";
 type StudioFrom = "profile" | "versions" | "directory";
 const NEW_VERSION_ID = "__new";      // the draft CV of a version being created (Creating version)

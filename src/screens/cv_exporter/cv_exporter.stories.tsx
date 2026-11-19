@@ -42,7 +42,7 @@ export const CreatingVersion: Story = {
 
 export const ExportingVersion: Story = {
   name: "Exporting version",
-  parameters: { docs: { description: { story: "One CV (Figma 653:36523). The Version field picks the version to export; the Version select lists each version with its description truncated on a second line, and an info icon beside it shows the full description of the selected version in a tooltip; the footer reads Close | Save▾, Export. Save is a ButtonGroup: its chevron opens a menu above it with “Save to new CV Version”. Left module in Edit fields mode." } } },
+  parameters: { docs: { description: { story: "One CV (Figma 653:36523). The Version field picks the version to export; the Version select (first item of the top row, left of File type) lists each version with its description truncated on a second line, and an info icon beside it shows the full description of the selected version in a tooltip; there is no toolbar row above the CV; the footer reads Close | Save▾, Export. Save is a ButtonGroup: its chevron opens a menu above it with “Save to new CV Version”. Left module in Edit fields mode." } } },
   render: () => <CVExporterScreen variant="exporting-version" cvs={[ZARA]} initialMode="edit" />,
 };
 
@@ -54,7 +54,7 @@ export const ExportingVersionProPilot: Story = {
 
 export const MultiExporting: Story = {
   name: "Multi exporting",
-  parameters: { docs: { description: { story: "Three CVs (Figma 653:37833): “3 CVs” title with names, pager, “Translate 3 CVs to”, and a split Export (3) button whose menu offers “Export current”. No Save." } } },
+  parameters: { docs: { description: { story: "Three CVs (Figma 653:37833): “3 CVs” title with names, pager, “Translate 3 CVs to”, and a split Export (3) button whose menu offers “Export current”. Cancel | Export (3)▾, no Save." } } },
   render: () => <CVExporterScreen variant="multi-exporting" cvs={[ZARA, JOHN, MARY]} initialMode="edit" />,
 };
 
