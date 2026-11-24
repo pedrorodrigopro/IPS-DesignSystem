@@ -48,6 +48,12 @@ import type { AppliedFilter } from "../../components/filters_applied/filters_app
 import type { BookingCellCategory } from "../../components/booking_cell/booking_cell";
 
 import type { WFState } from "../../components/pill/pill";
+import { TablePropertiesSidePanel } from "../../components/side_panel/table_properties_side_panel";
+import {
+  MAX_AUTO_LEFT, NO_TABLE_FIELDS, ROW_H, HEADER_H, TITLE_LABEL, FIELD_CATALOG,
+  InlineLine, LeftBody, LeftHeader, configToTabs, engagementValues, hasTableColumns, pickFields, profileValues, roleValues, rowHeight, tableWidth, tabsToConfig,
+} from "./table_fields";
+import type { LeftRowData, RowKind, TableFieldsConfig, TableLayout } from "./table_fields";
 
 // ── Typography helpers ────────────────────────────────────────────────────────
 
@@ -129,22 +135,45 @@ function ganttWeeksFrom(from: string): { weeks: typeof WEEKS; range: string } {
   return { weeks, range: `${dmy(day(0))} - ${dmy(day(27))}` };
 }
 
-function GanttHeader({ colW = GANTT_COL_DEFAULT, weeks = WEEKS }: { colW?: number; weeks?: typeof WEEKS }) {
+// Month row of the Gantt header: the 28 days grouped by month ("Nov 2026"), a month that changes mid-week splits the week
+function monthSpans(from: string): { label: string; days: number }[] {
+  const start = new Date(`${from}T00:00:00Z`);
+  const spans: { label: string; days: number }[] = [];
+  for (let i = 0; i < GANTT_TOTAL_COLS; i++) {
+    const d = new Date(start.getTime() + i * 86400000);
+    const label = `${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+    if (spans.length && spans[spans.length - 1].label === label) spans[spans.length - 1].days++;
+    else spans.push({ label, days: 1 });
+  }
+  return spans;
+}
+
+// Header: 60px (month 20 + week 20 + day 20); with table columns the left header grows by the column-titles row and the day row grows with it
+function GanttHeader({ colW = GANTT_COL_DEFAULT, weeks = WEEKS, from = "2026-08-31" }: { colW?: number; weeks?: typeof WEEKS; from?: string }) {
   const totalW = colW * GANTT_TOTAL_COLS;
+  const lbl: React.CSSProperties = { boxSizing: "border-box", display: "flex", alignItems: "center", whiteSpace: "nowrap", overflow: "hidden", fontFamily: "var(--font-family)" };
   return (
-    <div style={{ background: "white", width: totalW, minWidth: totalW }}>
+    <div style={{ background: "white", width: totalW, minWidth: totalW, height: "100%", minHeight: HEADER_H, display: "flex", flexDirection: "column" }}>
+      {/* Month labels */}
+      <div style={{ display: "flex", height: 20, flexShrink: 0, borderBottom: "1px solid var(--palette-neutral-0)" }}>
+        {monthSpans(from).map(m => (
+          <div key={m.label} style={{ ...lbl, width: m.days * colW, flexShrink: 0, padding: "0 8px", borderRight: "2px solid var(--palette-neutral-0)", fontSize: 12, fontWeight: 700, color: "var(--palette-blue-0)" }}>
+            {m.days * colW >= 110 ? m.label : m.label.split(" ")[0]}
+          </div>
+        ))}
+      </div>
       {/* Week labels */}
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "flex", height: 20, flexShrink: 0 }}>
         {weeks.map(w => (
-          <div key={w.label} style={{ width: 7 * colW, flexShrink: 0, padding: "4px 8px", borderRight: "1px solid var(--palette-neutral-0)", fontFamily: "var(--font-family)", fontSize: 11, fontWeight: 600, color: "var(--palette-blue-2)" }}>
+          <div key={w.label} style={{ ...lbl, width: 7 * colW, flexShrink: 0, padding: "0 8px", borderRight: "1px solid var(--palette-neutral-0)", fontSize: 11, fontWeight: 600, color: "var(--palette-blue-2)" }}>
             {w.label}
           </div>
         ))}
       </div>
       {/* Day labels */}
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 20, borderTop: "1px solid var(--palette-neutral-0)" }}>
         {weeks.flatMap(w => w.days).map((d, i) => (
-          <div key={i} style={{ width: colW, flexShrink: 0, padding: "2px 4px", borderRight: "1px solid var(--palette-neutral-0)", fontFamily: "var(--font-family)", fontSize: 10, color: "var(--palette-blue-2)", textAlign: "center" }}>
+          <div key={i} style={{ ...lbl, width: colW, flexShrink: 0, justifyContent: "center", padding: "0 4px", borderRight: "1px solid var(--palette-neutral-0)", fontSize: 10, color: "var(--palette-blue-2)" }}>
             {d}
           </div>
         ))}
@@ -245,6 +274,8 @@ export type BookingEntry  = {
   misalignedWeeks?: number[];
   /** The person is overbooked: an orange warning icon (next to the misalignment icon on the second line of the row's card) opens the Overbookings side panel with this content */
   overbooking?: BookingOverbooking;
+  /** Profile field values for the table properties (job title, grade, skills ...): whatever is missing gets a sample value */
+  fields?: Record<string, string>;
 };
 export type RoleEntry     = {
   id: string; name: string; state: WFState; roleId: string; expiry: string; assignee: string; bookings: BookingEntry[]; ganttPills?: GanttPill[];
@@ -254,8 +285,12 @@ export type RoleEntry     = {
   misaligned?: boolean;
   /** Content of the Misalignments side panel. Clicking the misalignment icon of the role, or of one of its bookings, opens it. */
   misalignment?: BookingMisalignment;
+  /** Role field values for the table properties (start date, principal owner ...): whatever is missing gets a sample value */
+  fields?: Record<string, string>;
 };
-export type EngagementEntry = { id: string; name: string; state: string; resourcingBy: string; assignee: string; dueDays: string; startDate: string; roles: RoleEntry[]; rolesBooked: string; ganttPills?: GanttPill[] };
+export type EngagementEntry = { id: string; name: string; state: string; resourcingBy: string; assignee: string; dueDays: string; startDate: string; roles: RoleEntry[]; rolesBooked: string; ganttPills?: GanttPill[];
+  /** Engagement field values for the table properties (end date, duration, principal owner ...): whatever is missing gets a sample value */
+  fields?: Record<string, string> };
 
 const ENGAGEMENTS: EngagementEntry[] = [
   {
@@ -378,7 +413,6 @@ const ENGAGEMENTS: EngagementEntry[] = [
 ];
 
 // ── Row height constant — MUST match Gantt row height exactly ────────────────
-const ROW_H = 60;
 
 // ── Left cell + Right cell rendered as a single logical row ──────────────────
 // This ensures pixel-perfect alignment between left text and right Gantt pills.
@@ -416,13 +450,12 @@ function EngRow({
 // Pills live on each data node — no parallel index needed.
 // Expanding any engagement always aligns correctly.
 
-type FlatRow = {
-  key: string;
-  leftContent: React.ReactNode;
-  rightPills?: GanttPill[];
-  bg?: string;
-  indent?: number;
-};
+type FlatRow = LeftRowData & { rightPills?: GanttPill[] };
+
+const roleFields = (eng: EngagementEntry, role: RoleEntry, cfg: TableFieldsConfig) =>
+  pickFields("role", roleValues({ id: role.id, name: role.name, state: role.state, roleId: role.roleId, expiry: role.expiry, assignee: role.assignee, dueDays: eng.dueDays, engagement: eng.name, resource: role.bookings[0]?.name, fields: role.fields }), cfg);
+const bookingFields = (b: BookingEntry, cfg: TableFieldsConfig) => pickFields("profile", profileValues({ name: b.name, fields: b.fields }), cfg);
+const leftProps = (kind: RowKind, f: { table: LeftRowData["table"]; inline: unknown[] }, hasMenu: boolean) => ({ kind, height: rowHeight(f.inline.length), table: f.table, hasMenu });
 
 function buildRows(
   engagements: EngagementEntry[],
@@ -432,15 +465,17 @@ function buildRows(
   onToggleRole: (id: string) => void,
   onMisalignment?: (roleId: string) => void,
   onOverbooking?: (roleId: string, bookingIndex: number) => void,
+  cfg: TableFieldsConfig = NO_TABLE_FIELDS,
 ): FlatRow[] {
   const rows: FlatRow[] = [];
 
   engagements.forEach(eng => {
+    const ef = pickFields("engagement", engagementValues(eng), cfg);
     const isExpanded = expanded.has(eng.id);
 
     // ── Engagement row ────────────────────────────────────────────────────────
     rows.push({
-      key: eng.id,
+      key: eng.id, ...leftProps("engagement", ef, true),
       bg: "white",
       indent: 4,
       rightPills: eng.ganttPills,
@@ -456,10 +491,8 @@ function buildRows(
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ ...bodyBold, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{eng.name}</div>
             <div style={labelCss}>{eng.rolesBooked}</div>
+            <InlineLine items={ef.inline} />
           </div>
-          <button style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)", flexShrink: 0 }}>
-            <Icon name="menu-vertical" size={14} />
-          </button>
         </Row>
       ),
     });
@@ -470,8 +503,9 @@ function buildRows(
       const roleExpanded = expandedRoles.has(role.id);
 
       // ── Role row ────────────────────────────────────────────────────────────
+      const rf = roleFields(eng, role, cfg);
       rows.push({
-        key: role.id,
+        key: role.id, ...leftProps("role", rf, true),
         bg: "var(--palette-neutral-2)",
         indent: 20,
         rightPills: rolePills(role),
@@ -490,10 +524,8 @@ function buildRows(
                 <PillWFState state={role.state} size="small" />
                 {role.bookings.length > 0 && <span style={labelCss}>{role.bookings.length} Vacancies booked</span>}
               </Row>
+              <InlineLine items={rf.inline} />
             </div>
-            <button style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)", flexShrink: 0 }}>
-              <Icon name="menu-vertical" size={14} />
-            </button>
           </Row>
         ),
       });
@@ -502,8 +534,9 @@ function buildRows(
 
       // ── Booking / profile rows ──────────────────────────────────────────────
       role.bookings.forEach((booking, bi) => {
+        const bf = bookingFields(booking, cfg);
         rows.push({
-          key: `${role.id}-b${bi}`,
+          key: `${role.id}-b${bi}`, ...leftProps("profile", bf, false),
           bg: "var(--palette-neutral-2)",
           indent: 40,
           rightPills: bookingPills(booking),
@@ -519,6 +552,7 @@ function buildRows(
                 {booking.misaligned || booking.overbooking
                   ? <SubLine misaligned={booking.misaligned} onMisalignment={role.misalignment && onMisalignment ? () => onMisalignment(role.id) : undefined} overbooked={!!booking.overbooking} onOverbooking={onOverbooking ? () => onOverbooking(role.id, bi) : undefined}>{booking.hours}</SubLine>
                   : <div style={labelCss}>{booking.hours}</div>}
+                <InlineLine items={bf.inline} />
               </div>
             </Row>
           ),
@@ -541,6 +575,7 @@ function buildRolesRows(
   onToggleRole: (id: string) => void,
   onMisalignment?: (roleId: string) => void,
   onOverbooking?: (roleId: string, bookingIndex: number) => void,
+  cfg: TableFieldsConfig = NO_TABLE_FIELDS,
 ): FlatRow[] {
   const rows: FlatRow[] = [];
 
@@ -549,8 +584,9 @@ function buildRolesRows(
       const roleExpanded = expandedRoles.has(role.id);
 
       // Role row — top level in Roles view
+      const rf = roleFields(eng, role, cfg);
       rows.push({
-        key: role.id,
+        key: role.id, ...leftProps("role", rf, true),
         bg: "white",
         indent: 4,
         rightPills: rolePills(role),
@@ -563,10 +599,8 @@ function buildRolesRows(
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ ...bodyBold, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{role.name}</div>
               {role.misaligned ? <SubLine misaligned onMisalignment={role.misalignment && onMisalignment ? () => onMisalignment(role.id) : undefined}>{eng.name}</SubLine> : <span style={{ ...labelCss, marginTop: 2, display: "block" }}>{eng.name}</span>}
+              <InlineLine items={rf.inline} />
             </div>
-            <button style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)", flexShrink: 0 }}>
-              <Icon name="menu-vertical" size={14} />
-            </button>
           </Row>
         ),
       });
@@ -575,8 +609,9 @@ function buildRolesRows(
 
       // Booking sub-rows
       role.bookings.forEach((booking, bi) => {
+        const bf = bookingFields(booking, cfg);
         rows.push({
-          key: `roles-${role.id}-b${bi}`,
+          key: `roles-${role.id}-b${bi}`, ...leftProps("profile", bf, false),
           bg: "var(--palette-neutral-2)",
           indent: 28,
           rightPills: bookingPills(booking),
@@ -591,6 +626,7 @@ function buildRolesRows(
                 {booking.misaligned || booking.overbooking
                   ? <SubLine misaligned={booking.misaligned} onMisalignment={role.misalignment && onMisalignment ? () => onMisalignment(role.id) : undefined} overbooked={!!booking.overbooking} onOverbooking={onOverbooking ? () => onOverbooking(role.id, bi) : undefined}>{booking.hours}</SubLine>
                   : <div style={labelCss}>{booking.hours}</div>}
+                <InlineLine items={bf.inline} />
               </div>
             </Row>
           ),
@@ -821,7 +857,7 @@ function buildGridRows(
 
 function GridCalendar({
   engagements, view,
-  flatRows, leftWidth, onDragStart,
+  flatRows, leftWidth, onDragStart, tbl,
   expanded, expandedRoles,
   weeks = GRID_WEEKS, roleRow = "cells", countLabel = "874 projects", onCellChange, focusWeek,
 }: {
@@ -830,6 +866,7 @@ function GridCalendar({
   flatRows: FlatRow[];
   leftWidth: number;
   onDragStart: (e: React.MouseEvent) => void;
+  tbl: TableLayout;
   expanded: Set<string>;
   expandedRoles: Set<string>;
   weeks?: GridWeeks;
@@ -852,17 +889,9 @@ function GridCalendar({
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
       {/* ── Shared header row: left sort header | divider | Gantt-style month/week headers ── */}
-      <div style={{ display: "flex", flexShrink: 0, borderBottom: "1px solid var(--palette-neutral-0)", background: "white" }}>
+      <div style={{ display: "flex", flexShrink: 0, minHeight: HEADER_H, borderBottom: "1px solid var(--palette-neutral-0)", background: "white" }}>
         {/* Left header — identical to Gantt */}
-        <div style={{ width: leftWidth, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", minHeight: 48 }}>
-          <Row gap={8} style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "inline-block", width: "max-content" }}>
-              <InputSelect value="Latest first" />
-            </span>
-            <span style={{ ...labelCss, whiteSpace: "nowrap", flexShrink: 0 }}>{countLabel}</span>
-          </Row>
-          <Button kind="secondary" size="small"><Icon name="list" size={14} /></Button>
-        </div>
+        <LeftHeader leftWidth={leftWidth} tbl={tbl} sort={<InputSelect value="Latest first" />} count={countLabel} />
         {/* Divider */}
         <div style={{ width: 4, flexShrink: 0, background: "var(--palette-neutral-0)" }} />
         {/* Right: month + week headers stacked */}
@@ -892,13 +921,7 @@ function GridCalendar({
       <div style={{ flex: 1, display: "flex", overflowY: "auto", overflowX: "hidden" }}>
 
         {/* LEFT — identical Gantt rows (same flatRows, same height ROW_H) */}
-        <div style={{ width: leftWidth, flexShrink: 0 }}>
-          {flatRows.map(row => (
-            <div key={row.key} style={{ height: ROW_H, display: "flex", alignItems: "flex-start", paddingLeft: row.indent ?? 4, paddingRight: 8, borderBottom: "1px solid var(--palette-neutral-0)", background: row.bg ?? "white", overflow: "hidden" }}>
-              {row.leftContent}
-            </div>
-          ))}
-        </div>
+        <LeftBody rows={flatRows} leftWidth={leftWidth} tbl={tbl} />
 
         {/* Draggable divider — same as Gantt */}
         <div onMouseDown={onDragStart} style={{ width: 4, flexShrink: 0, cursor: "col-resize", background: "var(--palette-neutral-0)", position: "relative", userSelect: "none" }}>
@@ -911,7 +934,7 @@ function GridCalendar({
         <div ref={bodyRef} style={{ flex: 1, minWidth: 0, overflowX: "auto", overflowY: "hidden" }}
           onScroll={e => { if (headerRef.current) headerRef.current.scrollLeft = (e.target as HTMLDivElement).scrollLeft; }}>
           {gridRows.map((row, ri) => (
-            <div key={row.key} style={{ position: "relative", display: "flex", width: allWeeks.length * CELL_W, height: ROW_H, borderBottom: "1px solid var(--palette-neutral-0)" }}>
+            <div key={row.key} style={{ position: "relative", display: "flex", width: allWeeks.length * CELL_W, height: flatRows[ri]?.height ?? ROW_H, borderBottom: "1px solid var(--palette-neutral-0)" }}>
               {row.pills ? (
                 // Role row as a role pill (no cells): grid lines per week, the green pill over the weeks that have requested hours
                 <>
@@ -1041,16 +1064,18 @@ function buildWorkforceRows(
   profiles: WorkforceProfile[],
   expanded: Set<string>,
   onToggle: (id: string) => void,
+  cfg: TableFieldsConfig = NO_TABLE_FIELDS,
 ): FlatRow[] {
   const rows: FlatRow[] = [];
 
   profiles.forEach(profile => {
+    const pf = pickFields("profile", profileValues({ name: profile.name, department: profile.department }), cfg);
     const isExpanded = expanded.has(profile.id);
     const util = utilisationStyle(profile.utilPct);
 
     // Profile row
     rows.push({
-      key: profile.id,
+      key: profile.id, ...leftProps("profile", pf, true),
       bg: "white",
       indent: 4,
       rightPills: undefined, // profile row has no Gantt pill — bookings below
@@ -1068,10 +1093,8 @@ function buildWorkforceRows(
               <PillSimple label={`${profile.utilPct}%`} size="small" bg={util.bg} color={util.color} />
               <span style={labelCss}>{profile.availHours}</span>
             </Row>
+            <InlineLine items={pf.inline} />
           </div>
-          <button style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)", flexShrink: 0 }}>
-            <Icon name="menu-vertical" size={14} />
-          </button>
         </Row>
       ),
     });
@@ -1079,8 +1102,9 @@ function buildWorkforceRows(
     if (!isExpanded) return;
 
     profile.bookings.forEach(booking => {
+      const wf = pickFields("role", roleValues({ id: booking.id, name: booking.roleName, engagement: booking.engagementName, resource: profile.name }), cfg);
       rows.push({
-        key: booking.id,
+        key: booking.id, ...leftProps("role", wf, true),
         bg: "var(--palette-neutral-2)",
         indent: 20,
         rightPills: booking.ganttPills,
@@ -1091,10 +1115,8 @@ function buildWorkforceRows(
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ ...bodyBold, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{booking.roleName}</div>
               <div style={labelCss}>{booking.hours} booked</div>
+              <InlineLine items={wf.inline} />
             </div>
-            <button style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)", flexShrink: 0 }}>
-              <Icon name="menu-vertical" size={14} />
-            </button>
           </Row>
         ),
       });
@@ -1113,12 +1135,13 @@ function wfCellCategory(booked: number, _available: number): BookingCellCategory
 }
 
 function WorkforceGridCalendar({
-  profiles, flatRows, leftWidth, onDragStart, expanded,
+  profiles, flatRows, leftWidth, onDragStart, tbl, expanded,
 }: {
   profiles: WorkforceProfile[];
   flatRows: FlatRow[];
   leftWidth: number;
   onDragStart: (e: React.MouseEvent) => void;
+  tbl: TableLayout;
   expanded: Set<string>;
 }) {
   // Build grid rows aligned to flatRows
@@ -1155,16 +1178,8 @@ function WorkforceGridCalendar({
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* Header row: left sort | divider | month/week headers */}
-      <div style={{ display: "flex", flexShrink: 0, borderBottom: "1px solid var(--palette-neutral-0)", background: "white" }}>
-        <div style={{ width: leftWidth, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", minHeight: 48 }}>
-          <Row gap={8} style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "inline-block", width: "max-content" }}>
-              <InputSelect value="A-Z" />
-            </span>
-            <span style={{ ...labelCss, whiteSpace: "nowrap" }}>274 profiles</span>
-          </Row>
-          <Button kind="icon" size="small"><Icon name="calendar" size={14} /></Button>
-        </div>
+      <div style={{ display: "flex", flexShrink: 0, minHeight: HEADER_H, borderBottom: "1px solid var(--palette-neutral-0)", background: "white" }}>
+        <LeftHeader leftWidth={leftWidth} tbl={tbl} sort={<InputSelect value="A-Z" />} count="274 profiles" />
         <div style={{ width: 4, flexShrink: 0, background: "var(--palette-neutral-0)" }} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", height: 24, borderBottom: "1px solid var(--palette-neutral-0)" }}>
@@ -1187,13 +1202,7 @@ function WorkforceGridCalendar({
       {/* Single shared scroll */}
       <div style={{ flex: 1, display: "flex", overflowY: "auto", overflowX: "auto" }}>
         {/* LEFT — same flatRows */}
-        <div style={{ width: leftWidth, flexShrink: 0 }}>
-          {flatRows.map(row => (
-            <div key={row.key} style={{ height: ROW_H, display: "flex", alignItems: "flex-start", paddingLeft: row.indent ?? 4, paddingRight: 8, borderBottom: "1px solid var(--palette-neutral-0)", background: row.bg ?? "white", overflow: "hidden" }}>
-              {row.leftContent}
-            </div>
-          ))}
-        </div>
+        <LeftBody rows={flatRows} leftWidth={leftWidth} tbl={tbl} />
         {/* Draggable divider */}
         <div onMouseDown={onDragStart} style={{ width: 4, flexShrink: 0, cursor: "col-resize", background: "var(--palette-neutral-0)", position: "relative", userSelect: "none" }}>
           <div style={{ position: "sticky", top: "50%", transform: "translateY(-50%)" }}>
@@ -1203,7 +1212,7 @@ function WorkforceGridCalendar({
         {/* RIGHT — BookingCell grid */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {gridData.map((row, ri) => (
-            <div key={ri} style={{ display: "flex", height: ROW_H, borderBottom: "1px solid var(--palette-neutral-0)", background: row.bg ?? "white" }}>
+            <div key={ri} style={{ display: "flex", height: flatRows[ri]?.height ?? ROW_H, borderBottom: "1px solid var(--palette-neutral-0)", background: row.bg ?? "white" }}>
               {row.values.map((val, ci) => (
                 <div key={ci} style={{ width: CELL_W, flexShrink: 0, height: "100%" }}>
                   <BookingCell
@@ -1251,6 +1260,13 @@ export type BookingEngineScreenProps = {
   countLabel?: string;
   /** Gantt: the role row's pill shows the role's title with its requested hours below (e.g. "Requested 80h"), as in the BookingPill Role story. Default: true; false hides the text */
   rolePillText?: boolean;
+  /**
+   * Table properties: the fields of engagements, roles and profiles the left table shows, as table columns or inline (default: none, only the titles).
+   * The list button of the left header opens the Table properties panel; applying it changes the table.
+   */
+  tableProperties?: TableFieldsConfig;
+  /** A field was changed in the Table properties panel */
+  onTableProperties?: (config: TableFieldsConfig) => void;
   /** Navbar item clicked */
   onNavigate?: (id: string) => void;
   avatarInitials?: string;
@@ -1258,7 +1274,7 @@ export type BookingEngineScreenProps = {
 
 export function BookingEngineScreen({
   view: initialView = "engagements", calendar: initialCalendar = "gantt", panel: initialPanel = "projects",
-  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, initialExpanded, ganttFrom, countLabel, rolePillText, onNavigate, avatarInitials,
+  engagements = ENGAGEMENTS, weeks, roleRow, onCellChange, filters, onRemoveFilter, onClearFilters, onFilter, initialExpanded, ganttFrom, countLabel, rolePillText, tableProperties, onTableProperties, onNavigate, avatarInitials,
 }: BookingEngineScreenProps) {
   const gantt = ganttFrom ? ganttWeeksFrom(ganttFrom) : { weeks: WEEKS, range: "31-08-2026 - 27-09-2026" };
   const [panel,    setPanel]    = useState<"projects" | "workforce">(initialPanel);
@@ -1277,7 +1293,12 @@ export function BookingEngineScreen({
   const [expanded, setExpanded]             = useState<Set<string>>(new Set(initialExpanded?.engagements ?? ["e2"]));
   const [expandedRoles, setExpandedRoles]   = useState<Set<string>>(new Set(initialExpanded?.roles ?? ["r2"]));
   const [page, setPage]                     = useState(1);
-  const [leftWidth, setLeftWidth]           = useState(420);
+  // Table properties: which fields show in the left table (table column / inline), set in the side panel
+  const [tableCfg,   setTableCfg]           = useState<TableFieldsConfig>(tableProperties ?? NO_TABLE_FIELDS);
+  // Opens wide enough for the table columns (still resizable)
+  const [leftWidth, setLeftWidth]           = useState(() => (hasTableColumns(tableCfg) ? Math.min(Math.max(420, tableWidth(tableCfg)), MAX_AUTO_LEFT) : 420));
+  const [propsOpen,  setPropsOpen]          = useState(false);
+  const [leftScroll, setLeftScroll]         = useState(0);
   const [isDragging, setIsDragging]         = useState(false);
   const [ganttColW,  setGanttColW]          = useState(GANTT_COL_DEFAULT);
   const [misRole,    setMisRole]            = useState<string | null>(null);        // role whose Misalignments panel is open
@@ -1383,7 +1404,7 @@ export function BookingEngineScreen({
     setIsDragging(true);
     const startX = e.clientX;
     const startW = leftWidth;
-    const onMove = (me: MouseEvent) => setLeftWidth(Math.max(200, Math.min(700, startW + me.clientX - startX)));
+    const onMove = (me: MouseEvent) => setLeftWidth(Math.max(200, Math.min(MAX_AUTO_LEFT, startW + me.clientX - startX)));
     const onUp   = () => { setIsDragging(false); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -1398,12 +1419,32 @@ export function BookingEngineScreen({
   const toggleWf = (id: string) => setExpandedWf(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   const projectsFlatRows = view === "roles"
-    ? buildRolesRows(engagements, expandedRoles, toggleRole, openMisalignment, openOverbooking)
-    : buildRows(engagements, expanded, expandedRoles, toggleEng, toggleRole, openMisalignment, openOverbooking);
+    ? buildRolesRows(engagements, expandedRoles, toggleRole, openMisalignment, openOverbooking, tableCfg)
+    : buildRows(engagements, expanded, expandedRoles, toggleEng, toggleRole, openMisalignment, openOverbooking, tableCfg);
 
-  const workforceFlatRows = buildWorkforceRows(WORKFORCE, expandedWf, toggleWf);
+  const workforceFlatRows = buildWorkforceRows(WORKFORCE, expandedWf, toggleWf, tableCfg);
 
   const flatRows = panel === "workforce" ? workforceFlatRows : projectsFlatRows;
+
+  // Table columns are named after the view's root row type; the other row types fill them by position
+  const rootKind: RowKind = panel === "workforce" ? "profile" : view === "roles" ? "role" : "engagement";
+  const tbl: TableLayout = {
+    cfg: tableCfg,
+    headers: tableCfg[rootKind].table.map(id => FIELD_CATALOG[rootKind].find(d => d.id === id)?.label ?? id),
+    titleLabel: TITLE_LABEL[rootKind],
+    rootKind,
+    scrollX: leftScroll,
+    onScrollX: setLeftScroll,
+    onOpenProperties: () => setPropsOpen(true),
+  };
+  // Every change in the panel applies straight away (no Apply button)
+  const changeTableProperties = (tabs: Parameters<typeof tabsToConfig>[0]) => {
+    const cfg = tabsToConfig(tabs);
+    setTableCfg(cfg);
+    // Make room for the columns (the panel stays resizable)
+    if (hasTableColumns(cfg) && tableWidth(cfg) > leftWidth) setLeftWidth(Math.min(tableWidth(cfg), MAX_AUTO_LEFT));
+    onTableProperties?.(cfg);
+  };
 
   // Workforce: wfView drives the calendar type (bookings = gantt pills, grid = BookingCell)
   const effectiveCalendar: CalendarType = panel === "workforce"
@@ -1502,29 +1543,21 @@ export function BookingEngineScreen({
         <div style={{ flex: 1, display: "flex", overflow: "hidden", background: "white", borderTop: "1px solid var(--palette-neutral-0)" }}>
           {panel === "workforce" && effectiveCalendar === "grid" ? (
             /* ── Workforce Grid ── */
-            <WorkforceGridCalendar profiles={WORKFORCE} flatRows={flatRows} leftWidth={leftWidth} onDragStart={onDragStart} expanded={expandedWf} />
+            <WorkforceGridCalendar profiles={WORKFORCE} flatRows={flatRows} leftWidth={leftWidth} onDragStart={onDragStart} tbl={tbl} expanded={expandedWf} />
           ) : effectiveCalendar === "grid" ? (
             /* ── Projects Grid ── */
-            <GridCalendar engagements={engagements} view={view} flatRows={flatRows} leftWidth={leftWidth} onDragStart={onDragStart} expanded={expanded} expandedRoles={expandedRoles} weeks={weeks} roleRow={roleRow} countLabel={countLabel} onCellChange={onCellChange} focusWeek={focusWeek} />
+            <GridCalendar engagements={engagements} view={view} flatRows={flatRows} leftWidth={leftWidth} onDragStart={onDragStart} tbl={tbl} expanded={expanded} expandedRoles={expandedRoles} weeks={weeks} roleRow={roleRow} countLabel={countLabel} onCellChange={onCellChange} focusWeek={focusWeek} />
           ) : (
             /* ── Gantt calendar ── */
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
               {/* Sticky header row */}
-              <div style={{ display: "flex", flexShrink: 0, borderBottom: "1px solid var(--palette-neutral-0)", background: "white" }}>
-                <div style={{ width: leftWidth, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", minHeight: 48 }}>
-                  <Row gap={8} style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: "inline-block", width: "max-content" }}>
-                      <InputSelect value="Latest first" />
-                    </span>
-                    <span style={{ ...labelCss, whiteSpace: "nowrap", flexShrink: 0 }}>{countLabel ?? "874 projects"}</span>
-                  </Row>
-                  <Button kind="secondary" size="small"><Icon name="list" size={14} /></Button>
-                </div>
+              <div style={{ display: "flex", flexShrink: 0, minHeight: HEADER_H, borderBottom: "1px solid var(--palette-neutral-0)", background: "white" }}>
+                <LeftHeader leftWidth={leftWidth} tbl={tbl} sort={<InputSelect value={panel === "workforce" ? "A-Z" : "Latest first"} />} count={panel === "workforce" ? "274 profiles" : (countLabel ?? "874 projects")} />
                 <div style={{ width: 4, flexShrink: 0, background: "var(--palette-neutral-0)" }} />
                 {/* Header gantt area — overflow hidden, synced via scroll */}
                 <div id="gantt-hdr" style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-                  <GanttHeader colW={ganttColW} weeks={gantt.weeks} />
+                  <GanttHeader colW={ganttColW} weeks={gantt.weeks} from={ganttFrom ?? "2026-08-31"} />
                 </div>
               </div>
 
@@ -1539,13 +1572,7 @@ export function BookingEngineScreen({
                 style={{ flex: 1, overflowY: "auto", overflowX: "auto", display: "flex" }}
               >
                 {/* Left label column — fixed, no horizontal scroll */}
-                <div style={{ width: leftWidth, flexShrink: 0, position: "sticky", left: 0, zIndex: 1, background: "white" }}>
-                  {flatRows.map(row => (
-                    <div key={row.key} style={{ height: ROW_H, display: "flex", alignItems: "flex-start", paddingLeft: row.indent ?? 4, paddingRight: 8, borderBottom: "1px solid var(--palette-neutral-0)", background: row.bg ?? "white", overflow: "hidden" }}>
-                      {row.leftContent}
-                    </div>
-                  ))}
-                </div>
+                <LeftBody rows={flatRows} leftWidth={leftWidth} tbl={tbl} style={{ position: "sticky", left: 0, zIndex: 1, background: "white" }} />
                 <div onMouseDown={onDragStart} style={{ width: 4, flexShrink: 0, cursor: "col-resize", background: "var(--palette-neutral-0)", position: "sticky", left: leftWidth, zIndex: 1, userSelect: "none" }}>
                   <div style={{ position: "sticky", top: "50%", transform: "translateY(-50%)" }}>
                     <Divider orientation="vertical" type="draggable" />
@@ -1553,7 +1580,7 @@ export function BookingEngineScreen({
                 </div>
                 <div style={{ flexShrink: 0 }}>
                   {flatRows.map(row => (
-                    <GanttRow key={row.key} height={ROW_H} pills={row.rightPills} colW={ganttColW} rolePillText={rolePillText} />
+                    <GanttRow key={row.key} height={row.height} pills={row.rightPills} colW={ganttColW} rolePillText={rolePillText} />
                   ))}
                 </div>
               </div>
@@ -1623,6 +1650,13 @@ export function BookingEngineScreen({
         </div>
 
       </div>
+
+      {/* Table properties: opened by the list button of the left header */}
+      <TablePropertiesSidePanel
+        open={propsOpen}
+        onClose={() => setPropsOpen(false)}
+        data={{ variant: "be", tabs: configToTabs(tableCfg), onChange: changeTableProperties }}
+      />
 
       {/* Misalignments panel: opened by the misalignment icon of a role or of one of its bookings */}
       {(() => {

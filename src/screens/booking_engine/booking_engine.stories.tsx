@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { BookingEngineScreen } from "./booking_engine";
 import type { EngagementEntry, GridWeeks } from "./booking_engine";
+import type { TableFieldsConfig } from "./table_fields";
 
 const meta: Meta = {
   title: "Screens/BookingEngine",
@@ -153,4 +154,18 @@ export const ProjectsRolesGridPills: Story = {
       initialExpanded={{ engagements: ["e9"], roles: ["p1"] }}
     />
   ),
+};
+
+// Table properties: the list button of the left header opens the Table properties panel on every story here; applying it changes the table live
+// (hidden / inline / table for the fields of engagements, roles and profiles). So there is no story per field: this one just opens with a mix applied
+// (as in the real app: engagement Assignee + Status as columns, Start date inline; the roles fill the same columns by position).
+const TABLE_PROPERTIES_APPLIED: TableFieldsConfig = {
+  engagement: { table: ["assignee", "status"], inline: ["startDate"] },
+  role:       { table: ["startDate", "resource"], inline: [] },
+  profile:    { table: ["jobTitle"], inline: ["grade", "location"] },
+};
+
+export const ProjectsEngagementsGanttTablePropertiesApplied: Story = {
+  name: "Projects / Engagements / Gantt — table properties applied",
+  render: () => <BookingEngineScreen view="engagements" calendar="gantt" tableProperties={TABLE_PROPERTIES_APPLIED} initialExpanded={{ engagements: ["e2"], roles: ["r2"] }} />,
 };

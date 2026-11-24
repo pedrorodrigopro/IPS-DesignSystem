@@ -11,15 +11,15 @@
 //   Sticky: Cancel | Apply
 //
 // Screen=BE (Booking Engine):
-//   Tabs: Engagements | Roles (fillWidth, each ~33%)
+//   Tabs: Engagements | Roles | Profile (fillWidth)
 //   No grouping switch
 //   "Visible fields in table" H5 + info icon + rows: drag + name + 3-state Toggle (table|list|hidden)
 //   "Visible fields inline" H5 + info icon + rows: same
 //   Divider
-//   "Hidden fields" H5 + rows: no drag + muted name + Toggle all-disabled-looking
-//   Sticky: Cancel | Apply
+//   "Hidden fields" H5 + rows: no drag + bold name + Toggle with "hidden" selected (the other two selectable)
+//   No footer: every change applies straight away (data.onChange)
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SidePanel }        from "./side_panel";
 import css from "./side_panel.module.scss";
 import { Header }           from "../header/header";
@@ -72,7 +72,8 @@ export type TablePropertiesSidePanelData =
   | {
       variant:  "be";
       tabs:     BETab[];
-      onApply?: (tabs: BETab[]) => void;
+      /** Called on every change (a field switched, a field moved): the table follows straight away, there is no Apply button */
+      onChange?: (tabs: BETab[]) => void;
     };
 
 export type TablePropertiesSidePanelProps = {
@@ -168,7 +169,8 @@ function BEIconToggle({ state, onChange, disabled }: {
               borderLeft,
               borderColor: active ? "var(--palette-blue-1)" : "var(--palette-neutral-0)",
               background:  active ? "var(--palette-blue-1)" : disabled ? "var(--palette-neutral-2)" : "white",
-              color:       active ? "white" : disabled ? "var(--palette-neutral-3)" : "var(--palette-blue-2)",
+              // Not selected: white with a dark navy icon (selected: navy with a white icon)
+              color:       active ? "white" : disabled ? "var(--palette-neutral-3)" : "var(--palette-blue-1)",
               opacity:     disabled ? 0.5 : 1,
             }}
           >
@@ -209,11 +211,12 @@ function BEHiddenRow({ label, onChange }: {
   onChange: (v: BEFieldState) => void;
 }) {
   return (
-    <Tile tileStyle="object-light" padding="panel">
+    <Tile tileStyle="object-dark" padding="panel">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ width: 16, flexShrink: 0 }} />
-        <span style={{ ...bodyMuted, flex: 1 }}>{label}</span>
-        <BEIconToggle state="hidden" onChange={onChange} disabled />
+        <span style={{ ...bodyBold, flex: 1 }}>{label}</span>
+        {/* Selectable: a hidden field can be switched to inline or table */}
+        <BEIconToggle state="hidden" onChange={onChange} />
       </div>
     </Tile>
   );
@@ -448,12 +451,25 @@ export function TablePropertiesSidePanel({
   const [grouping,   setGrouping]   = useState(data.variant === "default" ? (data.groupingOn ?? false) : false);
 
   // BE state
-  const [beTabs,     setBeTabs]     = useState(data.variant === "be" ? data.tabs : []);
+  const [beTabs,     setBeTabsState] = useState(data.variant === "be" ? data.tabs : []);
+  // Booking Engine: every change goes straight to the host
+  const setBeTabs = (tabs: BETab[]) => {
+    setBeTabsState(tabs);
+    if (data.variant === "be") data.onChange?.(tabs);
+  };
   const [activeTab,  setActiveTab]  = useState(data.variant === "be" ? (data.tabs[0]?.id ?? "") : "");
+
+  // Reopening shows what is applied (edits that were not applied are dropped)
+  useEffect(() => {
+    if (!open) return;
+    if (data.variant === "default") { setDefCols(data.columns); setGrouping(data.groupingOn ?? false); }
+    if (data.variant === "be")      { setBeTabsState(data.tabs); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleApply = () => {
     if (data.variant === "default") data.onApply?.(defCols, grouping);
-    if (data.variant === "be")      data.onApply?.(beTabs);
+    onClose();
   };
 
   return (
@@ -489,11 +505,14 @@ export function TablePropertiesSidePanel({
           <div style={{ height: 16 }} />
         </div>
 
-        <Actions
-          variant="sticky-panel"
-          leftActions={[{ label: "Cancel", variant: "secondary", onClick: onClose }]}
-          rightActions={[{ label: "Apply", variant: "primary", onClick: handleApply }]}
-        />
+        {/* Default variant: Cancel / Apply. Booking Engine: fields apply as they are changed, so no footer */}
+        {data.variant === "default" && (
+          <Actions
+            variant="sticky-panel"
+            leftActions={[{ label: "Cancel", variant: "secondary", onClick: onClose }]}
+            rightActions={[{ label: "Apply", variant: "primary", onClick: handleApply }]}
+          />
+        )}
 
       </div>
     </SidePanel>

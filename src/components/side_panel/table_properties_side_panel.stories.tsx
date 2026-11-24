@@ -49,6 +49,21 @@ const roleCols = [
   { id: "clients",      label: "Clients",          section: "hidden" as const, state: "hidden" as const },
 ];
 
+const profileCols = [
+  { id: "profile-name", label: "Profile name",  section: "table"  as const, state: "table"  as const, locked: true },
+  { id: "job-title",    label: "Job title",     section: "table"  as const, state: "table"  as const },
+  { id: "grade",        label: "Grade",         section: "inline" as const, state: "list"   as const },
+  { id: "location",     label: "Location",      section: "inline" as const, state: "list"   as const },
+  { id: "skills",       label: "Skills",        section: "hidden" as const, state: "hidden" as const },
+  { id: "department",   label: "Department",    section: "hidden" as const, state: "hidden" as const },
+  { id: "business-unit",label: "Business unit", section: "hidden" as const, state: "hidden" as const },
+  { id: "talent-pool",  label: "Talent pool",   section: "hidden" as const, state: "hidden" as const },
+  { id: "day-rate",     label: "Day rate",      section: "hidden" as const, state: "hidden" as const },
+  { id: "starting-date",label: "Starting date", section: "hidden" as const, state: "hidden" as const },
+  { id: "languages",    label: "Languages",     section: "hidden" as const, state: "hidden" as const },
+  { id: "reports-to",   label: "Reports to",    section: "hidden" as const, state: "hidden" as const },
+];
+
 // ── Wrapper ───────────────────────────────────────────────────────────────────
 
 function Wrapper({ children }: { children: React.ReactNode }) {
@@ -77,7 +92,7 @@ const meta: Meta = {
         component:
           "Table Properties Side Panel — Figma node 9657:92683. Width: 400px. " +
           "Default: no tabs, grouping switch, visible/hidden columns with Switch. " +
-          "BE: tabs (fillWidth), no grouping, fields with 3-state icon toggle (table|list|hidden).",
+          "BE: tabs Engagements | Roles | Profile (fillWidth), no grouping, fields with 3-state icon toggle (hidden|list|table); the first field of each tab (the title) is locked.",
       },
     },
   },
@@ -110,6 +125,7 @@ export const BookingEngine: StoryFn = () => {
           tabs: [
             { id: "engagements", label: "Engagements", columns: engagementCols },
             { id: "roles",       label: "Roles",        columns: roleCols       },
+            { id: "profile",     label: "Profile",      columns: profileCols    },
           ],
         }}
       />
