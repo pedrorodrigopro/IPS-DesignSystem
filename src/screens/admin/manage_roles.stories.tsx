@@ -7,7 +7,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { ManageRolesScreen } from "./manage_roles";
-import type { ManageRolesGroup, ManageRolesRole, PotentialOverbooking, BookedScheduleItem } from "./manage_roles";
+import type { ManageRolesGroup, ManageRolesRole, PotentialOverbooking, BookedScheduleItem, WMSchedule } from "./manage_roles";
+import type { MisalignmentSidePanelData } from "../../components/side_panel/misalignment_side_panel";
 import { ToastProvider, useToast } from "../../components/toast/toast";
 
 // ── Data ─────────────────────────────────────────────────────────────────────
@@ -61,13 +62,27 @@ const SCHEDULE_MARY: BookedScheduleItem[] = [
   { id: "m1", roleName: "Accessibility consultant", engagement: "RF_CLONE_1_[2026 Q4] ProFinda Advisory", category: "blue", hours: [null, null, 24, 24, null, null] },
 ];
 
-const SCHEDULE_SPENCER: BookedScheduleItem[] = [   // 24h on this role + 24h here = 8h over his 40h capacity in week one
-  { id: "s1", roleName: "Delivery lead", engagement: "Brightwell Insurance - Tax Compliance FY27", category: "red", hours: [24, 24, null, null, null, null] },
+const SCHEDULE_SPENCER: BookedScheduleItem[] = [   // 24h on this role + 16h here = exactly his 40h capacity: not overbooked
+  { id: "s1", roleName: "Delivery lead", engagement: "Brightwell Insurance - Tax Compliance FY27", category: "red", hours: [16, 24, null, null, null, null] },
 ];
 const SCHEDULE_FATIMA: BookedScheduleItem[] = [
   { id: "f1", roleName: "Compliance reviewer", engagement: "RF_CLONE_1_[2026 Q4] ProFinda Advisory", category: "blue", hours: [8, 16, 16, null, null, null] },
   { id: "f2", roleName: "Internal training", engagement: "ProFinda Academy", category: "purple", hours: [null, 8, null, null, null, null] },
 ];
+
+const SCHEDULE_SANTI: BookedScheduleItem[] = [      // suggested on a role: 16h there + 32h here = 8h over in week two
+  { id: "sa1", roleName: "Delivery lead", engagement: "Brightwell Insurance - Tax Compliance FY27", category: "red", hours: [null, 32, 32, null, null, null] },
+];
+// People's schedules by name: used for the people suggested on a role (their eye button, their potential overbookings) and for the booked ones
+const SCHEDULES: Record<string, WMSchedule> = {
+  "Leslie Smith": { schedule: SCHEDULE_LESLIE }, "Mary Lee": { schedule: SCHEDULE_MARY }, "Spencer Harmon": { schedule: SCHEDULE_SPENCER },
+  "Fatima Al-Rashid": { schedule: SCHEDULE_FATIMA }, "Santi Angulo": { schedule: SCHEDULE_SANTI },
+};
+// A misaligned booking: the calendar-misaligned icon shows in the pill and opens the Misalignments panel
+const MISALIGNED_LESLIE: MisalignmentSidePanelData = {
+  roleName: "Javascript developer", wmName: "Leslie Smith",
+  ranges: [{ id: "m1", dateRange: "5 Jan 2026 - 9 Jan 2026", subtitle: "Duration", items: [{ fieldName: "Duration", expected: "40h", current: "32h" }] }],
+};
 
 // Engagement roles — every role carries its engagement, so the Engagement cell is merged across them
 const role = (id: string, engagement: string, title: string, extra: Partial<ManageRolesRole> = {}): ManageRolesRole => ({
@@ -78,8 +93,8 @@ const ENGAGEMENT_GROUPS: ManageRolesGroup[] = [
   {
     name: "GPS Role",
     roles: [
-      role("e1", "ST engagement test", "Role 1", { wfState: "confirmed", bookedHours: 40, booked: { name: "Leslie Smith", schedule: SCHEDULE_LESLIE }, bookingCategory: { label: "Holiday", category: "booking-blue" }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "warning", 40, OVER_RED) }),
-      role("e2", "ST engagement test", "Role 2", { wfState: "booked", bookedHours: 20, booked: { name: "Mary Lee", schedule: SCHEDULE_MARY }, bookingCategory: { label: "Confirmed External Customer Project", category: "booking-red" }, availability: wk(1) }),
+      role("e1", "ST engagement test", "Role 1", { wfState: "confirmed", bookedHours: 40, booked: { name: "Leslie Smith", misalignment: MISALIGNED_LESLIE }, bookingCategory: { label: "Holiday", category: "booking-blue" }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "warning", 40, OVER_RED) }),
+      role("e2", "ST engagement test", "Role 2", { wfState: "booked", bookedHours: 20, booked: { name: "Mary Lee" }, bookingCategory: { label: "Confirmed External Customer Project", category: "booking-red" }, availability: wk(1) }),
     ],
   },
   {
@@ -93,20 +108,20 @@ const ROLLED_FORWARD_GROUPS: ManageRolesGroup[] = [
   {
     name: "Rolled forward roles",
     roles: [
-      role("f1", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Javascript developer", { wfState: "confirmed", bookedHours: 40, booked: { name: "Leslie Smith", schedule: SCHEDULE_LESLIE }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "warning", 40, OVER_RED) }),
+      role("f1", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Javascript developer", { wfState: "confirmed", bookedHours: 40, booked: { name: "Leslie Smith", misalignment: MISALIGNED_LESLIE }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "warning", 40, OVER_RED) }),
       role("f2", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Junior Javascript developer", { requestedRank: "Manager", availability: wk(1, undefined, 32) }),
       role("f3", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Accessibility consultant", { suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(2, "warning", 24, OVER_ORANGE) }),
       role("f4", "RF_CLONE_2_[2026 Q3] ProFinda IT", "React developer", { wfState: "booked", bookedHours: 40,
         // Two people booked on one role: two pills (the row grows), each with their own hours on the role and their own eye button
         booked: [
-          { name: "Spencer Harmon", hours: [24, null, null, null, null, null], schedule: SCHEDULE_SPENCER },
-          { name: "Fatima Al-Rashid", hours: [16, null, null, null, null, null], schedule: SCHEDULE_FATIMA },
+          { name: "Spencer Harmon", hours: [24, null, null, null, null, null] },
+          { name: "Fatima Al-Rashid", hours: [16, null, null, null, null, null] },
         ],
         suggested: { name: "Spencer Harmon", rank: "Principal Consultant" }, requestedRank: "Manager", availability: wk(0) }),
       role("f5", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Javascript developer", { availability: wk(1) }),
       role("f6", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Junior Javascript developer", { suggested: { name: "Santi Angulo", rank: "Consultant" }, availability: wk(1, undefined, 16) }),
       role("f7", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Accessibility consultant", { availability: wk(2, undefined, 36) }),
-      role("f8", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "React developer", { wfState: "confirmed", bookedHours: 20, booked: { name: "Mary Lee", schedule: SCHEDULE_MARY }, suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(0) }),
+      role("f8", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "React developer", { wfState: "confirmed", bookedHours: 20, booked: { name: "Mary Lee" }, suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(0) }),
     ],
   },
 ];
@@ -117,6 +132,7 @@ function WithToast(props: React.ComponentProps<typeof ManageRolesScreen>) {
   return (
     <ManageRolesScreen
       deltaMissing
+      schedules={SCHEDULES}
       {...props}
       onFillBook={({ roleIds }) => showToast({ type: "success", message: `Fill & Book: ${roleIds.length} ${roleIds.length === 1 ? "role" : "roles"}` })}
       onTagged={({ tag, roles, target, engagements }) => showToast({ type: "success", message: target === "engagements"
@@ -183,7 +199,7 @@ function RoleRowsScreen() {
   const { showToast } = useToast();
   return (
     <ManageRolesScreen
-      deltaMissing roleRows navbarActiveId="workflow" groups={ROLLED_FORWARD_GROUPS}
+      deltaMissing roleRows navbarActiveId="workflow" groups={ROLLED_FORWARD_GROUPS} schedules={SCHEDULES}
       onFillBook={({ roleIds }) => showToast({ type: "success", message: `Fill & Book: ${roleIds.length} ${roleIds.length === 1 ? "role" : "roles"}` })}
       onOpenRole={id => showToast({ type: "success", message: `Open role ${id}` })}
       onOpenEngagement={name => showToast({ type: "success", message: `Open engagement ${name}` })}

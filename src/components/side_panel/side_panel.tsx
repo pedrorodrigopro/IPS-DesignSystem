@@ -15,7 +15,7 @@ import classNames from "classnames";
 export type SidePanelProps = {
   /** Whether the panel is visible */
   open: boolean;
-  /** Called when backdrop or close button is clicked */
+  /** Called when backdrop or close button is clicked, or ESC is pressed */
   onClose: () => void;
   /** Panel content */
   children: React.ReactNode;
@@ -42,6 +42,14 @@ export function SidePanel({ open, onClose, children, width = 600, className, pla
       return () => clearTimeout(t);
     }
   }, [open]);
+
+  // ESC closes the panel (a Modal opened on top handles ESC first and stops it)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
   if (!mounted) return null;
 

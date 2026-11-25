@@ -51,6 +51,15 @@ import { BookingCell } from "../../components/booking_cell/booking_cell";
 import type { BookingCellCategory } from "../../components/booking_cell/booking_cell";
 import { OverbookingSidePanel } from "../../components/side_panel/overbooking_side_panel";
 import type { OverbookingItem } from "../../components/side_panel/overbooking_side_panel";
+import { ProfileSidePanel } from "../../components/side_panel/profile_side_panel";
+import { SAMPLE_PROFILE } from "../../components/side_panel/profile_side_panel";
+import type { ProfileSidePanelData } from "../../components/side_panel/profile_side_panel";
+import { RoleSidePanel } from "../../components/side_panel/role_side_panel";
+import type { RoleSidePanelData } from "../../components/side_panel/role_side_panel";
+import { EngagementSidePanel } from "../../components/side_panel/engagement_side_panel";
+import type { EngagementSidePanelData } from "../../components/side_panel/engagement_side_panel";
+import { MisalignmentSidePanel } from "../../components/side_panel/misalignment_side_panel";
+import type { MisalignmentSidePanelData } from "../../components/side_panel/misalignment_side_panel";
 import type { SuggestCandidate } from "../../components/side_panel/suggest_side_panel";
 
 
@@ -202,7 +211,7 @@ function InlineSelectCell({ value, placeholder }: { value?: string; placeholder?
 
 // ── Suggested workforce member cell — Figma "Input excel select" (name + rank, chevron); empty = warning background ──────
 
-const SUGGESTED_W = 170;
+const SUGGESTED_W = 300;   // pills (× avatar name + icons) and the Edit link
 
 /** Sample candidates of the Suggest side panel (people the role's Suggested WM cell can be set to) */
 export const DEFAULT_SUGGEST_CANDIDATES: { shortlist: SuggestCandidate[]; matches: SuggestCandidate[]; other: SuggestCandidate[] } = {
@@ -228,69 +237,71 @@ export const DEFAULT_SUGGEST_CANDIDATES: { shortlist: SuggestCandidate[]; matche
 type SuggestCtx = { valueFor: (role: RoleRow) => SuggestCandidate[]; open: (role: RoleRow) => void };
 const SuggestContext = createContext<SuggestCtx | null>(null);
 
-function SuggestedWMCell({ role }: { role: RoleRow }) {
-  const ctx = useContext(SuggestContext);
-  const list = ctx ? ctx.valueFor(role) : role.suggested ? [{ id: role.id, name: role.suggested.name, initials: "", rank: role.suggested.rank }] : [];
-  const first = list[0];
-  const empty = !first;
-  const rankLine = first ? [first.rank, list.length > 1 ? `+${list.length - 1} more` : null].filter(Boolean).join(" · ") : "";
-  return (
-    // Fills the whole cell edge to edge; the empty state uses the warning yellow (palette-orange-2), a populated cell stays transparent so the row tint shows through
-    <td
-      className={empty ? undefined : "mr-edit"}
-      style={{ ...tdStyle, padding: 0, background: empty ? "var(--palette-orange-2)" : undefined, cursor: ctx ? "pointer" : "default" }}
-      title={empty ? "No suggested workforce member" : undefined}
-      onClick={() => ctx?.open(role)}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 4, padding: "8px 8px 8px 12px" }}>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4, minHeight: 32, justifyContent: "center" }}>
-          {first && <span style={{ ...body, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{first.name}</span>}
-          {rankLine && <span style={{ ...labelCss, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rankLine}</span>}
-        </div>
-        <Icon name="chevron-down" size={14} style={{ color: "var(--palette-blue-2)", flexShrink: 0, marginTop: 9 }} />
-      </div>
-    </td>
-  );
+// ── People on a role: who is suggested and who is booked ─────────────────────────────────────────────────────────────
+// One entry per name (a person can be both). Their schedule comes from their own booking or from the screen's `schedules` by name.
+
+type WMPerson = { name: string; rank?: string; candidateId?: string; suggested: boolean; booked?: BookedWM; schedule?: BookedScheduleItem[]; capacity?: number };
+type RolePeople = { suggested: WMPerson[]; booked: WMPerson[]; all: WMPerson[] };
+function buildRolePeople(role: RoleRow, suggested: { id?: string; name: string; rank?: string }[], schedules: Record<string, WMSchedule> = {}): RolePeople {
+  const booked = bookedOf(role);
+  const make = (name: string, rank: string | undefined, id: string | undefined, isSuggested: boolean): WMPerson => {
+    const b = booked.find(x => x.name === name);
+    const known = schedules[name];
+    return { name, rank, candidateId: id, suggested: isSuggested, booked: b, schedule: b?.schedule ?? known?.schedule, capacity: b?.capacity ?? known?.capacity };
+  };
+  const sug = suggested.map(x => make(x.name, x.rank, x.id, true));
+  const bk = booked.map(b => make(b.name, undefined, undefined, sug.some(x => x.name === b.name)));
+  return { suggested: sug, booked: bk, all: [...sug, ...bk.filter(b => !sug.some(x => x.name === b.name))] };
 }
+// What the pills do comes from the screen (it owns the suggestions, the schedules and the side panels)
+type WMActions = {
+  peopleOf: (role: RoleRow) => RolePeople;
+  /** Week labels in which the person is over capacity on this role (empty = none) */
+  overWeeks: (role: RoleRow, person: WMPerson) => string[];
+  openProfile: (name: string) => void;
+  openOverbooking: (roleId: string, name: string) => void;
+  openMisalignment: (roleId: string, name: string) => void;
+  removeSuggested: (role: RoleRow, candidateId: string) => void;
+};
+const WMContext = createContext<WMActions>({
+  peopleOf: role => buildRolePeople(role, role.suggested ? [{ name: role.suggested.name, rank: role.suggested.rank }] : []),
+  overWeeks: () => [], openProfile: () => {}, openOverbooking: () => {}, openMisalignment: () => {}, removeSuggested: () => {},
+});
 
-// ── Booked workforce member cell — a removable pill: × + avatar + name (neutral-1, fully rounded) ───────────────────────
-
-const BOOKED_W = 240;
 const initialsOf = (name: string) => name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const BookedUnbookContext = createContext<((role: RoleRow, name: string) => void) | undefined>(undefined);
 
-// Booked workforce members whose schedule is shown (`roleId|personIndex`): the eye button of a Booked WM pill toggles it, the roles table and the availability table both add the rows
+// Workforce members whose schedule is shown (`roleId|name`): the eye button of their pill (Suggested or Booked WM) toggles it, the roles table and the availability table both add the rows
 // `hours` / `edit`: the cells are editable like the Booking Engine grid; the screen keeps what was typed (role id → schedule row id → week → hours)
-const ScheduleContext = createContext<{ open: Set<string>; toggle: (roleId: string, person: number) => void; hours: (roleId: string, item: BookedScheduleItem, week: number) => number | null; edit: (change: ScheduleChange) => void }>(
+const ScheduleContext = createContext<{ open: Set<string>; toggle: (roleId: string, name: string) => void; hours: (roleId: string, item: BookedScheduleItem, week: number) => number | null; edit: (change: ScheduleChange) => void }>(
   { open: new Set(), toggle: () => {}, hours: (_r, item, w) => item.hours[w] ?? null, edit: () => {} },
 );
 const SCHEDULE_ROW_H = 52;
-const SCHEDULE_NAME_W = 170;      // several people on a role: width of the floating name next to the role names
+const SCHEDULE_NAME_W = 170;      // width of the floating name next to the role names
 const SCHEDULE_LABEL_W = 340;     // ... and of the role-name block (fixed, so the names line up)
-const BOOKED_PILL_H = 34;         // height of a Booked WM pill (avatar + 1px border); a row holding n pills is 16 + n pills + gaps high
+const BOOKED_PILL_H = 34;         // height of a workforce member pill (avatar + 1px border); a row holding n pills is 16 + n pills + gaps high
 const BOOKED_GAP = 4;
-const scheduleKey = (roleId: string, person: number) => `${roleId}|${person}`;
+const scheduleKey = (roleId: string, name: string) => `${roleId}|${name}`;
 /** Who is booked on the role: nobody unless it is confirmed or booked */
 const bookedOf = (role: RoleRow): BookedWM[] => !role.booked || !isBookedState(role) ? [] : Array.isArray(role.booked) ? role.booked : [role.booked];
-/** Height of a role's row (both tables): 60px, or taller when several Booked WM pills stack in its cell */
-const rowHeightOf = (role: RoleRow) => { const n = bookedOf(role).length; return Math.max(ROW_H, 16 + n * BOOKED_PILL_H + Math.max(0, n - 1) * BOOKED_GAP + 1); };
-/** A row under a role while a booked member's schedule is shown: for every person shown (named in a cell on the left, merged over their rows, when the role has several), the role itself (they are booked on it), then their other roles, or a note when there are none */
-type ScheduleEntry = { key: string; kind: "own" | "other" | "none"; person: number; item?: BookedScheduleItem; /** first row of the person's group, and how many rows the group has (the roles table names the person in a cell merged over them) */ groupSize?: number };
-function scheduleRowsOf(role: RoleRow, open: Set<string>): ScheduleEntry[] | null {
-  const people = bookedOf(role);
+/** Height of a role's row (both tables): 60px, or taller when several pills stack in its Suggested / Booked WM cell */
+const rowHeightOf = (rp: RolePeople) => { const n = Math.max(rp.suggested.length, rp.booked.length); return Math.max(ROW_H, 16 + n * BOOKED_PILL_H + Math.max(0, n - 1) * BOOKED_GAP + 1); };
+/** A row under a role while a person's schedule is shown (named in the block on the left, merged over their rows): the role itself (their hours on it), then their other roles, or a note when there are none */
+type ScheduleEntry = { key: string; kind: "own" | "other" | "none"; person: WMPerson; item?: BookedScheduleItem; /** first row of the person's group, and how many rows the group has */ groupSize?: number };
+function scheduleRowsOf(role: RoleRow, rp: RolePeople, open: Set<string>): ScheduleEntry[] | null {
   const out: ScheduleEntry[] = [];
-  people.forEach((p, pi) => {
-    if (!open.has(scheduleKey(role.id, pi))) return;
-    const items = p.schedule ?? [];
+  rp.all.forEach(person => {
+    if (!open.has(scheduleKey(role.id, person.name))) return;
+    const items = person.schedule ?? [];
     const from = out.length;
-    out.push({ key: `${pi}:own`, kind: "own", person: pi });
-    items.forEach(item => out.push({ key: `${pi}:${item.id}`, kind: "other", person: pi, item }));
-    if (!items.length) out.push({ key: `${pi}:none`, kind: "none", person: pi });
+    out.push({ key: `${person.name}:own`, kind: "own", person });
+    items.forEach(item => out.push({ key: `${person.name}:${item.id}`, kind: "other", person, item }));
+    if (!items.length) out.push({ key: `${person.name}:none`, kind: "none", person });
     out[from].groupSize = out.length - from;
   });
   return out.length ? out : null;
 }
-const scheduleRowCount = (role: RoleRow, open: Set<string>) => scheduleRowsOf(role, open)?.length ?? 0;
+const scheduleRowCount = (role: RoleRow, rp: RolePeople, open: Set<string>) => scheduleRowsOf(role, rp, open)?.length ?? 0;
 /** Hours requested on the role in a week (what the availability cell shows, including what was typed) */
 function ownHoursOf(role: RoleRow, week: number, edits: Record<string, Record<number, number | null>>): number | null {
   const e = edits[role.id];
@@ -300,77 +311,133 @@ function ownHoursOf(role: RoleRow, week: number, edits: Record<string, Record<nu
 }
 /** Booking colour of the role's own row: the colour of its booking category (blue by default) */
 const ownCategory = (role: RoleRow): BookingCellCategory => { const c = role.bookingCategory?.category; return c === "booking-red" ? "red" : c === "booking-purple" ? "purple" : "blue"; };
-/** One person alone on the role with no hours of their own: their row starts as the requested hours (it follows the availability cells until it is edited itself) */
-const isSyncedWithRequested = (role: RoleRow) => { const p = bookedOf(role); return p.length === 1 && !p[0].hours; };
-/** The role as a schedule row of a person (their hours on it; the default is the requested hours split evenly between the people booked) */
-function ownScheduleItem(role: RoleRow, person: number): BookedScheduleItem {
-  const n = bookedOf(role).length || 1;
-  const base = bookedOf(role)[person]?.hours ?? (role.availability ?? []).map(c => { const h = c == null ? null : typeof c === "number" ? c : c.hours; return h == null ? null : Math.round(h / n); });
-  return { id: `own-${person}`, roleName: role.title, engagement: role.engagement ?? "", category: ownCategory(role), hours: base };
-}
-/** A person's hours on the role in a week: what was typed in their own schedule row, otherwise their starting hours. Alone on the role with no hours of their own, that start is the requested hours (live), but editing the schedule row never touches the availability cells above. */
-function personRoleHours(role: RoleRow, person: number, week: number, edits: Record<string, Record<number, number | null>>, scheduleHours: (roleId: string, item: BookedScheduleItem, week: number) => number | null): number | null {
-  const item = ownScheduleItem(role, person);
-  return scheduleHours(role.id, isSyncedWithRequested(role) ? { ...item, hours: Array.from({ length: week + 1 }, (_, w) => ownHoursOf(role, w, edits)) } : item, week);
-}
 const sumHours = (h: (number | null)[]) => h.reduce<number>((n, x) => n + (x ?? 0), 0);
+/** A person's starting hours on the role in a week: their own booking hours; else the requested hours (live) when there is one person (or one booked) on the role, or the requested hours split evenly between the people booked */
+function ownBaseHours(role: RoleRow, rp: RolePeople, person: WMPerson, week: number, edits: Record<string, Record<number, number | null>>): number | null {
+  if (person.booked?.hours) return person.booked.hours[week] ?? null;
+  const slots = rp.booked.length || rp.all.length || 1;
+  if (slots === 1) return ownHoursOf(role, week, edits);
+  const c = role.availability?.[week];
+  const h = c == null ? null : typeof c === "number" ? c : c.hours;
+  return h == null ? null : Math.round(h / slots);
+}
+/** A person's hours on the role in a week: what was typed in their own schedule row, otherwise their starting hours. Editing the schedule row never touches the availability cells above. */
+function personRoleHours(role: RoleRow, rp: RolePeople, person: WMPerson, week: number, edits: Record<string, Record<number, number | null>>, scheduleHours: (roleId: string, item: BookedScheduleItem, week: number) => number | null): number | null {
+  const item: BookedScheduleItem = { id: `own-${person.name}`, roleName: role.title, engagement: role.engagement ?? "", hours: Array.from({ length: week + 1 }, (_, w) => ownBaseHours(role, rp, person, w, edits)) };
+  return scheduleHours(role.id, item, week);
+}
+
+const pillIconBtn: React.CSSProperties = { width: 20, height: 20, padding: 0, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-0)", flexShrink: 0 };
+
+/** A workforce member as a pill (the removable Pill look: neutral-1 fill, 1px neutral-0 border): [×] avatar name [misalignment] [overbooking] [eye = schedule] [open = profile] */
+function WMPill({ name, rank, onRemove, removeLabel, shown, onToggle, onOpen, onMisalign, over, staticOverWeeks }: {
+  name: string; rank?: string;
+  onRemove?: () => void; removeLabel?: string;
+  shown: boolean; onToggle: () => void; onOpen: () => void;
+  /** Booking Engine's calendar-misaligned icon: opens the Misalignments panel */
+  onMisalign?: () => void;
+  /** Potential overbooking in these weeks: the warning icon (tooltip lists the weeks), a button opening the Potential overbookings panel when it has a handler */
+  over?: { weeks: string[]; onClick?: () => void };
+  /** Overbooking told by the data but not calculable (no schedule): the warning icon only */
+  staticOverWeeks?: string[];
+}) {
+  const weeks = over?.weeks.length ? over : staticOverWeeks?.length ? { weeks: staticOverWeeks, onClick: undefined } : null;
+  return (
+    <span title={rank} style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%", boxSizing: "border-box", height: BOOKED_PILL_H, padding: onRemove ? "0 6px" : "0 6px 0 4px", verticalAlign: "middle", borderRadius: "var(--radius-2xl, 32px)", background: "var(--palette-neutral-1)", border: "1px solid var(--palette-neutral-0)" }}>
+      {onRemove && (
+        <button type="button" title={`Remove ${name}`} aria-label={removeLabel ?? `Remove ${name}`} onClick={onRemove} style={pillIconBtn}>
+          <Icon name="cross" size={16} />
+        </button>
+      )}
+      <Avatar initials={initialsOf(name)} size="small" />
+      <span style={{ ...body, fontWeight: 700, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+      {onMisalign && (
+        <button type="button" title="Show misalignments" aria-label={`Show misalignments of ${name}`} onClick={onMisalign} style={pillIconBtn}>
+          <Icon name="calendar-misaligned" size={14} style={{ color: "var(--palette-orange-3)" }} />
+        </button>
+      )}
+      {weeks && (
+        // portal: the table pane scrolls (overflow), which would cut a normal tooltip off at the cell edge
+        <Tooltip portal placement="up-right" maxWidth={320} content={
+          <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <strong>Potential overbooking</strong>
+            <span>Weeks affected:</span>
+            {weeks.weeks.map(w => <span key={w}>{w}</span>)}
+          </span>
+        }>
+          {weeks.onClick
+            ? <button type="button" aria-label={`Show potential overbookings of ${name}`} onClick={weeks.onClick} style={pillIconBtn}><Icon name="warning" size={16} style={{ color: "var(--palette-orange-1)" }} /></button>
+            : <span aria-label="Potential overbooking" style={{ display: "inline-flex", cursor: "default", flexShrink: 0 }}><Icon name="warning" size={16} style={{ color: "var(--palette-orange-1)" }} /></span>}
+        </Tooltip>
+      )}
+      {/* Schedule: the "hidden" eye turns into "shown" while this person's bookings are listed under the role (each person has their own eye) */}
+      <button type="button" aria-pressed={shown} title={shown ? "Hide schedule" : "Show schedule"} aria-label={shown ? `Hide schedule of ${name}` : `Show schedule of ${name}`} onClick={onToggle} style={pillIconBtn}>
+        <Icon name={shown ? "shown" : "hidden"} size={16} />
+      </button>
+      <button type="button" title="Open profile" aria-label={`Open profile of ${name}`} onClick={onOpen} style={pillIconBtn}>
+        <Icon name="open" size={16} />
+      </button>
+    </span>
+  );
+}
+
+// ── Suggested workforce member cell — pills (removable, schedule eye, open profile) + an Edit link that opens the Suggest panel; empty = warning background ──────
+
+function SuggestedWMCell({ role }: { role: RoleRow }) {
+  const ctx = useContext(SuggestContext);
+  const wm = useContext(WMContext);
+  const schedule = useContext(ScheduleContext);
+  const rp = wm.peopleOf(role);
+  const empty = rp.suggested.length === 0;
+  return (
+    // The empty state uses the warning yellow (palette-orange-2)
+    <td style={{ ...tdStyle, padding: 8, background: empty ? "var(--palette-orange-2)" : undefined }} title={empty ? "No suggested workforce member" : undefined}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: BOOKED_GAP, minWidth: 0, flex: 1 }}>
+          {rp.suggested.map(person => {
+            const weeks = wm.overWeeks(role, person);
+            return (
+              <WMPill key={person.name} name={person.name} rank={person.rank}
+                // a booked or confirmed role always shows someone: its suggestions cannot be emptied
+                onRemove={isBookedState(role) || !person.candidateId ? undefined : () => wm.removeSuggested(role, person.candidateId!)}
+                removeLabel={`Remove suggested workforce member ${person.name}`}
+                shown={schedule.open.has(scheduleKey(role.id, person.name))} onToggle={() => schedule.toggle(role.id, person.name)}
+                onOpen={() => wm.openProfile(person.name)}
+                over={weeks.length ? { weeks, onClick: () => wm.openOverbooking(role.id, person.name) } : undefined} />
+            );
+          })}
+        </div>
+        <span style={{ flexShrink: 0, marginTop: 7 }}><Button kind="link" size="small" onClick={() => ctx?.open(role)}>{empty ? "Add" : "Edit"}</Button></span>
+      </div>
+    </td>
+  );
+}
+
+// ── Booked workforce member cell — the same pills (the × unbooks), plus the misalignment icon ──────────────────────────
+
+const BOOKED_W = 300;   // pill with × avatar name, misalignment, overbooking, eye and open icons
 
 function BookedWMCell({ role }: { role: RoleRow }) {
   const unbook = useContext(BookedUnbookContext);
   const schedule = useContext(ScheduleContext);
-  const people = bookedOf(role);
+  const wm = useContext(WMContext);
+  const rp = wm.peopleOf(role);
   return (
     <td style={{ ...readOnlyTd, padding: "8px", verticalAlign: "top", whiteSpace: "nowrap" }}>
       {/* One pill per booked person, stacked: the row grows with them (see rowHeightOf) */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: BOOKED_GAP }}>
-      {people.map((person, pi) => {
-        const shown = schedule.open.has(scheduleKey(role.id, pi));
-        return (
-        // Same look as the removable Pill: neutral-1 fill with the 1px neutral-0 border
-        <span key={pi} style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%", boxSizing: "border-box", height: BOOKED_PILL_H, padding: "0 6px", verticalAlign: "middle", borderRadius: "var(--radius-2xl, 32px)", background: "var(--palette-neutral-1)", border: "1px solid var(--palette-neutral-0)" }}>
-          <button
-            type="button"
-            title={`Remove ${person.name}`}
-            aria-label={`Remove booked workforce member ${person.name}`}
-            onClick={() => unbook?.(role, person.name)}
-            style={{ width: 20, height: 20, padding: 0, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-0)", flexShrink: 0 }}
-          >
-            <Icon name="cross" size={16} />
-          </button>
-          <Avatar initials={initialsOf(person.name)} size="small" />
-          <span style={{ ...body, fontWeight: 700, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.name}</span>
-          {/* Potential overbooking: the warning sits inside the pill, right after the name */}
-          {person.overbooking && (
-            // portal: the table pane scrolls (overflow), which would cut a normal tooltip off at the cell edge
-            <Tooltip
-              portal
-              placement="up-right"
-              maxWidth={320}
-              content={
-                <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <strong>Potential overbooking</strong>
-                  <span>Weeks affected:</span>
-                  {person.overbooking.weeks.map(w => <span key={w}>{w}</span>)}
-                </span>
-              }
-            >
-              <span aria-label="Potential overbooking" style={{ display: "inline-flex", cursor: "default", flexShrink: 0 }}>
-                <Icon name="warning" size={16} style={{ color: "var(--palette-orange-1)" }} />
-              </span>
-            </Tooltip>
-          )}
-          {/* Schedule: the "hidden" eye turns into "shown" while this person's bookings are listed under the role (each person has their own eye) */}
-          <button
-            type="button" aria-pressed={shown}
-            title={shown ? "Hide schedule" : "Show schedule"} aria-label={shown ? `Hide schedule of ${person.name}` : `Show schedule of ${person.name}`}
-            onClick={() => schedule.toggle(role.id, pi)}
-            style={{ width: 20, height: 20, padding: 0, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-0)", flexShrink: 0 }}
-          >
-            <Icon name={shown ? "shown" : "hidden"} size={16} />
-          </button>
-        </span>
-        );
-      })}
+        {rp.booked.map(person => {
+          const weeks = wm.overWeeks(role, person);
+          return (
+            <WMPill key={person.name} name={person.name}
+              onRemove={() => unbook?.(role, person.name)} removeLabel={`Remove booked workforce member ${person.name}`}
+              shown={schedule.open.has(scheduleKey(role.id, person.name))} onToggle={() => schedule.toggle(role.id, person.name)}
+              onOpen={() => wm.openProfile(person.name)}
+              onMisalign={person.booked?.misalignment ? () => wm.openMisalignment(role.id, person.name) : undefined}
+              over={weeks.length ? { weeks, onClick: () => wm.openOverbooking(role.id, person.name) } : undefined}
+              staticOverWeeks={person.booked?.overbooking?.weeks} />
+          );
+        })}
       </div>
     </td>
   );
@@ -560,28 +627,31 @@ export type PotentialOverbooking = {
 };
 const DEFAULT_CAPACITY = 40;
 const PILL_OF: Record<BookingCellCategory, BookingPillCategory> = { blue: "booking-blue", red: "booking-red", purple: "booking-purple", empty: "booking-blue" };
-type OverbookingNow = { person: number; name?: string; over: number; level: "warning" | "error"; items: (OverbookingItem & { hours: number })[]; roleHours: number };
-/** The potential overbookings of a role in one week: one per booked person who is over capacity (empty = none). A person with a `schedule` is calculated live (their hours on this role + their hours elsewhere − capacity),
- *  so editing the schedule rows or the hours moves it; a role with no scheduled person falls back to the cell's own `overbooking` data. */
-function overbookingsNow(role: RoleRow, week: number, requested: number | null | undefined, scheduleHours: (roleId: string, item: BookedScheduleItem, week: number) => number | null, edits: Record<string, Record<number, number | null>>): OverbookingNow[] {
+type OverbookingNow = { name?: string; over: number; level: "warning" | "error"; items: (OverbookingItem & { hours: number })[]; roleHours: number };
+type ScheduleHoursFn = (roleId: string, item: BookedScheduleItem, week: number) => number | null;
+type HoursEdits = Record<string, Record<number, number | null>>;
+/** One person's potential overbooking on a role in one week, or null: their hours on this role + their hours on the other roles of their schedule − capacity. Needs a `schedule`; editing the schedule rows or the hours moves it. */
+function personOverbooking(role: RoleRow, rp: RolePeople, person: WMPerson, week: number, scheduleHours: ScheduleHoursFn, edits: HoursEdits): OverbookingNow | null {
+  if (!person.schedule) return null;
   const raw = role.availability?.[week];
   const cell = raw == null || typeof raw === "number" ? null : raw;
-  const people = bookedOf(role);
-  const out: OverbookingNow[] = [];
-  people.forEach((p, pi) => {
-    if (!p.schedule) return;
-    const roleHours = personRoleHours(role, pi, week, edits, scheduleHours) ?? 0;
-    if (!(roleHours > 0)) return;
-    const items = p.schedule
-      .map(it => { const hours = scheduleHours(role.id, it, week) ?? 0; return { roleName: it.roleName, bookingLabel: `Booked ${hours}h`, bookingCategory: PILL_OF[it.category ?? "blue"], hours }; })
-      .filter(i => i.hours > 0);
-    const over = roleHours + items.reduce((n, i) => n + i.hours, 0) - (p.capacity ?? DEFAULT_CAPACITY);
-    if (over > 0) out.push({ person: pi, name: p.name, over, level: cell?.flag ?? "warning", items, roleHours });
-  });
-  if (!people.some(p => p.schedule) && cell?.overbooking && requested && requested > 0) {
+  const roleHours = personRoleHours(role, rp, person, week, edits, scheduleHours) ?? 0;
+  if (!(roleHours > 0)) return null;
+  const items = person.schedule
+    .map(it => { const hours = scheduleHours(role.id, it, week) ?? 0; return { roleName: it.roleName, bookingLabel: `Booked ${hours}h`, bookingCategory: PILL_OF[it.category ?? "blue"], hours }; })
+    .filter(i => i.hours > 0);
+  const over = roleHours + items.reduce((n, i) => n + i.hours, 0) - (person.capacity ?? DEFAULT_CAPACITY);
+  return over > 0 ? { name: person.name, over, level: cell?.flag ?? "warning", items, roleHours } : null;
+}
+/** The potential overbookings of a role in one week: one per person (suggested or booked) who is over capacity (empty = none). A role where nobody has a schedule falls back to the cell's own `overbooking` data. */
+function overbookingsNow(role: RoleRow, rp: RolePeople, week: number, requested: number | null | undefined, scheduleHours: ScheduleHoursFn, edits: HoursEdits): OverbookingNow[] {
+  const raw = role.availability?.[week];
+  const cell = raw == null || typeof raw === "number" ? null : raw;
+  const out = rp.all.map(p => personOverbooking(role, rp, p, week, scheduleHours, edits)).filter((x): x is OverbookingNow => !!x);
+  if (!rp.all.some(p => p.schedule) && cell?.overbooking && requested && requested > 0) {
     const items = cell.overbooking.items;
     const over = requested + items.reduce((n, i) => n + i.hours, 0) - (cell.overbooking.capacity ?? DEFAULT_CAPACITY);
-    if (over > 0) out.push({ person: -1, over, level: cell.flag ?? "warning", items, roleHours: requested });
+    if (over > 0) out.push({ over, level: cell.flag ?? "warning", items, roleHours: requested });
   }
   return out;
 }
@@ -597,9 +667,14 @@ export type BookedWM = {
   schedule?: BookedScheduleItem[];
   /** The person's weekly capacity in hours (default 40). With a `schedule`, the potential overbooking of every week is live: their hours on this role + their hours on the other roles − capacity */
   capacity?: number;
+  /** The booking is misaligned with the role: the calendar-misaligned icon shows in the pill, next to the name, like in the Booking Engine; clicking it opens the Misalignments side panel with this content */
+  misalignment?: MisalignmentSidePanelData;
   /** The person's hours on this role per week column. A role with one booked person can leave it out (their hours start as the requested hours, following the availability cells until the schedule row is edited); with several people each needs their own (default: the requested hours split evenly). Editing the schedule row never changes the availability cells */
   hours?: (number | null)[];
 };
+
+/** A workforce member's schedule by name: used for the people suggested on a role (and as the fallback of a booked person without a schedule of their own) */
+export type WMSchedule = { schedule: BookedScheduleItem[]; capacity?: number };
 
 /** An hours cell of a schedule row was edited (the booked workforce member's booking on another role) */
 export type ScheduleChange = { roleId: string; scheduleId: string; weekIndex: number; hours: number };
@@ -773,6 +848,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
   const scheduleCtx = useContext(ScheduleContext);
   const scheduleOpen = scheduleCtx.open;
   const hoursEdits = useContext(HoursEditsContext);
+  const wm = useContext(WMContext);
   const headers = [
     ...(mergedEngagement ? [{ label: "Engagement title", mandatory: false, width: 168, checkbox: selectable }] : []),
     { label: roleRows ? "Role" : "Role title", mandatory: true, width: roleRows ? 220 : 168, checkbox: selectable },
@@ -834,11 +910,12 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
             const first = mergedEngagement && (idx === 0 || roles[idx - 1].engagement !== role.engagement);
             const run = first ? roles.filter((x, j) => j >= idx && roles.slice(idx, j + 1).every(y => y.engagement === role.engagement)) : [];
             // The schedule rows of an open role sit inside the merged engagement cell too
-            const extra = run.reduce((n, r) => n + scheduleRowCount(r, scheduleOpen), 0);
-            const sched = scheduleRowsOf(role, scheduleOpen);
+            const extra = run.reduce((n, r) => n + scheduleRowCount(r, wm.peopleOf(r), scheduleOpen), 0);
+            const rp = wm.peopleOf(role);
+            const sched = scheduleRowsOf(role, rp, scheduleOpen);
             return (
             <Fragment key={role.id}>
-            <tr className={freshRow === role.id ? "mr-row-new" : undefined} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white", ...(availability ? { height: rowHeightOf(role) } : null) }}>
+            <tr className={freshRow === role.id ? "mr-row-new" : undefined} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white", ...(availability ? { height: rowHeightOf(rp) } : null) }}>
               {/* Read-only engagement title, merged across the engagement's roles: neutral light background, regular weight, checkbox selects them all */}
               {first && (
                 <td rowSpan={run.length + extra} style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
@@ -933,38 +1010,33 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
             </tr>
             {sched !== null && sched.map((entry, ei) => {
               const item = entry.item;
-              const people = bookedOf(role);
-              const lastOfPerson = !sched[ei + 1] || sched[ei + 1].person !== entry.person;
-              const person = people[entry.person];
-              const several = people.length > 1;
-              // Several people on the role: each person's group has a merged-looking block with their avatar and wrapping name, floating right next to the role names (the other rows of the group leave the room empty, so the names line up)
+              const person = entry.person;
+              const lastOfPerson = !sched[ei + 1] || sched[ei + 1].person.name !== person.name;
+              const status = person.booked ? "booked" : "requested";
+              // Each person's group has a merged-looking block with their avatar and wrapping name, floating right next to the role names (the other rows of the group leave the room empty, so the names line up)
               const label = (children: React.ReactNode) => (
                 <tr key={entry.key} style={{ height: SCHEDULE_ROW_H }}>
                   <td colSpan={headers.length - (mergedEngagement ? 1 : 0)} style={{ ...tdStyle, height: SCHEDULE_ROW_H, boxSizing: "border-box", background: "var(--palette-neutral-2)", verticalAlign: "middle", padding: "4px 12px", borderRight: "none",
-                    // Several people: the empty room left of the name block has no row lines, only the divider between two people (the lines next to the role names are drawn by the label block)
-                    ...(several && !lastOfPerson ? { borderBottom: "none" } : null) }}>
+                    // the empty room left of the name block has no row lines, only the divider between two people (the lines next to the role names are drawn by the label block)
+                    ...(!lastOfPerson ? { borderBottom: "none" } : null) }}>
                     {/* Floating label: sticky to the right edge of the (horizontally scrolling) roles pane, so it stays right next to the divider */}
-                    {several ? (
-                      <div style={{ position: "sticky", right: 12, marginLeft: "auto", width: SCHEDULE_NAME_W + SCHEDULE_LABEL_W + 16, height: SCHEDULE_ROW_H - 9, display: "flex", alignItems: "center", gap: 16 }}>
-                        <div style={{ width: SCHEDULE_NAME_W, flexShrink: 0, alignSelf: "stretch", position: "relative" }}>
-                          {entry.groupSize && (
-                            // Like a merged cell: the block spans every row of the person's group (it overflows the first row), the name wraps next to the avatar
-                            <div style={{ position: "absolute", zIndex: 1, top: -4, left: -12, width: SCHEDULE_NAME_W + 16, height: entry.groupSize * SCHEDULE_ROW_H, boxSizing: "border-box", padding: 8, background: "var(--palette-neutral-2)", borderBottom: "1px solid var(--palette-neutral-0)", borderRight: "1px solid var(--palette-neutral-0)" }}>
-                              <Row gap={8} style={{ alignItems: "flex-start" }}>
-                                <Avatar initials={initialsOf(person.name)} size="small" />
-                                <span style={{ ...body, fontWeight: 700, minWidth: 0, overflowWrap: "anywhere", lineHeight: "24px" }}>{person.name}</span>
-                              </Row>
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ width: SCHEDULE_LABEL_W, flexShrink: 0, minWidth: 0, alignSelf: "stretch", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                          {children}
-                          {!lastOfPerson && <div style={{ position: "absolute", left: -12, right: -12, bottom: -4, height: 1, background: "var(--palette-neutral-0)" }} />}
-                        </div>
+                    <div style={{ position: "sticky", right: 12, marginLeft: "auto", width: SCHEDULE_NAME_W + SCHEDULE_LABEL_W + 16, height: SCHEDULE_ROW_H - 9, display: "flex", alignItems: "center", gap: 16 }}>
+                      <div style={{ width: SCHEDULE_NAME_W, flexShrink: 0, alignSelf: "stretch", position: "relative" }}>
+                        {entry.groupSize && (
+                          // Like a merged cell: the block spans every row of the person's group (it overflows the first row), the name wraps next to the avatar
+                          <div style={{ position: "absolute", zIndex: 1, top: -4, left: -12, width: SCHEDULE_NAME_W + 16, height: entry.groupSize * SCHEDULE_ROW_H, boxSizing: "border-box", padding: 8, background: "var(--palette-neutral-2)", borderBottom: "1px solid var(--palette-neutral-0)", borderRight: "1px solid var(--palette-neutral-0)" }}>
+                            <Row gap={8} style={{ alignItems: "flex-start" }}>
+                              <Avatar initials={initialsOf(person.name)} size="small" />
+                              <span style={{ ...body, fontWeight: 700, minWidth: 0, overflowWrap: "anywhere", lineHeight: "24px" }}>{person.name}</span>
+                            </Row>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div style={{ position: "sticky", right: 12, marginLeft: "auto", width: "max-content", maxWidth: 520 }}>{children}</div>
-                    )}
+                      <div style={{ width: SCHEDULE_LABEL_W, flexShrink: 0, minWidth: 0, alignSelf: "stretch", position: "relative", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                        {children}
+                        {!lastOfPerson && <div style={{ position: "absolute", left: -12, right: -12, bottom: -4, height: 1, background: "var(--palette-neutral-0)" }} />}
+                      </div>
+                    </div>
                   </td>
                 </tr>
               );
@@ -974,8 +1046,8 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
                   <div style={{ ...labelCss, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
                 </div>
               );
-              if (entry.kind === "none") return label(<span style={muted}>{person.name} has no other bookings in these weeks</span>);
-              if (entry.kind === "own") return label(two(role.title, `${role.engagement ?? ""} · ${sumHours(weeks.map((_, w) => personRoleHours(role, entry.person, w, hoursEdits, scheduleCtx.hours)))}h booked`));
+              if (entry.kind === "none") return label(<span style={{ ...muted, textAlign: "right" }}>{person.name} has no other bookings in these weeks</span>);
+              if (entry.kind === "own") return label(two(role.title, `${role.engagement ?? ""} · ${sumHours(weeks.map((_, w) => personRoleHours(role, rp, person, w, hoursEdits, scheduleCtx.hours)))}h ${status}`));
               return label(two(item!.roleName, `${item!.engagement} · ${sumHours(item!.hours.map((_, w) => scheduleCtx.hours(role.id, item!, w)))}h booked`));
             })}
             </Fragment>
@@ -1043,6 +1115,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
   const hoursEdits = useContext(HoursEditsContext);
   const scheduleCtx = useContext(ScheduleContext);
   const scheduleOpen = scheduleCtx.open;
+  const wm = useContext(WMContext);
   const stickyRef = useStickyHeader();
   const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined, overbooking: undefined as PotentialOverbooking | undefined } : c);
 
@@ -1093,9 +1166,9 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
           </tr>
         </thead>
         <tbody>
-          {roles.map((role, ri) => (
+          {roles.map((role, ri) => { const rp = wm.peopleOf(role); return (
             <Fragment key={role.id}>
-            <tr className={freshRow === role.id ? "mr-row-new" : undefined} style={{ height: rowHeightOf(role), background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
+            <tr className={freshRow === role.id ? "mr-row-new" : undefined} style={{ height: rowHeightOf(rp), background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
               {weeks.map((w, i) => {
                 const c = norm(role.availability?.[i]);
                 const edges: FillEdges | null = rect && ri >= rect.r0 && ri <= rect.r1 && i >= rect.c0 && i <= rect.c1
@@ -1103,7 +1176,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
                 return (
                   <HoursTd
                     key={w} defaultValue={c?.hours}
-                    flag={(() => { const o = overbookingsNow(role, i, i in (hoursEdits[role.id] ?? {}) ? hoursEdits[role.id][i] : c?.hours, scheduleCtx.hours, hoursEdits); return o.length ? (o.some(x => x.level === "error") ? "error" : "warning") : undefined; })()}
+                    flag={(() => { const o = overbookingsNow(role, rp, i, i in (hoursEdits[role.id] ?? {}) ? hoursEdits[role.id][i] : c?.hours, scheduleCtx.hours, hoursEdits); return o.length ? (o.some(x => x.level === "error") ? "error" : "warning") : undefined; })()}
                     onFlagClick={() => openOverbooking?.(role.id, i)}
                     onChange={hours => { edited.current[key(role.id, i)] = hours; onAvailabilityChange?.({ roleId: role.id, weekIndex: i, hours }); }}
                     fill={fills[key(role.id, i)]} fillEdges={edges} dragging={active}
@@ -1118,17 +1191,17 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
             </tr>
             {(() => {
               // Per person shown: the role itself first (their hours on it; alone on the role they are the requested hours above), then their other bookings: Booking Engine grid cells with the booking colour dot, same rows as on the left
-              const sched = scheduleRowsOf(role, scheduleOpen);
+              const sched = scheduleRowsOf(role, rp, scheduleOpen);
               if (sched === null) return null;
               return sched.map(entry => {
                 const item = entry.item;
                 return (
                 <tr key={entry.key} style={{ height: SCHEDULE_ROW_H }}>
                   {weeks.map((w, i) => {
-                    const h = entry.kind === "own" ? personRoleHours(role, entry.person, i, hoursEdits, scheduleCtx.hours) : item ? scheduleCtx.hours(role.id, item, i) : null;
+                    const h = entry.kind === "own" ? personRoleHours(role, rp, entry.person, i, hoursEdits, scheduleCtx.hours) : item ? scheduleCtx.hours(role.id, item, i) : null;
                     const category = h ? (entry.kind === "own" ? ownCategory(role) : item?.category ?? "blue") : "empty";
                     const onChange = entry.kind === "own"
-                      ? (v: number) => scheduleCtx.edit({ roleId: role.id, scheduleId: `own-${entry.person}`, weekIndex: i, hours: v })
+                      ? (v: number) => scheduleCtx.edit({ roleId: role.id, scheduleId: `own-${entry.person.name}`, weekIndex: i, hours: v })
                       : item ? (v: number) => scheduleCtx.edit({ roleId: role.id, scheduleId: item.id, weekIndex: i, hours: v }) : undefined;
                     return (
                       <td key={w} style={{ ...tdStyle, padding: 0, height: SCHEDULE_ROW_H, boxSizing: "border-box", background: "var(--palette-neutral-2)" }}>
@@ -1142,7 +1215,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
               });
             })()}
             </Fragment>
-          ))}
+          ); })}
         </tbody>
       </table>
     </div>
@@ -1288,10 +1361,14 @@ export type ManageRolesScreenProps = {
   tagRolesButton?: boolean;
   /** Role-rows layout (default false): no merged engagement cell. The first column is Role (checkbox + editable title), the second Engagement (editable, one line, one per row). On hover both show an "open" button (onOpenRole / onOpenEngagement). Selection is by role only. */
   roleRows?: boolean;
-  /** Role-rows layout: the "open" button of a Role cell */
+  /** Role-rows layout: the "open" button of a Role cell shows the role side panel; this is called by the open button in that panel's header (go to the role screen) */
   onOpenRole?: (roleId: string) => void;
-  /** Role-rows layout: the "open" button of an Engagement cell */
+  /** Role-rows layout: the "open" button of an Engagement cell shows the engagement side panel; this is called by the open button in that panel's header (go to the engagement screen) */
   onOpenEngagement?: (engagement: string) => void;
+  /** Content of the role side panel for a role, on top of what the row says (title, state, engagement, description, owner) and a sample default */
+  roleDetails?: (role: ManageRolesRole) => Partial<RoleSidePanelData>;
+  /** Content of the engagement side panel, on top of what the rows say (name, roles, filled) and a sample default */
+  engagementDetails?: (engagement: string, roles: ManageRolesRole[]) => Partial<EngagementSidePanelData>;
   /** Delta = booked − requested hours for every role (default: requested − booked, and just the requested hours when nothing is booked). The hours still missing then show as a negative number in red-0, e.g. "-40h"; 0h stays green. */
   deltaMissing?: boolean;
   /** How many week columns the availability pane shows when the screen opens (the divider still resizes it). Default: what the layout picks (one week next to Booked WM and Delta). */
@@ -1306,6 +1383,12 @@ export type ManageRolesScreenProps = {
   onNavigate?: (navbarId: string) => void;
   onBack?: () => void;
   onSave?: () => void;
+  /** Schedules by workforce member name: the other roles the people suggested on a role are booked on (their eye button shows them, and they feed the potential overbookings). A booked person's own `schedule` wins. */
+  schedules?: Record<string, WMSchedule>;
+  /** Profile side panel content by name (the open button of a pill); a person without one gets a basic profile */
+  profiles?: Record<string, ProfileSidePanelData>;
+  /** The open button of a Suggested / Booked WM pill was clicked: the screen shows the profile side panel and tells the host which profile */
+  onOpenProfile?: (name: string) => void;
   /** The ghost "Fill & Book (X)" button at the end of the bulk banner: X is how many of the selected roles are not booked or confirmed and have a suggested WM (the roles inside the picked engagements when engagements are selected); `roleIds` are those roles */
   onFillBook?: (info: { roleIds: string[] }) => void;
   /** "Manage tags" → Update: the tag was applied to `roles` roles (`roleIds` says which). `target` "engagements": it was applied to the picked engagements themselves (`engagements` = their names), not to their roles. */
@@ -1341,8 +1424,8 @@ export type ManageRolesScreenProps = {
 };
 
 export function ManageRolesScreen({
-  groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, weeksVisible, tagRolesButton = true, deltaMissing = false, roleRows = false, onOpenRole, onOpenEngagement, onAvailabilityChange, onScheduleChange,
-  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onFillBook, onTagged, onUnbook, onRowAction, onOpenInBookingEngine,
+  groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, weeksVisible, tagRolesButton = true, deltaMissing = false, roleRows = false, onOpenRole, onOpenEngagement, roleDetails, engagementDetails, onAvailabilityChange, onScheduleChange,
+  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, schedules = {}, profiles = {}, onOpenProfile, onFillBook, onTagged, onUnbook, onRowAction, onOpenInBookingEngine,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {}, initialEngagementTags = {},
   suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange, tagCommand,
 }: ManageRolesScreenProps) {
@@ -1388,40 +1471,109 @@ export function ManageRolesScreen({
     if (own.length === 0 && bookedOf(role).length) return bookedOf(role).map((b, i) => candidateOf(`b-${role.id}-${i}`, b.name, role.requestedRank));
     return own;
   };
-  const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: r => { setOverKey(null); setSuggestRole(r); } };
-  // Potential overbookings panel: opened by the bar on top of a flagged availability cell; the suggested WM's calendar against this role's availability rules
+  // One side panel at a time: opening one closes the others
+  const [overKey, setOverKey] = useState<{ roleId: string; week?: number; name?: string } | null>(null);     // Potential overbookings: of one week (the bar), or of every week of one person (the pill icon)
+  const [misKey, setMisKey] = useState<{ roleId: string; name: string } | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [rolePanel, setRolePanel] = useState<string | null>(null);          // role id of the role side panel
+  const [engPanel, setEngPanel] = useState<string | null>(null);            // engagement name of the engagement side panel
+  const closePanels = () => { setOverKey(null); setMisKey(null); setProfileName(null); setSuggestRole(null); setRolePanel(null); setEngPanel(null); };
+  const openRolePanel = (id: string) => { closePanels(); setRolePanel(id); };
+  const openEngagementPanel = (name: string) => { closePanels(); setEngPanel(name); };
+  const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: r => { closePanels(); setSuggestRole(r); } };
   const [scheduleEdits, setScheduleEdits] = useState<Record<string, Record<number, number>>>({});
   const scheduleHours = (roleId: string, item: BookedScheduleItem, w: number): number | null => { const e = scheduleEdits[`${roleId}:${item.id}`]; return e && w in e ? e[w] : item.hours[w] ?? null; };
-  const [scheduleOpen, setScheduleOpen] = useState<Set<string>>(new Set());   // roles whose booked WM's schedule is shown
-  const [overKey, setOverKey] = useState<{ roleId: string; week: number } | null>(null);
-  const openOverbooking = (roleId: string, week: number) => { setSuggestRole(null); setOverKey({ roleId, week }); };
+  const [scheduleOpen, setScheduleOpen] = useState<Set<string>>(new Set());   // `roleId|name` of the people whose schedule is shown
+  const weekLabels = weeks ?? DEFAULT_AVAILABILITY_WEEKS;
+  // Who is suggested / booked on a role (one entry per name), with their schedules
+  const peopleOf = (role: RoleRow): RolePeople => buildRolePeople(role, suggestedFor(role).map(c => ({ id: c.id, name: c.name, rank: c.rank })), schedules);
+  const overWeeksOf = (role: RoleRow, person: WMPerson): string[] => {
+    const rp = peopleOf(role);
+    return weekLabels.filter((_, w) => !!personOverbooking(role, rp, person, w, scheduleHours, hoursEdits));
+  };
+  const removeSuggested = (role: RoleRow, candidateId: string) => {
+    const next = suggestedFor(role).filter(c => c.id !== candidateId);
+    setSuggestedBy(prev => ({ ...prev, [role.id]: next }));
+    onSuggestedChange?.({ roleId: role.id, suggested: next });
+  };
+  // A person without a profile of their own gets the sample profile content (all the sections) under their name
+  const profileOf = (name: string): ProfileSidePanelData => profiles[name] ?? { ...SAMPLE_PROFILE, name, initials: initialsOf(name), jobTitle: allCandidates.find(c => c.name === name)?.rank ?? SAMPLE_PROFILE.jobTitle, email: `${name.toLowerCase().replace(/[^a-z ]/g, "").split(" ").filter(Boolean).join(".")}@profinda.com` };
+  const roleData = (): RoleSidePanelData | undefined => {
+    const r = rolePanel ? groups.flatMap(g => g.roles).find(x => x.id === rolePanel) : undefined;
+    if (!r) return undefined;
+    return {
+      title: r.title, wfState: r.wfState, id: r.id, state: "Open", privacy: "Public", participant: "Co-Owner",
+      engagementName: r.engagement, description: r.description,
+      owners: r.assignee ? [{ name: r.assignee, initials: initialsOf(r.assignee) }] : [{ name: "Santiago A CV Upload", initials: "SC" }],
+      duration: "14 days", timeLeft: "6 days", dateCreated: "13-07-2026",
+      skills: [{ label: "Jira", proficiency: "advanced" }, { label: "Project Management", proficiency: "intermediate", core: true }, { label: "Agile", proficiency: "basic" }],
+      privacyValue: "Public", creatorName: "Spencer Harmon", creatorInitials: "SH",
+      ...roleDetails?.(r),
+      onOpenRole: () => onOpenRole?.(r.id),
+      onOpenEngagement: r.engagement ? () => onOpenEngagement?.(r.engagement!) : undefined,
+    };
+  };
+  const engagementData = (): EngagementSidePanelData | undefined => {
+    if (!engPanel) return undefined;
+    const rs = groups.flatMap(g => g.roles).filter(x => x.engagement === engPanel);
+    return {
+      title: engPanel, id: "100000064", state: "Open", privacy: "Public", participant: "Co-Owner",
+      ownerName: "Fake Surname", ownerInitials: "FS",
+      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      duration: "365 days", timeLeft: "280 days", dateCreated: "25-09-2025",
+      roles: String(rs.length), filled: String(rs.filter(isBookedState).length),
+      budget: "£180,000", cost: "£112,000", privacyValue: "Public", serviceLineGroup: "Strategy", requestedBy: "Spencer Harmon",
+      creatorName: "Spencer Harmon", creatorInitials: "SH",
+      ...engagementDetails?.(engPanel, rs),
+      onOpenEngagement: () => onOpenEngagement?.(engPanel),
+    };
+  };
+  const wmActions: WMActions = {
+    peopleOf, overWeeks: overWeeksOf, removeSuggested,
+    openProfile: name => { closePanels(); setProfileName(name); onOpenProfile?.(name); },
+    openOverbooking: (roleId, name) => { closePanels(); setOverKey({ roleId, name }); },
+    openMisalignment: (roleId, name) => { closePanels(); setMisKey({ roleId, name }); },
+  };
+  // Potential overbookings panel: opened by the bar on top of a flagged availability cell (every person over capacity that week) or by the warning icon of a pill (every week that person is over capacity)
+  const openOverbooking = (roleId: string, week: number) => { closePanels(); setOverKey({ roleId, week }); };
   const overData = (() => {
     if (!overKey) return undefined;
     const r = groups.flatMap(g => g.roles).find(x => x.id === overKey.roleId);
     if (!r) return undefined;
-    const raw = r.availability?.[overKey.week];
-    const cell = raw == null || typeof raw === "number" ? null : raw;
-    const hours = hoursEdits[r.id]?.[overKey.week] ?? cell?.hours ?? (typeof raw === "number" ? raw : null);
-    const list = overbookingsNow(r, overKey.week, hours, scheduleHours, hoursEdits);
-    if (!list.length) return undefined;     // an edit made it go away: nothing left to show
-    const multi = list.length > 1;
-    const several = bookedOf(r).length > 1;
-    const week = (weeks ?? DEFAULT_AVAILABILITY_WEEKS)[overKey.week];
+    const rp = peopleOf(r);
+    const ranges: { id: string; dateRange: string; subtitle: string; level: "warning" | "error"; items: OverbookingItem[] }[] = [];
+    const names = new Set<string>();
+    (overKey.week != null ? [overKey.week] : weekLabels.map((_, i) => i)).forEach(w => {
+      const raw = r.availability?.[w];
+      const cell = raw == null || typeof raw === "number" ? null : raw;
+      const hours = hoursEdits[r.id]?.[w] ?? cell?.hours ?? (typeof raw === "number" ? raw : null);
+      const list = overbookingsNow(r, rp, w, hours, scheduleHours, hoursEdits).filter(n => !overKey.name || n.name === overKey.name);
+      list.forEach(now => {
+        if (now.name) names.add(now.name);
+        ranges.push({
+          id: `${r.id}-${w}-${now.name ?? ""}`,
+          dateRange: weekLabels[w],
+          subtitle: `${list.length > 1 && !overKey.name && now.name ? `${now.name} · ` : ""}${now.over} hours over this week`,
+          level: now.level,
+          items: [
+            rp.booked.length > 1 && now.name && rp.booked.some(b => b.name === now.name) ? { roleName: r.title, bookingLabel: `Booked ${now.roleHours}h`, bookingCategory: "role-booked" as const } : { roleName: r.title, bookingLabel: `Requested ${now.roleHours}h`, bookingCategory: "role-partial" as const },
+            ...now.items.map(({ hours: _h, ...item }) => item),
+          ],
+        });
+      });
+    });
+    if (!ranges.length) return undefined;     // an edit made it go away: nothing left to show
     return {
-      personName: multi ? `${list.length} workforce members` : list[0].name ?? suggestedFor(r)[0]?.name ?? "No workforce member suggested",
+      personName: overKey.name ?? (names.size > 1 ? `${names.size} workforce members` : [...names][0] ?? suggestedFor(r)[0]?.name ?? "No workforce member suggested"),
       potential: true,
-      // One range per person who is over capacity that week
-      ranges: list.map(now => ({
-        id: `${r.id}-${overKey.week}-${now.person}`,
-        dateRange: week,
-        subtitle: `${multi && now.name ? `${now.name} · ` : ""}${now.over} hours over this week`,
-        level: now.level,
-        items: [
-          several ? { roleName: r.title, bookingLabel: `Booked ${now.roleHours}h`, bookingCategory: "role-booked" as const } : { roleName: r.title, bookingLabel: `Requested ${now.roleHours}h`, bookingCategory: "role-partial" as const },
-          ...now.items.map(({ hours: _h, ...item }) => item),
-        ],
-      })),
+      ranges,
     };
+  })();
+  const misData = (() => {
+    if (!misKey) return undefined;
+    const r = groups.flatMap(g => g.roles).find(x => x.id === misKey.roleId);
+    const d = r && bookedOf(r).find(b => b.name === misKey.name)?.misalignment;
+    return d ? { ...d, wmName: d.wmName ?? misKey.name } : undefined;
   })();
   // The Suggest side panel stores every pick (and removal) at once for the role it is open on
   const storeSuggested = (list: SuggestCandidate[]) => {
@@ -1510,7 +1662,8 @@ export function ManageRolesScreen({
   };
 
   return (
-    <ScheduleContext.Provider value={{ open: scheduleOpen, toggle: (roleId, person) => setScheduleOpen(prev => { const n = new Set(prev), k = scheduleKey(roleId, person); if (!n.delete(k)) n.add(k); return n; }),
+    <WMContext.Provider value={wmActions}>
+    <ScheduleContext.Provider value={{ open: scheduleOpen, toggle: (roleId, name) => setScheduleOpen(prev => { const n = new Set(prev), k = scheduleKey(roleId, name); if (!n.delete(k)) n.add(k); return n; }),
       hours: scheduleHours,
       edit: c => { setScheduleEdits(prev => ({ ...prev, [`${c.roleId}:${c.scheduleId}`]: { ...prev[`${c.roleId}:${c.scheduleId}`], [c.weekIndex]: c.hours } })); onScheduleChange?.(c); } }}>
     <BookedUnbookContext.Provider value={onUnbook ? ((r, name) => onUnbook({ roleId: r.id, name })) : undefined}>
@@ -1579,7 +1732,7 @@ export function ManageRolesScreen({
             <div style={{ ...labelCss, margin: header ? "12px 0 16px" : "0 0 16px", flexShrink: 0 }}>{counter}</div>
 
             {groups.map((g, i) => (
-              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engTags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} onAvailabilityChange={trackHours} roleRows={roleRows} onOpenRole={onOpenRole} onOpenEngagement={onOpenEngagement} onEngagementChange={(id, e) => setEngOverrides(o => ({ ...o, [id]: e }))} />
+              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engTags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} onAvailabilityChange={trackHours} roleRows={roleRows} onOpenRole={openRolePanel} onOpenEngagement={openEngagementPanel} onEngagementChange={(id, e) => setEngOverrides(o => ({ ...o, [id]: e }))} />
             ))}
 
             <div style={{ flex: 1, minHeight: 24 }} />
@@ -1621,6 +1774,10 @@ export function ManageRolesScreen({
       />
 
       <OverbookingSidePanel open={!!overData} onClose={() => setOverKey(null)} data={overData} />
+      <MisalignmentSidePanel open={!!misData} onClose={() => setMisKey(null)} data={misData} />
+      <RoleSidePanel open={!!rolePanel} onClose={() => setRolePanel(null)} data={roleData() ?? { title: "" }} />
+      <EngagementSidePanel open={!!engPanel} onClose={() => setEngPanel(null)} data={engagementData() ?? { title: "" }} />
+      <ProfileSidePanel open={!!profileName} onClose={() => setProfileName(null)} data={profileName ? profileOf(profileName) : { name: "" }} />
 
       {/* Row menu: drawn in body (fixed) so the tables' scroll panes can't clip it */}
       {menu && createPortal(
@@ -1641,5 +1798,6 @@ export function ManageRolesScreen({
     </SuggestContext.Provider>
     </BookedUnbookContext.Provider>
     </ScheduleContext.Provider>
+    </WMContext.Provider>
   );
 }
