@@ -300,7 +300,7 @@ function ownHoursOf(role: RoleRow, week: number, edits: Record<string, Record<nu
 }
 /** Booking colour of the role's own row: the colour of its booking category (blue by default) */
 const ownCategory = (role: RoleRow): BookingCellCategory => { const c = role.bookingCategory?.category; return c === "booking-red" ? "red" : c === "booking-purple" ? "purple" : "blue"; };
-/** One person alone on the role with no hours of their own: their row IS the requested hours (editing it edits the availability cell) */
+/** One person alone on the role with no hours of their own: their row starts as the requested hours (it follows the availability cells until it is edited itself) */
 const isSyncedWithRequested = (role: RoleRow) => { const p = bookedOf(role); return p.length === 1 && !p[0].hours; };
 /** The role as a schedule row of a person (their hours on it; the default is the requested hours split evenly between the people booked) */
 function ownScheduleItem(role: RoleRow, person: number): BookedScheduleItem {
@@ -308,9 +308,10 @@ function ownScheduleItem(role: RoleRow, person: number): BookedScheduleItem {
   const base = bookedOf(role)[person]?.hours ?? (role.availability ?? []).map(c => { const h = c == null ? null : typeof c === "number" ? c : c.hours; return h == null ? null : Math.round(h / n); });
   return { id: `own-${person}`, roleName: role.title, engagement: role.engagement ?? "", category: ownCategory(role), hours: base };
 }
-/** A person's hours on the role in a week */
+/** A person's hours on the role in a week: what was typed in their own schedule row, otherwise their starting hours. Alone on the role with no hours of their own, that start is the requested hours (live), but editing the schedule row never touches the availability cells above. */
 function personRoleHours(role: RoleRow, person: number, week: number, edits: Record<string, Record<number, number | null>>, scheduleHours: (roleId: string, item: BookedScheduleItem, week: number) => number | null): number | null {
-  return isSyncedWithRequested(role) ? ownHoursOf(role, week, edits) : scheduleHours(role.id, ownScheduleItem(role, person), week);
+  const item = ownScheduleItem(role, person);
+  return scheduleHours(role.id, isSyncedWithRequested(role) ? { ...item, hours: Array.from({ length: week + 1 }, (_, w) => ownHoursOf(role, w, edits)) } : item, week);
 }
 const sumHours = (h: (number | null)[]) => h.reduce<number>((n, x) => n + (x ?? 0), 0);
 
@@ -596,7 +597,7 @@ export type BookedWM = {
   schedule?: BookedScheduleItem[];
   /** The person's weekly capacity in hours (default 40). With a `schedule`, the potential overbooking of every week is live: their hours on this role + their hours on the other roles − capacity */
   capacity?: number;
-  /** The person's hours on this role per week column. A role with one booked person can leave it out (their hours are the requested hours, edited together with the availability cells); with several people each needs their own (default: the requested hours split evenly) */
+  /** The person's hours on this role per week column. A role with one booked person can leave it out (their hours start as the requested hours, following the availability cells until the schedule row is edited); with several people each needs their own (default: the requested hours split evenly). Editing the schedule row never changes the availability cells */
   hours?: (number | null)[];
 };
 
@@ -1052,13 +1053,6 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
   const edited = useRef<Record<string, number | null>>({});      // what the user typed / filled, by "roleId:week"
   const fillSeq = useRef(0);
   const key = (roleId: string, c: number) => `${roleId}:${c}`;
-  // An hours edit made from outside the cell (the role's own schedule row): the availability cell takes the value like a drag fill and the change is reported
-  const applyHours = (r: number, c: number, v: number) => {
-    const k = key(roles[r].id, c);
-    edited.current[k] = v;
-    setFills(f => ({ ...f, [k]: { n: ++fillSeq.current, v: String(v) } }));
-    onAvailabilityChange?.({ roleId: roles[r].id, weekIndex: c, hours: v });
-  };
   const valueAt = (r: number, c: number): number | null => {
     const k = key(roles[r].id, c);
     return k in edited.current ? edited.current[k] : (norm(roles[r].availability?.[c])?.hours ?? null);
@@ -1134,7 +1128,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
                     const h = entry.kind === "own" ? personRoleHours(role, entry.person, i, hoursEdits, scheduleCtx.hours) : item ? scheduleCtx.hours(role.id, item, i) : null;
                     const category = h ? (entry.kind === "own" ? ownCategory(role) : item?.category ?? "blue") : "empty";
                     const onChange = entry.kind === "own"
-                      ? (isSyncedWithRequested(role) ? (v: number) => applyHours(ri, i, v) : (v: number) => scheduleCtx.edit({ roleId: role.id, scheduleId: `own-${entry.person}`, weekIndex: i, hours: v }))
+                      ? (v: number) => scheduleCtx.edit({ roleId: role.id, scheduleId: `own-${entry.person}`, weekIndex: i, hours: v })
                       : item ? (v: number) => scheduleCtx.edit({ roleId: role.id, scheduleId: item.id, weekIndex: i, hours: v }) : undefined;
                     return (
                       <td key={w} style={{ ...tdStyle, padding: 0, height: SCHEDULE_ROW_H, boxSizing: "border-box", background: "var(--palette-neutral-2)" }}>
