@@ -1632,6 +1632,9 @@ export declare type RoleSubtitleProps = {
     className?: string;
 };
 
+/** Sample content of the profile panel (Figma Sidepanel/Profile): stories and screens use it as the default profile, with their own name / job title on top */
+export declare const SAMPLE_PROFILE: ProfileSidePanelData;
+
 export declare type SavedFilter = {
     id: string;
     label: string;
@@ -1684,7 +1687,7 @@ export declare function SidePanel({ open, onClose, children, width, className, p
 export declare type SidePanelProps = {
     /** Whether the panel is visible */
     open: boolean;
-    /** Called when backdrop or close button is clicked */
+    /** Called when backdrop or close button is clicked, or ESC is pressed */
     onClose: () => void;
     /** Panel content */
     children: default_2.ReactNode;
