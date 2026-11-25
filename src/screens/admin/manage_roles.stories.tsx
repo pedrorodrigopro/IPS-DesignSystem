@@ -118,6 +118,7 @@ function WithToast(props: React.ComponentProps<typeof ManageRolesScreen>) {
     <ManageRolesScreen
       deltaMissing
       {...props}
+      onFillBook={({ roleIds }) => showToast({ type: "success", message: `Fill & Book: ${roleIds.length} ${roleIds.length === 1 ? "role" : "roles"}` })}
       onTagged={({ tag, roles, target, engagements }) => showToast({ type: "success", message: target === "engagements"
         ? `Tag “${tag}” added to ${engagements.length} ${engagements.length === 1 ? "engagement" : "engagements"}`
         : `Tag “${tag}” added to ${roles} ${roles === 1 ? "role" : "roles"}` })}
@@ -183,6 +184,7 @@ function RoleRowsScreen() {
   return (
     <ManageRolesScreen
       deltaMissing roleRows navbarActiveId="workflow" groups={ROLLED_FORWARD_GROUPS}
+      onFillBook={({ roleIds }) => showToast({ type: "success", message: `Fill & Book: ${roleIds.length} ${roleIds.length === 1 ? "role" : "roles"}` })}
       onOpenRole={id => showToast({ type: "success", message: `Open role ${id}` })}
       onOpenEngagement={name => showToast({ type: "success", message: `Open engagement ${name}` })}
     />

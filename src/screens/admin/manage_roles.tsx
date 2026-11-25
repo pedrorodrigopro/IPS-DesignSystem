@@ -1312,6 +1312,8 @@ export type ManageRolesScreenProps = {
   onNavigate?: (navbarId: string) => void;
   onBack?: () => void;
   onSave?: () => void;
+  /** The ghost "Fill & Book (X)" button at the end of the bulk banner: X is how many of the selected roles are not booked or confirmed and have a suggested WM (the roles inside the picked engagements when engagements are selected); `roleIds` are those roles */
+  onFillBook?: (info: { roleIds: string[] }) => void;
   /** "Manage tags" → Update: the tag was applied to `roles` roles (`roleIds` says which). `target` "engagements": it was applied to the picked engagements themselves (`engagements` = their names), not to their roles. */
   onTagged?: (info: { tag: string; roles: number; roleIds: string[]; notified: string[]; target: "roles" | "engagements"; engagements: string[] }) => void;
   /** Adds a secondary "Open in Booking Engine" button to the page header, top right. Called with the ids of the roles the screen shows right now (duplicates and deletes included). */
@@ -1346,7 +1348,7 @@ export type ManageRolesScreenProps = {
 
 export function ManageRolesScreen({
   groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, weeksVisible, tagRolesButton = true, deltaMissing = false, roleRows = false, onOpenRole, onOpenEngagement, onAvailabilityChange, onScheduleChange,
-  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged, onUnbook, onRowAction, onOpenInBookingEngine,
+  navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onFillBook, onTagged, onUnbook, onRowAction, onOpenInBookingEngine,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {}, initialEngagementTags = {},
   suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange, tagCommand,
 }: ManageRolesScreenProps) {
@@ -1472,6 +1474,8 @@ export function ManageRolesScreen({
   // The banner counts what was picked (engagements or roles); the modal always counts roles.
   const selectedRoles = groups.flatMap(g => g.roles).filter(r => roleInSelection(selection, r));
   const selectedCount = selected.size;
+  // Fill & Book (X) in the bulk banner: the selected roles that are not booked / confirmed and have a suggested WM
+  const fillBookRoles = selectedRoles.filter(r => !isBookedState(r) && suggestedFor(r).length > 0);
   // What "tag engagements" tags: the picked engagements, or (roles selected) the engagements those roles belong to
   const taggedEngagements = mode === "role" ? [...new Set(selectedRoles.map(r => r.engagement).filter((e): e is string => !!e))] : [...selected];
 
@@ -1538,14 +1542,17 @@ export function ManageRolesScreen({
                   layout="inline"
                   message={`${selectedCount} ${mode === "role" ? (selectedCount === 1 ? "role" : "roles") : (selectedCount === 1 ? "engagement" : "engagements")} selected`}
                   onDismiss={clearSelection}
-                  rightContent={(mode === "role" ? ROLE_ACTIONS : ENGAGEMENT_ACTIONS.filter(a => tagRolesButton || a.id !== "tag-roles")).map(a => (
+                  rightContent={[...(mode === "role" ? ROLE_ACTIONS : ENGAGEMENT_ACTIONS.filter(a => tagRolesButton || a.id !== "tag-roles")).map(a => (
                     <Tooltip key={a.id} content={a.label} placement="up-center" maxWidth={240}>
                       <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" || (a.id === "tag" && mode === "role") ? () => openTagging("roles") : a.id === "tag" || a.id === "tag-engagements" ? () => openTagging("engagements") : undefined}>
                         <Icon name={a.id} size={16} />
                         <span style={srOnly}>{a.label}</span>
                       </Button>
                     </Tooltip>
-                  ))}
+                  )),
+                    // Last place: a ghost text button with the number of roles it applies to (disabled at 0)
+                    <Button key="fill-book" kind="ghost" size="regular" disabled={fillBookRoles.length === 0} onClick={() => onFillBook?.({ roleIds: fillBookRoles.map(r => r.id) })}>Fill &amp; Book ({fillBookRoles.length})</Button>,
+                  ]}
                 />
               </div>
             </div>
