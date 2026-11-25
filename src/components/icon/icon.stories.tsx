@@ -58,7 +58,7 @@ const allIcons: IconName[] = [
   "sector", "segment", "skype", "skype-for-business", "snooze",
   "soft-exception", "split2",
   "substitute-child", "substitute-parent",
-  "tag-roles", "target-allocation", "task", "teams", "twitter", "unpin",
+  "tag-engagements", "tag-roles", "target-allocation", "task", "teams", "twitter", "unpin",
   "user-interest", "web", "wine-glass", "work",
 ];
 

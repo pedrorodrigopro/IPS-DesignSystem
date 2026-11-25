@@ -5,8 +5,9 @@
 //
 // Selection (engagement roles): checkbox on the header, on each merged engagement cell and on each role. Engagement and role
 // selection are mutually exclusive: ticking an engagement leaves its roles unticked and disabled, but the actions still apply to the
-// roles inside it. Selecting rows shows a 600px bulk banner centred in the page header row with three
-// ghost icon buttons — tag-roles (opens "Manage tags"), tag and owner. "Manage tags" is Figma "Tag roles" (2738:67102).
+// roles inside it. Selecting rows shows a 600px bulk banner centred in the page header row with ghost icon buttons:
+// engagements selected = tag-roles, tag, owner; roles selected = tag, tag-engagements (the engagements those roles belong to), owner.
+// They open "Manage tags" (src/modals/manage_tags, Storybook: Modals / Manage tags; Figma "Tag roles" 2738:67102).
 //
 // Container mapping (RULE 2b):
 //   Page bg: white (form/edit screen — not neutral-2)
@@ -23,7 +24,7 @@
 //   Switch columns: Switch component
 //   Row actions: check icon (sticky) + menu-vertical
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Fragment, createContext, useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Navbar }          from "../../components/navbar/navbar";
@@ -41,10 +42,15 @@ import { BookingPill }     from "../../components/booking_pill/booking_pill";
 import type { BookingPillCategory } from "../../components/booking_pill/booking_pill";
 import { PillSimple, PillWFState } from "../../components/pill/pill";
 import type { WFState }    from "../../components/pill/pill";
-import { Modal }           from "../../components/modal/modal";
-import { InputSelect, InputTextarea } from "../../components/input/input";
-import { DropdownActions, DropdownMultiSelection, DropdownSelection } from "../../components/dropdown/dropdown";
+import { InputSelect } from "../../components/input/input";
+import { DropdownActions, DropdownSelection } from "../../components/dropdown/dropdown";
+import { ManageTagsModal, DEFAULT_TAG_OPTIONS, DEFAULT_PEOPLE_OPTIONS } from "../../modals/manage_tags/manage_tags_modal";
+import type { TagRolesResult, TagPrefill } from "../../modals/manage_tags/manage_tags_modal";
 import { SuggestSidePanel } from "../../components/side_panel/suggest_side_panel";
+import { BookingCell } from "../../components/booking_cell/booking_cell";
+import type { BookingCellCategory } from "../../components/booking_cell/booking_cell";
+import { OverbookingSidePanel } from "../../components/side_panel/overbooking_side_panel";
+import type { OverbookingItem } from "../../components/side_panel/overbooking_side_panel";
 import type { SuggestCandidate } from "../../components/side_panel/suggest_side_panel";
 
 
@@ -77,12 +83,25 @@ function MandatoryHeader({ label }: { label: string }) {
 // ── "No X added / Add" multi-value cell ──────────────────────────────────────
 
 function MultiValueCell({ emptyLabel, value }: { emptyLabel: string; value?: string }) {
+  // One flow: the text and the "Add" link wrap together (two lines at most in these narrow columns, so the 60px rows hold it)
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {value ? <span style={{ ...body, fontWeight: 700, fontSize: 12 }}>{value}</span> : <span style={muted}>{emptyLabel}</span>}
-      <button style={{ ...linkCss }}>Add</button>
+    <div style={{ fontSize: 12, lineHeight: "18px" }}>
+      {value ? <span style={{ ...body, fontWeight: 700, fontSize: 12, lineHeight: "18px" }}>{value}</span> : <span style={{ ...muted, lineHeight: "18px" }}>{emptyLabel}</span>}{" "}
+      <button style={{ ...linkCss, lineHeight: "18px", verticalAlign: "top" }}>Add</button>
     </div>
   );
+}
+
+// Clicking a text field cell focuses it and selects all of its text (the mouse-up that ends the click would clear the selection, so it is swallowed once).
+// The focus look (outer ring on the cell border) is CSS: `.mr-field:focus` inside `.mr-edit` / `.mr-cell`, see FOCUS_CSS.
+function useSelectAll<T extends HTMLInputElement | HTMLTextAreaElement>() {
+  const fresh = useRef(false);
+  return {
+    className: "mr-field",
+    onFocus: (e: React.FocusEvent<T>) => { fresh.current = true; e.target.select(); },
+    onMouseUp: (e: React.MouseEvent<T>) => { if (fresh.current) { e.preventDefault(); fresh.current = false; } },
+    onBlur: () => { fresh.current = false; },
+  };
 }
 
 // ── Editable text cell ────────────────────────────────────────────────────────
@@ -91,19 +110,62 @@ function MultiValueCell({ emptyLabel, value }: { emptyLabel: string; value?: str
 function EditableTextCell({ defaultValue = "" }: { defaultValue?: string }) {
   const [val, setVal] = useState(defaultValue);
   const ref = useRef<HTMLTextAreaElement>(null);
-  const fit = () => { const t = ref.current; if (t) { t.style.height = "auto"; t.style.height = `${t.scrollHeight}px`; } };
+  const sel = useSelectAll<HTMLTextAreaElement>();
+  // A one-line title is centred in 32px (6px padding); a two-line one drops the padding so it still fits the 60px rows
+  const fit = () => { const t = ref.current; if (t) { t.style.padding = "6px 4px"; t.style.height = "auto"; if (t.scrollHeight > 32) { t.style.padding = "1px 4px"; t.style.height = "auto"; } t.style.height = `${t.scrollHeight}px`; } };
   useEffect(fit, [val]);
   return (
     <textarea
       ref={ref}
       rows={1}
+      {...sel}
       value={val}
       onChange={e => setVal(e.target.value.replace(/\n/g, " "))}
       onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLTextAreaElement).blur(); } }}
       style={{ display: "block", width: "100%", minHeight: 32, resize: "none", overflow: "hidden", boxSizing: "border-box", border: "none", borderBottom: "1px solid transparent", background: "transparent", fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, lineHeight: "20px", color: "var(--palette-blue-0)", outline: "none", padding: "6px 4px", borderRadius: 0, overflowWrap: "anywhere" }}
-      onFocus={e => e.target.style.borderBottomColor = "var(--palette-primary-0)"}
-      onBlur={e => e.target.style.borderBottomColor = "transparent"}
     />
+  );
+}
+
+// Engagement cell of the role-rows layout: a select (value + chevron), not a text field. The list opens in a portal so the table's scroll pane cannot clip it.
+function EngagementSelectCell({ value: val, onChange, options, tags }: { value: string; onChange: (engagement: string) => void; options: string[]; tags: Record<string, string> }) {
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const items = (options.includes(val) || !val ? options : [val, ...options]).map(o => ({ id: o, label: o }));
+  const toggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (pos) { setPos(null); return; }
+    const r = e.currentTarget.getBoundingClientRect();
+    setPos({ top: r.bottom + 4, left: r.left, width: r.width });
+  };
+  return (
+    <>
+      <button type="button" className="mr-field" title={val} aria-haspopup="listbox" aria-expanded={!!pos} onClick={toggle}
+        style={{ display: "flex", alignItems: "center", width: "100%", height: 32, padding: "0 4px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left" }}>
+        <span style={{ ...bodyBold, fontSize: 14, lineHeight: "20px", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{val}</span>
+        <Icon name="chevron-down" size={14} style={{ color: "var(--palette-blue-2)", flexShrink: 0, marginLeft: 4 }} />
+      </button>
+      {tags[val] && <div style={{ padding: "4px 4px 0" }}><PillSimple label={tags[val]} size="small" leftIcon="tag" /></div>}
+      {pos && createPortal(
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 9500 }} onClick={() => setPos(null)} />
+          <div style={{ position: "fixed", zIndex: 9501, top: pos.top, left: pos.left, minWidth: pos.width, width: "max-content", maxWidth: 480 }}>
+            <DropdownSelection items={items} selectedId={val} onSelect={id => { onChange(id); setPos(null); }} />
+          </div>
+        </>,
+        document.body,
+      )}
+    </>
+  );
+}
+
+// The "open" button of the Role / Engagement cells: the IPS Button (icon tertiary, small, icon only), shown on hover at the right end of the first line;
+// the text fades out under it
+function OpenButton({ label, onClick, right = 0 }: { label: string; onClick?: () => void; right?: number }) {
+  return (
+    <div className="mr-open-wrap" style={{ position: "absolute", top: 0, right, height: 32, display: "flex", alignItems: "center", paddingLeft: 28, paddingRight: 4 }}>
+      <Button kind="iconTertiary" size="small" title={label} onClick={onClick}>
+        <Icon name="open" size={16} />
+      </Button>
+    </div>
   );
 }
 
@@ -111,14 +173,14 @@ function EditableTextCell({ defaultValue = "" }: { defaultValue?: string }) {
 
 function EditableNumberCell({ defaultValue = 1 }: { defaultValue?: number }) {
   const [val, setVal] = useState(defaultValue.toString());
+  const sel = useSelectAll<HTMLInputElement>();
   return (
     <input
+      {...sel}
       type="number"
       value={val}
       onChange={e => setVal(e.target.value)}
       style={{ width: "100%", height: 32, border: "none", borderBottom: "1px solid transparent", background: "transparent", fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, color: "var(--palette-blue-0)", outline: "none", padding: "0 4px", borderRadius: 0 }}
-      onFocus={e => e.target.style.borderBottomColor = "var(--palette-primary-0)"}
-      onBlur={e => e.target.style.borderBottomColor = "transparent"}
     />
   );
 }
@@ -174,7 +236,8 @@ function SuggestedWMCell({ role }: { role: RoleRow }) {
   return (
     // Fills the whole cell edge to edge; the empty state uses the warning yellow (palette-orange-2), a populated cell stays transparent so the row tint shows through
     <td
-      style={{ ...tdStyle, padding: 0, background: empty ? "var(--palette-orange-2)" : "transparent", cursor: ctx ? "pointer" : "default" }}
+      className={empty ? undefined : "mr-edit"}
+      style={{ ...tdStyle, padding: 0, background: empty ? "var(--palette-orange-2)" : undefined, cursor: ctx ? "pointer" : "default" }}
       title={empty ? "No suggested workforce member" : undefined}
       onClick={() => ctx?.open(role)}
     >
@@ -195,12 +258,43 @@ const BOOKED_W = 240;
 const initialsOf = (name: string) => name.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const BookedUnbookContext = createContext<((role: RoleRow) => void) | undefined>(undefined);
 
+// Booked workforce members whose schedule is shown (role ids): the eye button of the Booked WM pill toggles it, the roles table and the availability table both add the rows
+// `hours` / `edit`: the cells are editable like the Booking Engine grid; the screen keeps what was typed (role id → schedule row id → week → hours)
+const ScheduleContext = createContext<{ open: Set<string>; toggle: (roleId: string) => void; hours: (roleId: string, item: BookedScheduleItem, week: number) => number | null; edit: (change: ScheduleChange) => void }>(
+  { open: new Set(), toggle: () => {}, hours: (_r, item, w) => item.hours[w] ?? null, edit: () => {} },
+);
+const SCHEDULE_ROW_H = 52;
+/** A row under a role while its booked member's schedule is shown: the role itself first (the person is booked on it), then their other roles, or a note when there are none */
+type ScheduleEntry = { key: string; kind: "own" | "other" | "none"; item?: BookedScheduleItem };
+function scheduleRowsOf(role: RoleRow, open: Set<string>): ScheduleEntry[] | null {
+  if (!open.has(role.id) || !role.booked || !isBookedState(role)) return null;
+  const items = role.booked.schedule ?? [];
+  return [
+    { key: "own", kind: "own" },
+    ...items.map(item => ({ key: item.id, kind: "other" as const, item })),
+    ...(items.length ? [] : [{ key: "none", kind: "none" as const }]),
+  ];
+}
+const scheduleRowCount = (role: RoleRow, open: Set<string>) => scheduleRowsOf(role, open)?.length ?? 0;
+/** Hours requested on the role in a week (what the availability cell shows, including what was typed) */
+function ownHoursOf(role: RoleRow, week: number, edits: Record<string, Record<number, number | null>>): number | null {
+  const e = edits[role.id];
+  if (e && week in e) return e[week];
+  const c = role.availability?.[week];
+  return c == null ? null : typeof c === "number" ? c : c.hours;
+}
+/** Booking colour of the role's own row: the colour of its booking category (blue by default) */
+const ownCategory = (role: RoleRow): BookingCellCategory => { const c = role.bookingCategory?.category; return c === "booking-red" ? "red" : c === "booking-purple" ? "purple" : "blue"; };
+const sumHours = (h: (number | null)[]) => h.reduce<number>((n, x) => n + (x ?? 0), 0);
+
 function BookedWMCell({ role }: { role: RoleRow }) {
   const unbook = useContext(BookedUnbookContext);
+  const schedule = useContext(ScheduleContext);
+  const shown = schedule.open.has(role.id);
   return (
-    <td style={{ ...tdStyle, padding: "8px", verticalAlign: "top", whiteSpace: "nowrap" }}>
+    <td style={{ ...readOnlyTd, padding: "8px", verticalAlign: "top", whiteSpace: "nowrap" }}>
       {role.booked && isBookedState(role) && (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%", boxSizing: "border-box", padding: "4px 10px 4px 6px", verticalAlign: "middle", borderRadius: "var(--radius-2xl, 32px)", background: "var(--palette-neutral-1)" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: "100%", boxSizing: "border-box", padding: "4px 6px", verticalAlign: "middle", borderRadius: "var(--radius-2xl, 32px)", background: "var(--palette-neutral-1)" }}>
           <button
             type="button"
             title={`Remove ${role.booked.name}`}
@@ -232,6 +326,15 @@ function BookedWMCell({ role }: { role: RoleRow }) {
               </span>
             </Tooltip>
           )}
+          {/* Schedule: the "hidden" eye turns into "shown" while the person's other bookings are listed under the role */}
+          <button
+            type="button" aria-pressed={shown}
+            title={shown ? "Hide schedule" : "Show schedule"} aria-label={shown ? `Hide schedule of ${role.booked.name}` : `Show schedule of ${role.booked.name}`}
+            onClick={() => schedule.toggle(role.id)}
+            style={{ width: 20, height: 20, padding: 0, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-0)", flexShrink: 0 }}
+          >
+            <Icon name={shown ? "shown" : "hidden"} size={16} />
+          </button>
         </span>
       )}
     </td>
@@ -246,8 +349,8 @@ function BookedWMCell({ role }: { role: RoleRow }) {
 type FillEdges = { top: boolean; bottom: boolean; left: boolean; right: boolean };
 const FILL_BLUE = "var(--palette-primary-0)";
 
-function HoursTd({ defaultValue, flag, onChange, fill, fillEdges, dragging, onDragStart, onDragEnter }: {
-  defaultValue?: number; flag?: "error" | "warning"; onChange?: (hours: number | null) => void;
+function HoursTd({ defaultValue, flag, onFlagClick, onChange, fill, fillEdges, dragging, onDragStart, onDragEnter }: {
+  defaultValue?: number; flag?: "error" | "warning"; onFlagClick?: () => void; onChange?: (hours: number | null) => void;
   /** A value pushed in from outside (drag fill): `n` changes every time, `v` is the text to show */
   fill?: { n: number; v: string };
   /** Edges of the drag rectangle that run along this cell (null = the cell is not inside it) */
@@ -258,6 +361,7 @@ function HoursTd({ defaultValue, flag, onChange, fill, fillEdges, dragging, onDr
   const [hover, setHover] = useState(false);
   const [focus, setFocus] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const fresh = useRef(false);     // the click that focused the field: its mouse-up must not clear the "select all"
   useEffect(() => { if (fill) setVal(fill.v); }, [fill?.n]); // eslint-disable-line react-hooks/exhaustive-deps
   const edge = (on: boolean, inset: string) => (on ? inset : null);
   const outline = fillEdges
@@ -274,15 +378,23 @@ function HoursTd({ defaultValue, flag, onChange, fill, fillEdges, dragging, onDr
         boxShadow: outline ?? (focus ? "inset 0 0 0 2px var(--palette-blue-1)" : undefined),
       }}
     >
-      {flag && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: flag === "error" ? "var(--palette-red-0)" : "var(--palette-orange-1)" }} />}
+      {flag && (
+        // Potential overbooking: an 8px bar on top of the cell (it overlays the cell, the row keeps its height). The press must not reach the cell, which would focus the field / start a drag fill.
+        <button
+          type="button" className="mr-flag" aria-label="Show potential overbookings" title="Potential overbooking"
+          onMouseDown={e => e.stopPropagation()} onClick={onFlagClick}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, height: 8, padding: 0, border: "none", cursor: "pointer", background: flag === "error" ? "var(--palette-red-0)" : "var(--palette-orange-1)" }}   /* orange-1 = the warning icon of the panel */
+        />
+      )}
       <input
         ref={input}
         value={val}
         inputMode="numeric"
         aria-label="Requested hours"
         onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 3); setVal(v); onChange?.(v === "" ? null : Number(v)); }}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onFocus={e => { setFocus(true); fresh.current = true; e.target.select(); }}
+        onMouseUp={e => { if (fresh.current) { e.preventDefault(); fresh.current = false; } }}
+        onBlur={() => { setFocus(false); fresh.current = false; }}
         style={{
           display: "block", width: "100%", height: 24, marginTop: 4, boxSizing: "border-box", textAlign: "center", outline: "none", padding: "0 8px",
           fontFamily: "var(--font-family)", fontSize: 14, fontWeight: 700, lineHeight: "115%", color: "var(--palette-blue-0)",
@@ -336,6 +448,8 @@ const tdStyle: React.CSSProperties = {
   borderBottom: "1px solid var(--palette-neutral-0)",
   borderRight: "1px solid var(--palette-neutral-0)",
 };
+// Cells that cannot be edited (Tag, Workflow state, Delta, Booked WM, Clients) sit on the neutral light background, like the Delta cell and the merged engagement cell
+const readOnlyTd: React.CSSProperties = { ...tdStyle, background: "var(--palette-neutral-2)" };
 
 // ── Sticky table headers ──────────────────────────────────────────────────────
 // The tables sit inside horizontal-scroll wrappers (overflow-x makes them clip vertically too) and inside a Tile with overflow:hidden, so a plain
@@ -388,12 +502,16 @@ type RoleRow = {
   /** Adds the extra switch column (smoke-santi) to the group's table */
   extraColumns?: boolean;
   /** Requested hours per week for the availability-rules table, one entry per week column (missing / null = empty cell).
-   *  `flag` draws a 2px red (error) or orange (warning) top border on the cell. */
+   *  `flag` draws an 8px red (error) or orange (warning) bar on top of the cell; clicking it opens the Potential overbookings side panel. */
   availability?: AvailabilityCell[];
   /** Suggested workforce member ("Suggested WM" column of the engagement tables). Missing / null = nobody suggested yet: the cell shows the warning background, except on a booked or confirmed role, which always shows someone (its own suggestion, else the booked WM). */
   suggested?: { name: string; rank?: string } | null;
   /** Booked workforce member ("Booked WM" column, right after Suggested WM in every engagement variant): who is booked. The pill only shows when the role's Workflow state is confirmed or booked; in any other state the cell stays empty. */
-  booked?: { name: string; /** Potential overbooking: an orange warning icon next to the pill; its tooltip says "Potential overbooking" and lists these weeks */ overbooking?: { weeks: string[] } } | null;
+  booked?: { name: string; /** Potential overbooking: an orange warning icon next to the pill; its tooltip says "Potential overbooking" and lists these weeks */ overbooking?: { weeks: string[] };
+    /** The booked person's schedule in the weeks of the availability table: the other roles / engagements they are booked on. Shown as rows under the role (and the grid on the right) when the eye button of the Booked WM pill is switched on */
+    schedule?: BookedScheduleItem[];
+    /** The person's weekly capacity in hours (default 40). With a `schedule`, the potential overbooking of every week is live: requested hours on this role + their hours on the other roles − capacity */
+    capacity?: number } | null;
   /** Rank the role asks for: a suggested WM of that rank gets the green check in the Suggest side panel */
   requestedRank?: string;
   /** Hours booked on the role (confirmed and booked roles). Feeds the read-only **Delta** column of the engagement variants: requested hours (the sum of the
@@ -401,7 +519,53 @@ type RoleRow = {
   bookedHours?: number;
 };
 
-export type AvailabilityCell = number | { hours: number; flag?: "error" | "warning" } | null;
+/** What the Potential overbookings side panel shows for a flagged week: the suggested workforce member's other commitments in that week, colliding with the role's availability rules.
+ *  The overbooking is live: requested hours + the hours of `items` − `capacity`. Editing the requested hours down to (or under) the capacity makes it go away: the bar disappears. */
+export type PotentialOverbooking = {
+  /** The person's capacity for the week, in hours (default 40) */
+  capacity?: number;
+  /** The person's colliding bookings in that week (the role's own requested hours are added on top by the panel) */
+  items: (OverbookingItem & { hours: number })[];
+};
+const DEFAULT_CAPACITY = 40;
+const PILL_OF: Record<BookingCellCategory, BookingPillCategory> = { blue: "booking-blue", red: "booking-red", purple: "booking-purple", empty: "booking-blue" };
+type OverbookingNow = { over: number; level: "warning" | "error"; items: (OverbookingItem & { hours: number })[] };
+/** The potential overbooking of a role in one week, or null. A role with a booked member and a schedule is calculated live from that schedule (so editing the schedule rows moves it);
+ *  otherwise the cell's own `overbooking` data is used. Needs requested hours on the role in that week. */
+function overbookingNow(role: RoleRow, week: number, requested: number | null | undefined, scheduleHours: (roleId: string, item: BookedScheduleItem, week: number) => number | null): OverbookingNow | null {
+  if (!(requested && requested > 0)) return null;
+  const raw = role.availability?.[week];
+  const cell = raw == null || typeof raw === "number" ? null : raw;
+  const booked = role.booked && isBookedState(role) ? role.booked : null;
+  let items: (OverbookingItem & { hours: number })[]; let capacity: number;
+  if (booked?.schedule) {
+    items = booked.schedule
+      .map(it => { const hours = scheduleHours(role.id, it, week) ?? 0; return { roleName: it.roleName, bookingLabel: `Booked ${hours}h`, bookingCategory: PILL_OF[it.category ?? "blue"], hours }; })
+      .filter(i => i.hours > 0);
+    capacity = booked.capacity ?? DEFAULT_CAPACITY;
+  } else if (cell?.overbooking) { items = cell.overbooking.items; capacity = cell.overbooking.capacity ?? DEFAULT_CAPACITY; }
+  else return null;
+  const over = requested + items.reduce((n, i) => n + i.hours, 0) - capacity;
+  return over > 0 ? { over, level: cell?.flag ?? "warning", items } : null;
+}
+
+/** A week of the availability table. A potential overbooking draws an 8px bar on top of the cell: the warning icon colour of the panel (orange), or red (`error`) for a higher overbooking range (defined by the account). Clicking the bar opens the Potential overbookings side panel.
+ *  Where the role has a booked member with a `schedule` the overbooking is calculated live; otherwise `flag` + `overbooking` describe it. */
+/** An hours cell of a schedule row was edited (the booked workforce member's booking on another role) */
+export type ScheduleChange = { roleId: string; scheduleId: string; weekIndex: number; hours: number };
+
+/** One role (of another engagement or the same one) the booked workforce member is booked on */
+export type BookedScheduleItem = {
+  id: string;
+  roleName: string;
+  engagement: string;
+  /** Booking colour of the grid cells (default blue) */
+  category?: BookingCellCategory;
+  /** Hours booked per week, one entry per week column of the availability table (null / 0 = nothing) */
+  hours: (number | null)[];
+};
+
+export type AvailabilityCell = number | { hours: number; flag?: "error" | "warning"; overbooking?: PotentialOverbooking } | null;
 
 /** Reported while a requested-hours cell of the availability-rules table is edited (hours = null when the cell is emptied) */
 export type AvailabilityChange = { roleId: string; weekIndex: number; hours: number | null };
@@ -413,7 +577,7 @@ export const DEFAULT_AVAILABILITY_WEEKS = [
 ];
 
 // Row / header heights shared by the roles table and the availability table so their rows line up
-const ROW_H = 100;
+const ROW_H = 60;
 const HEAD_H = 49;   // the roles table header is as tall as its checkboxes need (32px + padding + border)
 const WEEK_W = 96;           // narrow week columns (the Figma's are 143px); headers wrap onto two lines
 const ACTIONS_W = 64;
@@ -436,6 +600,8 @@ const ROW_MENU_ITEMS: { id: RowMenuAction; label: string }[] = [
 ];
 // The screen owns the menu; the buttons only say which row and where they are
 const FreshRowContext = createContext<string | null>(null);
+// Clicking the overbooking bar of a cell asks the screen to open the Potential overbookings panel for that role and week
+const OverbookingOpenContext = createContext<((roleId: string, weekIndex: number) => void) | null>(null);
 // Hours the user typed into the availability cells so far (role id → week index → hours), so Delta follows the edits
 const HoursEditsContext = createContext<Record<string, Record<number, number | null>>>({});
 
@@ -443,21 +609,25 @@ const DELTA_W = 88;
 /** Only a confirmed or booked role has someone booked: its Booked WM pill shows, and its Delta is requested − booked */
 const isBookedState = (role: RoleRow) => role.wfState === "confirmed" || role.wfState === "booked";
 /** Delta column. Confirmed and booked roles: requested − booked hours (negative = red-0, 0h = green-0, positive = neutral). Every other role has nothing booked yet, so its delta is simply the requested hours: always above 0h. */
-function deltaHours(role: RoleRow, edits: Record<string, Record<number, number | null>>): number {
+function deltaHours(role: RoleRow, edits: Record<string, Record<number, number | null>>, missing = false): number {
   const cell = (c: AvailabilityCell | undefined) => (c == null ? 0 : typeof c === "number" ? c : c.hours);
   const requested = (role.availability ?? []).reduce<number>((n, c, i) => n + (edits[role.id] && i in edits[role.id] ? (edits[role.id][i] ?? 0) : cell(c)), 0)
     + Object.keys(edits[role.id] ?? {}).filter(k => Number(k) >= (role.availability?.length ?? 0)).reduce((n, k) => n + (edits[role.id][Number(k)] ?? 0), 0);
+  // `missing` (deltaMissing): booked − requested for every role, so hours still to book show as a negative number (nothing booked: minus the requested hours)
+  if (missing) return (isBookedState(role) ? role.bookedHours ?? 0 : 0) - requested;
   if (!isBookedState(role)) return requested;
   return requested - (role.bookedHours ?? 0);
 }
+/** deltaMissing: Delta is booked − requested, i.e. negative (red-0) while hours are missing */
+const DeltaMissingContext = createContext(false);
 const fmtDelta = (d: number) => `${d > 0 ? "+" : ""}${d}h`;
 
 // Read-only, same look as the merged engagement title cell: neutral-2 background, regular weight
 function DeltaCell({ role }: { role: RoleRow }) {
   const edits = useContext(HoursEditsContext);
-  const d = deltaHours(role, edits);
+  const d = deltaHours(role, edits, useContext(DeltaMissingContext));
   return (
-    <td style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
+    <td style={readOnlyTd}>
       {/* Bold; negative = red-0 (#D42A36), 0h = green-0 (#248E61), positive = neutral */}
       <span style={{ ...body, fontWeight: 700, lineHeight: "20px", color: d < 0 ? "var(--palette-red-0)" : d === 0 ? "var(--palette-green-0)" : "var(--palette-blue-0)" }}>{fmtDelta(d)}</span>
     </td>
@@ -465,41 +635,44 @@ function DeltaCell({ role }: { role: RoleRow }) {
 }
 const RowMenuContext = createContext<((role: RoleRow, anchor: HTMLElement) => void) | null>(null);
 // Entry animation of a duplicated row: it slides in from above while a blue tint fades out
+// Hover of editable cells = the hover of an IPS input field (white-1). Role-rows layout: the Role / Engagement cells also show an "open" button on hover
+// (the text fades out under it), and their grey fill covers the whole cell height.
+const HOVER_CSS = `.mr-edit:hover { background-color: var(--palette-white-1); }
+.mr-cell:hover .mr-fill { background-color: var(--palette-white-1); }
+.mr-open-wrap { opacity: 0; pointer-events: none; transition: opacity 0.12s ease; background: linear-gradient(90deg, rgba(247,247,248,0), var(--palette-white-1) 55%); }
+.mr-cell:has(.mr-field:focus) .mr-open-wrap { background: linear-gradient(90deg, rgba(255,255,255,0), var(--palette-white-0) 55%); }
+.mr-cell:hover .mr-open-wrap, .mr-cell:focus-within .mr-open-wrap { opacity: 1; pointer-events: auto; }
+.mr-flag { transition: filter 0.12s ease; }
+.mr-flag:hover { filter: brightness(0.8); }
+.mr-flag:focus-visible { outline: 2px solid var(--palette-blue-1); outline-offset: -2px; }
+`;
+// Focus of a text field cell: the white cell with a navy ring (the IPS input focus) drawn on the cell's own outer border
+const FOCUS_CSS = `.mr-edit:has(.mr-field:focus), .mr-cell:has(.mr-field:focus) { background-color: var(--palette-white-0); box-shadow: inset 0 0 0 2px var(--palette-blue-1); }
+.mr-cell:has(.mr-field:focus) .mr-fill { background-color: transparent; }   /* the cell itself is white: the fill must not cover the ring */
+.mr-field:focus { outline: none; }`;
 const ROW_ANIM_CSS = `@keyframes mr-row-in { 0% { opacity: 0; transform: translateY(-14px); background-color: var(--palette-primary-3); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
 .mr-row-new { animation: mr-row-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }`;
 
 function StickyActions({ variant = "dtt", role }: { variant?: RowActionsVariant; role?: RoleRow }) {
   const openMenu = useContext(RowMenuContext);
+  // Vertical: the menu dots on top of the status circle (20px each, they fit the 60px rows)
   const menuBtn = (
     <button
       type="button" title="More actions" aria-label="More actions" aria-haspopup="menu"
-      onClick={e => { if (role && openMenu) openMenu(role, e.currentTarget); }}
-      style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)" }}
+      onClick={e => { if (variant === "roles" && role && openMenu) openMenu(role, e.currentTarget); }}
+      style={{ width: 20, height: 20, flexShrink: 0, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-0)" }}
     >
       <Icon name="menu-vertical" size={14} />
     </button>
   );
-  if (variant === "roles") {
-    return (
-      <Row gap={4}>
-        {/* Green tick pill */}
-        <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 20, borderRadius: 16, background: "var(--palette-green-2)" }}>
-          <Icon name="check" size={14} style={{ color: "var(--palette-green-0)" }} />
-        </div>
-        {menuBtn}
-      </Row>
-    );
-  }
-  // dtt — pencil in neutral-1 pill
+  const roles = variant === "roles";
   return (
-    <Row gap={4}>
-      <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 20, borderRadius: 16, background: "var(--palette-neutral-1)" }}>
-        <Icon name="edit" size={14} style={{ color: "var(--palette-blue-0)" }} />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+      {menuBtn}
+      <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, flexShrink: 0, borderRadius: "50%", background: roles ? "var(--palette-green-2)" : "var(--palette-neutral-1)" }}>
+        <Icon name={roles ? "check" : "edit"} size={14} style={{ color: roles ? "var(--palette-green-0)" : "var(--palette-blue-0)" }} />
       </div>
-      <button style={{ width: 24, height: 24, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-2)" }}>
-        <Icon name="menu-vertical" size={14} />
-      </button>
-    </Row>
+    </div>
   );
 }
 
@@ -525,13 +698,16 @@ function SelectBox({ kind, selection, checked, indeterminate, onChange, header =
   );
 }
 
-function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, engagementTags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth, onAvailabilityChange }: { engagementTags?: Record<string, string>; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
+function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags = {}, engagementTags = {}, availability = false, weeks = DEFAULT_AVAILABILITY_WEEKS, availabilityWidth = DEFAULT_AVAILABILITY_W, onAvailabilityWidth, onAvailabilityChange, roleRows = false, onOpenRole, onOpenEngagement, onEngagementChange }: { onEngagementChange?: (roleId: string, engagement: string) => void; engagementTags?: Record<string, string>; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler; roleRows?: boolean; onOpenRole?: (roleId: string) => void; onOpenEngagement?: (engagement: string) => void }) {
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const paneRef = useRef<HTMLDivElement>(null);
   const stickyRef = useStickyHeader();
   // The merged Engagement column only exists when the roles belong to engagements (not on the template editor)
   const hasEngagement = roles.some(r => r.engagement);
+  // Role-rows layout: no merged engagement cell. Role (checkbox + title) is the first column, Engagement the second: one line, editable, one per row.
+  const mergedEngagement = hasEngagement && !roleRows;
+  const engagementColumn = hasEngagement && roleRows;
   // What each header checkbox toggles: this table's engagement titles / role ids
   // Every engagement variant has it (DTT has no availability table); only confirmed / booked roles carry a person, the rest show an empty cell
   const showBooked = !!availability;
@@ -544,9 +720,13 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
     return { keys, checked: selection.mode === kind && keys.length > 0 && n === keys.length, indeterminate: selection.mode === kind && n > 0 && n < keys.length };
   };
   const freshRow = useContext(FreshRowContext);
+  const scheduleCtx = useContext(ScheduleContext);
+  const scheduleOpen = scheduleCtx.open;
+  const hoursEdits = useContext(HoursEditsContext);
   const headers = [
-    ...(hasEngagement ? [{ label: "Engagement title", mandatory: false, width: 168, checkbox: selectable }] : []),
-    { label: "Role title",         mandatory: true,  width: 168, checkbox: selectable },
+    ...(mergedEngagement ? [{ label: "Engagement title", mandatory: false, width: 168, checkbox: selectable }] : []),
+    { label: roleRows ? "Role" : "Role title", mandatory: true, width: roleRows ? 220 : 168, checkbox: selectable },
+    ...(engagementColumn ? [{ label: "Engagement", mandatory: false, width: 240 }] : []),
     // Tag column (set with "Manage tags"); the template editor has no tags
     ...(selectable ? [{ label: "Tag", mandatory: false, width: 140 }] : []),
     { label: "Workflow state",     mandatory: false, width: 140 },
@@ -577,7 +757,7 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
   const rolesTable = (
     <div style={{ overflowX: "auto", ...(availability ? { flex: "1 1 0", minWidth: 0 } : null) }}>
-      <table ref={stickyRef} style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (availability ? SUGGESTED_W : 0) + (showBooked ? BOOKED_W : 0) + (showDelta ? DELTA_W : 0) }}>
+      <table ref={stickyRef} style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: 1524 + (roleRows && hasEngagement ? 124 : 0) + (availability ? SUGGESTED_W : 0) + (showBooked ? BOOKED_W : 0) + (showDelta ? DELTA_W : 0) }}>
         <thead>
           <tr style={availability ? { height: HEAD_H } : undefined}>
             {headers.map((h, i) => (
@@ -601,13 +781,17 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
         <tbody>
           {roles.map((role, idx) => {
             // Consecutive roles of the same engagement share one merged engagement cell
-            const first = hasEngagement && (idx === 0 || roles[idx - 1].engagement !== role.engagement);
+            const first = mergedEngagement && (idx === 0 || roles[idx - 1].engagement !== role.engagement);
             const run = first ? roles.filter((x, j) => j >= idx && roles.slice(idx, j + 1).every(y => y.engagement === role.engagement)) : [];
+            // The schedule rows of an open role sit inside the merged engagement cell too
+            const extra = run.reduce((n, r) => n + scheduleRowCount(r, scheduleOpen), 0);
+            const sched = scheduleRowsOf(role, scheduleOpen);
             return (
-            <tr key={role.id} className={freshRow === role.id ? "mr-row-new" : undefined} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white", ...(availability ? { height: ROW_H } : null) }}>
+            <Fragment key={role.id}>
+            <tr className={freshRow === role.id ? "mr-row-new" : undefined} style={{ background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white", ...(availability ? { height: ROW_H } : null) }}>
               {/* Read-only engagement title, merged across the engagement's roles: neutral light background, regular weight, checkbox selects them all */}
               {first && (
-                <td rowSpan={run.length} style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
+                <td rowSpan={run.length + extra} style={{ ...tdStyle, background: "var(--palette-neutral-2)" }}>
                   <Row gap={8} style={{ alignItems: "flex-start" }}>
                     {selectable && <SelectBox kind="engagement" selection={selection} checked={!!role.engagement && selection.selected.has(role.engagement)} onChange={() => role.engagement && selection.toggle([role.engagement], "engagement")} />}
                     <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
@@ -618,25 +802,53 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
                   </Row>
                 </td>
               )}
-              <td style={tdStyle}>
+              {roleRows ? (
+                // Role cell: the checkbox, then the editable title (wraps). On hover the text area turns input-grey over the whole cell height and an "open" button appears
+                <td className="mr-cell" style={{ ...tdStyle, position: "relative", padding: 0 }}>
+                  <div className="mr-fill" style={{ position: "absolute", top: 0, bottom: 0, left: 44, right: 0 }} />
+                  <Row gap={4} style={{ alignItems: "flex-start", position: "relative", padding: "8px" }}>
+                    {selectable && <SelectBox kind="role" selection={selection} checked={selection.selected.has(role.id)} onChange={() => selection.toggle([role.id], "role")} />}
+                    <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+                      <EditableTextCell defaultValue={role.title} />
+                      <OpenButton label={`Open role: ${role.title}`} onClick={() => onOpenRole?.(role.id)} />
+                    </div>
+                  </Row>
+                </td>
+              ) : (
+              <td className="mr-edit" style={tdStyle}>
                 <Row gap={8} style={{ alignItems: "flex-start" }}>
                   {selectable && <SelectBox kind="role" selection={selection} checked={selection.selected.has(role.id)} onChange={() => selection.toggle([role.id], "role")} />}
                   <EditableTextCell defaultValue={role.title} />
                 </Row>
               </td>
+              )}
+              {engagementColumn && (
+                // Engagement cell: a select (value + chevron, one line with an ellipsis); same hover fill and "open" button as the role cell, the button sits left of the chevron
+                <td className="mr-cell" style={{ ...tdStyle, position: "relative", padding: 0 }}>
+                  <div className="mr-fill" style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }} />
+                  <div style={{ position: "relative", padding: "8px" }}>
+                    {/* same box as in the role cell: the button is positioned against the text, not the cell padding, so it lines up with the first line */}
+                    <div style={{ position: "relative" }}>
+                      {/* the tag the engagement got (bulk "Tag parent engagements" / Tag) shows right below its title */}
+                      <EngagementSelectCell value={role.engagement ?? ""} onChange={e => onEngagementChange?.(role.id, e)} options={[...new Set(roles.map(r => r.engagement).filter((e): e is string => !!e))]} tags={engagementTags} />
+                      <OpenButton right={22} label={`Open engagement: ${role.engagement ?? ""}`} onClick={() => role.engagement && onOpenEngagement?.(role.engagement)} />
+                    </div>
+                  </div>
+                </td>
+              )}
               {selectable && (
-                <td style={tdStyle}>
+                <td style={readOnlyTd}>
                   {tags[role.id] ? <PillSimple label={tags[role.id]} size="small" leftIcon="tag" /> : <span style={muted}>-</span>}
                 </td>
               )}
-              <td style={tdStyle}>{role.wfState && <PillWFState state={role.wfState} />}</td>
+              <td style={readOnlyTd}>{role.wfState && <PillWFState state={role.wfState} />}</td>
               {showDelta && <DeltaCell role={role} />}
               {availability && <SuggestedWMCell role={role} />}
               {showBooked && <BookedWMCell role={role} />}
-              <td style={tdStyle}><EditableTextCell defaultValue={role.description} /></td>
-              <td style={tdStyle}><EditableNumberCell defaultValue={role.vacancies} /></td>
-              <td style={tdStyle}><InlineSelectCell placeholder="" value={role.assignee} /></td>
-              <td style={tdStyle}>
+              <td className="mr-edit" style={tdStyle}><EditableTextCell defaultValue={role.description} /></td>
+              <td className="mr-edit" style={tdStyle}><EditableNumberCell defaultValue={role.vacancies} /></td>
+              <td className="mr-edit" style={tdStyle}><InlineSelectCell placeholder="" value={role.assignee} /></td>
+              <td className="mr-edit" style={tdStyle}>
                 {role.bookingCategory
                   ? <BookingCategoryCell {...role.bookingCategory} />
                   : <InlineSelectCell placeholder="" />}
@@ -649,19 +861,19 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
                   <Switch checked={false} onChange={() => {}} />
                 </td>
               )}
-              <td style={tdStyle}>
+              <td className="mr-edit" style={tdStyle}>
                 <InlineSelectCell value={role.businessUnit} />
               </td>
-              <td style={tdStyle}><InlineSelectCell placeholder="" value={role.priority} /></td>
-              <td style={tdStyle}><EditableTextCell defaultValue={role.label ?? "label"} /></td>
-              <td style={tdStyle}>
+              <td className="mr-edit" style={tdStyle}><InlineSelectCell placeholder="" value={role.priority} /></td>
+              <td className="mr-edit" style={tdStyle}><EditableTextCell defaultValue={role.label ?? "label"} /></td>
+              <td className="mr-edit" style={tdStyle}>
                 <Row gap={4}>
                   <EditableTextCell defaultValue={role.location ?? ""} />
                   <Icon name="filter-clean" size={14} style={{ color: "var(--palette-blue-2)" }} />
                   <Icon name="chevron-down" size={14} style={{ color: "var(--palette-blue-2)" }} />
                 </Row>
               </td>
-              <td style={tdStyle}><span style={muted}>-</span></td>
+              <td style={readOnlyTd}><span style={muted}>-</span></td>
               {/* Sticky actions — filter:drop-shadow works on <td>, box-shadow does not */}
               {!availability && (
                 <td style={{ ...tdStyle, position: "sticky", right: 0, background: "white", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }}>
@@ -669,6 +881,29 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
                 </td>
               )}
             </tr>
+            {sched !== null && sched.map(entry => {
+              const item = entry.item;
+              const title = entry.kind === "own" ? role.title : item?.roleName;
+              const sub = entry.kind === "own"
+                ? `${role.engagement ?? ""} · ${sumHours(weeks.map((_, w) => ownHoursOf(role, w, hoursEdits)))}h booked`
+                : item ? `${item.engagement} · ${sumHours(item.hours.map((_, w) => scheduleCtx.hours(role.id, item, w)))}h booked` : "";
+              return (
+              <tr key={entry.key} style={{ height: SCHEDULE_ROW_H }}>
+                <td colSpan={headers.length - (mergedEngagement ? 1 : 0)} style={{ ...tdStyle, height: SCHEDULE_ROW_H, boxSizing: "border-box", background: "var(--palette-neutral-2)", verticalAlign: "middle", padding: "4px 12px", borderRight: "none" }}>
+                  {/* Floating label: sticky to the right edge of the (horizontally scrolling) roles pane, so it stays right next to the divider */}
+                  <div style={{ position: "sticky", right: 12, marginLeft: "auto", width: "max-content", maxWidth: 520 }}>
+                  {entry.kind !== "none" ? (
+                    <div style={{ minWidth: 0, textAlign: "right" }}>
+                      <div style={{ ...body, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+                      <div style={{ ...labelCss, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
+                    </div>
+                  ) : <span style={muted}>{role.booked?.name} has no other bookings in these weeks</span>}
+                  </div>
+                </td>
+              </tr>
+              );
+            })}
+            </Fragment>
             );
           })}
         </tbody>
@@ -729,8 +964,12 @@ function RolesTable({ roles, showExtraColumns = false, rowActions = "dtt", selec
 
 function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, width, onAvailabilityChange }: { roles: RoleRow[]; weeks: string[]; selection: Selection; selectable: boolean; rowActions: RowActionsVariant; width: number; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const freshRow = useContext(FreshRowContext);
+  const openOverbooking = useContext(OverbookingOpenContext);
+  const hoursEdits = useContext(HoursEditsContext);
+  const scheduleCtx = useContext(ScheduleContext);
+  const scheduleOpen = scheduleCtx.open;
   const stickyRef = useStickyHeader();
-  const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined } : c);
+  const norm = (c: AvailabilityCell | undefined) => (c == null ? null : typeof c === "number" ? { hours: c, flag: undefined as "error" | "warning" | undefined, overbooking: undefined as PotentialOverbooking | undefined } : c);
 
   // Drag fill. `anchor` = the cell the press started on, `over` = the cell the pointer is on now; once they differ the drag is on.
   const [anchor, setAnchor] = useState<{ r: number; c: number } | null>(null);
@@ -739,6 +978,13 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
   const edited = useRef<Record<string, number | null>>({});      // what the user typed / filled, by "roleId:week"
   const fillSeq = useRef(0);
   const key = (roleId: string, c: number) => `${roleId}:${c}`;
+  // An hours edit made from outside the cell (the role's own schedule row): the availability cell takes the value like a drag fill and the change is reported
+  const applyHours = (r: number, c: number, v: number) => {
+    const k = key(roles[r].id, c);
+    edited.current[k] = v;
+    setFills(f => ({ ...f, [k]: { n: ++fillSeq.current, v: String(v) } }));
+    onAvailabilityChange?.({ roleId: roles[r].id, weekIndex: c, hours: v });
+  };
   const valueAt = (r: number, c: number): number | null => {
     const k = key(roles[r].id, c);
     return k in edited.current ? edited.current[k] : (norm(roles[r].availability?.[c])?.hours ?? null);
@@ -780,14 +1026,17 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
         </thead>
         <tbody>
           {roles.map((role, ri) => (
-            <tr key={role.id} className={freshRow === role.id ? "mr-row-new" : undefined} style={{ height: ROW_H, background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
+            <Fragment key={role.id}>
+            <tr className={freshRow === role.id ? "mr-row-new" : undefined} style={{ height: ROW_H, background: selectable && roleInSelection(selection, role) ? "var(--palette-primary-3)" : "white" }}>
               {weeks.map((w, i) => {
                 const c = norm(role.availability?.[i]);
                 const edges: FillEdges | null = rect && ri >= rect.r0 && ri <= rect.r1 && i >= rect.c0 && i <= rect.c1
                   ? { top: ri === rect.r0, bottom: ri === rect.r1, left: i === rect.c0, right: i === rect.c1 } : null;
                 return (
                   <HoursTd
-                    key={w} defaultValue={c?.hours} flag={c?.flag}
+                    key={w} defaultValue={c?.hours}
+                    flag={overbookingNow(role, i, i in (hoursEdits[role.id] ?? {}) ? hoursEdits[role.id][i] : c?.hours, scheduleCtx.hours)?.level}
+                    onFlagClick={() => openOverbooking?.(role.id, i)}
                     onChange={hours => { edited.current[key(role.id, i)] = hours; onAvailabilityChange?.({ roleId: role.id, weekIndex: i, hours }); }}
                     fill={fills[key(role.id, i)]} fillEdges={edges} dragging={active}
                     onDragStart={() => { setAnchor({ r: ri, c: i }); setOver({ r: ri, c: i }); }}
@@ -799,6 +1048,30 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
                 <StickyActions variant={rowActions} role={role} />
               </td>
             </tr>
+            {(() => {
+              // The role itself first (the person is booked on it: its cells are the requested hours above), then the person's other bookings: Booking Engine grid cells with the booking colour dot, same rows as on the left
+              const sched = scheduleRowsOf(role, scheduleOpen);
+              if (sched === null) return null;
+              return sched.map(entry => {
+                const item = entry.item;
+                return (
+                <tr key={entry.key} style={{ height: SCHEDULE_ROW_H }}>
+                  {weeks.map((w, i) => {
+                    const h = entry.kind === "own" ? ownHoursOf(role, i, hoursEdits) : item ? scheduleCtx.hours(role.id, item, i) : null;
+                    const category = h ? (entry.kind === "own" ? ownCategory(role) : item?.category ?? "blue") : "empty";
+                    const onChange = entry.kind === "own" ? (v: number) => applyHours(ri, i, v) : item ? (v: number) => scheduleCtx.edit({ roleId: role.id, scheduleId: item.id, weekIndex: i, hours: v }) : undefined;
+                    return (
+                      <td key={w} style={{ ...tdStyle, padding: 0, height: SCHEDULE_ROW_H, boxSizing: "border-box", background: "var(--palette-neutral-2)" }}>
+                        <div style={{ height: SCHEDULE_ROW_H - 1 }}><BookingCell value={h || null} category={category} readOnly={!onChange} onChange={onChange} /></div>
+                      </td>
+                    );
+                  })}
+                  <td style={{ ...tdStyle, position: "sticky", right: 0, background: "var(--palette-neutral-2)", zIndex: 1, borderRight: "none", filter: "drop-shadow(-4px 0 6px rgba(203,218,247,0.85))" }} />
+                </tr>
+                );
+              });
+            })()}
+            </Fragment>
           ))}
         </tbody>
       </table>
@@ -808,7 +1081,7 @@ function AvailabilityTable({ roles, weeks, selection, selectable, rowActions, wi
 
 // ── Accordion group ───────────────────────────────────────────────────────────
 
-function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags, engagementTags, availability = false, weeks, availabilityWidth, onAvailabilityWidth, onAvailabilityChange }: { engagementTags?: Record<string, string>; name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
+function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", selection, selectable = true, tags, engagementTags, availability = false, weeks, availabilityWidth, onAvailabilityWidth, onAvailabilityChange, roleRows, onOpenRole, onOpenEngagement, onEngagementChange }: { onEngagementChange?: (roleId: string, engagement: string) => void; roleRows?: boolean; onOpenRole?: (roleId: string) => void; onOpenEngagement?: (engagement: string) => void; engagementTags?: Record<string, string>; name: string; roles: RoleRow[]; showExtraColumns?: boolean; rowActions?: RowActionsVariant; selection: Selection; selectable?: boolean; tags?: Record<string, string>; availability?: boolean; weeks?: string[]; availabilityWidth?: number; onAvailabilityWidth?: (w: number) => void; onAvailabilityChange?: AvailabilityChangeHandler }) {
   const [expanded, setExpanded] = useState(true);
 
   return (
@@ -832,7 +1105,7 @@ function RoleGroup({ name, roles, showExtraColumns = false, rowActions = "dtt", 
       </SB>
 
       {/* Roles table — no extra wrapper, sits directly inside the Tile */}
-      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engagementTags} availability={availability} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={onAvailabilityWidth} onAvailabilityChange={onAvailabilityChange} />}
+      {expanded && <RolesTable roles={roles} showExtraColumns={showExtraColumns} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engagementTags} availability={availability} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={onAvailabilityWidth} onAvailabilityChange={onAvailabilityChange} roleRows={roleRows} onOpenRole={onOpenRole} onOpenEngagement={onOpenEngagement} onEngagementChange={onEngagementChange} />}
     </Tile>
   );
 }
@@ -901,123 +1174,24 @@ export type ManageRolesRole = RoleRow;
 export type ManageRolesGroup = { name: string; roles: RoleRow[] };
 export type { RowActionsVariant };
 
-// ── Manage tags modal — Figma "Tag roles" 2738:67102 (two states: empty / filled with "Notify others" on) ──────────────
-
-export const DEFAULT_TAG_OPTIONS = ["EM to review", "RM to review", "Ready to book", "Needs rework", "On hold"];
-export const DEFAULT_PEOPLE_OPTIONS = ["Megan Taylor", "Charlie Parker", "Spencer Harmon", "Santi Angulo"];
-const toItems = (xs: string[]) => xs.map(t => ({ id: t, label: t }));
-const NOTE_MAX = 500;
-const summary = (ids: string[]) => (ids.length === 0 ? "" : ids.length <= 2 ? ids.join(", ") : `${ids.length} selected`);
-
-export type TagRolesResult = { tag: string; note: string; notify: string[] };
-
-export type TagPrefill = { tag: string; notify?: string[] };
-
-export function ManageTagsModal({ open, count, unit = "role", onClose, onUpdate, tagOptions, peopleOptions, defaultNotify, prefill }: { open: boolean; count: number; /** What is being tagged: roles (default) or engagements */ unit?: "role" | "engagement"; onClose: () => void; onUpdate: (r: TagRolesResult) => void; tagOptions: string[]; peopleOptions: string[]; defaultNotify: string; prefill?: TagPrefill }) {
-  const [tag, setTag] = useState("");
-  const [tagOpen, setTagOpen] = useState(false);
-  const [note, setNote] = useState("");
-  const [notify, setNotify] = useState(false);
-  const [people, setPeople] = useState<string[]>([]);
-  const [peopleOpen, setPeopleOpen] = useState(false);
-
-  // Every opening starts empty
-  useEffect(() => {
-    if (open) { setTag(prefill?.tag ?? ""); setTagOpen(false); setNote(""); setNotify(!!prefill?.notify?.length); setPeople(prefill?.notify ?? []); setPeopleOpen(false); }
-  }, [open]);
-
-  const toggleNotify = (on: boolean) => {
-    setNotify(on);
-    if (on && people.length === 0) setPeople([defaultNotify]);   // Figma shows Megan Taylor prefilled
-  };
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="Manage tags"
-      subtitle={`${count} ${count === 1 ? unit : `${unit}s`}`}
-      width={500}
-      leftActions={[{ label: "Cancel", variant: "secondary", onClick: onClose }]}
-      rightActions={[{ label: "Update", variant: "primary", disabled: !tag, onClick: () => onUpdate({ tag, note, notify: notify ? people : [] }) }]}
-    >
-      <span style={body}>Pick a tag to add to these {unit}s:</span>
-
-      <div style={{ position: "relative" }}>
-        <InputSelect label="Tag" value={tag} onClick={() => setTagOpen(o => !o)} />
-        {/* Figma: the empty field stays plain; a muted warning line says why Update is disabled */}
-        {!tag && (
-          <Row gap={4} style={{ marginTop: 4, paddingLeft: 4 }}>
-            <Icon name="warning" size={14} style={{ color: "var(--palette-blue-2)" }} />
-            <span style={labelCss}>No tag</span>
-          </Row>
-        )}
-        {tag && (
-          <button
-            type="button"
-            title="Clear tag"
-            onClick={() => setTag("")}
-            style={{ position: "absolute", top: -2, right: 0, width: 20, height: 20, border: "none", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--palette-blue-0)" }}
-          >
-            <Icon name="filter-clean" size={14} />
-          </button>
-        )}
-        {tagOpen && (
-          <>
-            <div style={{ position: "fixed", inset: 0, zIndex: 9 }} onClick={() => setTagOpen(false)} />
-            <div style={{ position: "absolute", top: tag ? "calc(100% - 4px)" : "calc(100% - 24px)", left: 0, right: 0, zIndex: 10 }}>
-              <DropdownSelection items={toItems(tagOptions)} selectedId={tag} onSelect={id => { setTag(id); setTagOpen(false); }} />
-            </div>
-          </>
-        )}
-      </div>
-
-      <InputTextarea
-        label="Note"
-        rows={4}
-        value={note}
-        message={`${note.length}/${NOTE_MAX}`}
-        onChange={e => setNote(e.target.value.slice(0, NOTE_MAX))}
-      />
-
-      <Switch checked={notify} onChange={toggleNotify} label="Notify others" showLabel layout="horizontal-left" />
-
-      {notify && (
-        <div style={{ position: "relative" }}>
-          <InputSelect
-            label="Send a notification to"
-            value={summary(people)}
-            state="instructions"
-            message="All selected people will be notified."
-            onClick={() => setPeopleOpen(o => !o)}
-          />
-          {peopleOpen && (
-            <>
-              <div style={{ position: "fixed", inset: 0, zIndex: 9 }} onClick={() => setPeopleOpen(false)} />
-              <div style={{ position: "absolute", top: "calc(100% - 28px)", left: 0, right: 0, zIndex: 10 }}>
-                <DropdownMultiSelection items={toItems(peopleOptions)} selectedIds={people} onSelectionChange={setPeople} searchable={false} />
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </Modal>
-  );
-}
+// The Manage tags modal lives in src/modals/manage_tags (Storybook: Modals / Manage tags); re-exported here for the standalone bundle and prototypes
+export { ManageTagsModal, DEFAULT_TAG_OPTIONS, DEFAULT_PEOPLE_OPTIONS } from "../../modals/manage_tags/manage_tags_modal";
+export type { TagRolesResult, TagPrefill } from "../../modals/manage_tags/manage_tags_modal";
 
 // ── Bulk buttons — three ghost icon buttons in the bulk banner ────────────────────────────────────────────────────────
 
-type BulkAction = { id: "tag-roles" | "tag" | "owner"; label: string };
+type BulkAction = { id: "tag-roles" | "tag" | "tag-engagements" | "owner"; label: string };
 // Engagements selected: tag tags the picked engagements (the tag shows right below each engagement title), tag-roles tags every role inside them (Tag column).
-// Roles selected: tag tags the picked roles (no tag-roles). All of them open "Manage tags".
+// Roles selected: tag tags the picked roles, tag-engagements tags the engagements those roles belong to. All of them open "Manage tags".
 const ENGAGEMENT_ACTIONS: BulkAction[] = [
   { id: "tag-roles", label: "Tag roles" },
   { id: "tag",       label: "Tag" },
   { id: "owner",     label: "Owners" },
 ];
 const ROLE_ACTIONS: BulkAction[] = [
-  { id: "tag",       label: "Tag" },
-  { id: "owner",     label: "Owners" },
+  { id: "tag",             label: "Tag" },
+  { id: "tag-engagements", label: "Tag parent engagements" },
+  { id: "owner",           label: "Owners" },
 ];
 // Visually hidden text gives the icon-only buttons an accessible name without a second (native) tooltip
 const srOnly: React.CSSProperties = { position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" };
@@ -1042,10 +1216,20 @@ export type ManageRolesScreenProps = {
   weeks?: string[];
   /** Show the "Tag roles" button in the bulk banner when engagements are selected (it tags every role inside them). Default true; off leaves Tag (the engagements) and Owners. */
   tagRolesButton?: boolean;
+  /** Role-rows layout (default false): no merged engagement cell. The first column is Role (checkbox + editable title), the second Engagement (editable, one line, one per row). On hover both show an "open" button (onOpenRole / onOpenEngagement). Selection is by role only. */
+  roleRows?: boolean;
+  /** Role-rows layout: the "open" button of a Role cell */
+  onOpenRole?: (roleId: string) => void;
+  /** Role-rows layout: the "open" button of an Engagement cell */
+  onOpenEngagement?: (engagement: string) => void;
+  /** Delta = booked − requested hours for every role (default: requested − booked, and just the requested hours when nothing is booked). The hours still missing then show as a negative number in red-0, e.g. "-40h"; 0h stays green. */
+  deltaMissing?: boolean;
   /** How many week columns the availability pane shows when the screen opens (the divider still resizes it). Default: what the layout picks (one week next to Booked WM and Delta). */
   weeksVisible?: number;
   /** An hours cell of the availability-rules table was edited (one call per keystroke). The cell keeps its own value; the host decides what to do with it. */
   onAvailabilityChange?: AvailabilityChangeHandler;
+  /** An hours cell of a booked workforce member's schedule rows was edited (committed on Enter / blur, like the Booking Engine grid) */
+  onScheduleChange?: (change: ScheduleChange) => void;
   /** Replaces the default Navbar (e.g. a prototype's navbar with an unread badge) */
   navbar?: React.ReactNode;
   navbarActiveId?: string;
@@ -1085,7 +1269,7 @@ export type ManageRolesScreenProps = {
 };
 
 export function ManageRolesScreen({
-  groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, weeksVisible, tagRolesButton = true, onAvailabilityChange,
+  groups: groupsIn, header, title = "Manage roles", rowActions = "roles", saveLabel = "Fill & Book", selectable = true, availability, weeks, weeksVisible, tagRolesButton = true, deltaMissing = false, roleRows = false, onOpenRole, onOpenEngagement, onAvailabilityChange, onScheduleChange,
   navbar, navbarActiveId = "admin", onNavigate, onBack, onSave, onTagged, onUnbook, onRowAction, onOpenInBookingEngine,
   tagOptions = DEFAULT_TAG_OPTIONS, peopleOptions = DEFAULT_PEOPLE_OPTIONS, defaultNotify = "Megan Taylor", initialTags = {}, initialEngagementTags = {},
   suggestCandidates = DEFAULT_SUGGEST_CANDIDATES, onSuggestedChange, initialSuggested = {}, suggestCommand, onSuggestOpenChange, tagCommand,
@@ -1095,12 +1279,13 @@ export function ManageRolesScreen({
   const [deleted, setDeleted] = useState<Set<string>>(new Set());
   const [freshRow, setFreshRow] = useState<string | null>(null);
   const [hoursEdits, setHoursEdits] = useState<Record<string, Record<number, number | null>>>({});
+  const [engOverrides, setEngOverrides] = useState<Record<string, string>>({});   // role-rows layout: the engagement a role was moved to in its select (role id → engagement)
   const dupSeq = useRef(0);
   const trackHours: AvailabilityChangeHandler = c => { setHoursEdits(e => ({ ...e, [c.roleId]: { ...e[c.roleId], [c.weekIndex]: c.hours } })); onAvailabilityChange?.(c); };
   const groups: ManageRolesGroup[] = groupsIn.map(g => {
     let roles = [...g.roles];
     dups.forEach(d => { const i = roles.findIndex(r => r.id === d.afterId); if (i >= 0) roles.splice(i + 1, 0, d.role); });
-    return { ...g, roles: roles.filter(r => !deleted.has(r.id)) };
+    return { ...g, roles: roles.filter(r => !deleted.has(r.id)).map(r => (engOverrides[r.id] ? { ...r, engagement: engOverrides[r.id] } : r)) };
   });
   const total = groups.reduce((n, g) => n + g.roles.length, 0);
   // Counter above the groups: "X engagements · Y roles" (engagements = distinct titles; the template editor has none, so it shows roles only)
@@ -1131,7 +1316,38 @@ export function ManageRolesScreen({
     if (own.length === 0 && isBookedState(role) && role.booked) return [candidateOf(`b-${role.id}`, role.booked.name, role.requestedRank)];
     return own;
   };
-  const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: setSuggestRole };
+  const suggestCtx: SuggestCtx = { valueFor: suggestedFor, open: r => { setOverKey(null); setSuggestRole(r); } };
+  // Potential overbookings panel: opened by the bar on top of a flagged availability cell; the suggested WM's calendar against this role's availability rules
+  const [scheduleEdits, setScheduleEdits] = useState<Record<string, Record<number, number>>>({});
+  const scheduleHours = (roleId: string, item: BookedScheduleItem, w: number): number | null => { const e = scheduleEdits[`${roleId}:${item.id}`]; return e && w in e ? e[w] : item.hours[w] ?? null; };
+  const [scheduleOpen, setScheduleOpen] = useState<Set<string>>(new Set());   // roles whose booked WM's schedule is shown
+  const [overKey, setOverKey] = useState<{ roleId: string; week: number } | null>(null);
+  const openOverbooking = (roleId: string, week: number) => { setSuggestRole(null); setOverKey({ roleId, week }); };
+  const overData = (() => {
+    if (!overKey) return undefined;
+    const r = groups.flatMap(g => g.roles).find(x => x.id === overKey.roleId);
+    if (!r) return undefined;
+    const raw = r.availability?.[overKey.week];
+    const cell = raw == null || typeof raw === "number" ? null : raw;
+    const hours = hoursEdits[r.id]?.[overKey.week] ?? cell?.hours ?? (typeof raw === "number" ? raw : null);
+    const now = overbookingNow(r, overKey.week, hours, scheduleHours);
+    if (!now) return undefined;     // an edit made it go away: nothing left to show
+    const week = (weeks ?? DEFAULT_AVAILABILITY_WEEKS)[overKey.week];
+    return {
+      personName: suggestedFor(r)[0]?.name ?? "No workforce member suggested",
+      potential: true,
+      ranges: [{
+        id: `${r.id}-${overKey.week}`,
+        dateRange: week,
+        subtitle: `${now.over} hours over this week`,
+        level: now.level,
+        items: [
+          { roleName: r.title, bookingLabel: `Requested ${hours ?? 0}h`, bookingCategory: "role-partial" as const },
+          ...now.items.map(({ hours: _h, ...item }) => item),
+        ],
+      }],
+    };
+  })();
   // The Suggest side panel stores every pick (and removal) at once for the role it is open on
   const storeSuggested = (list: SuggestCandidate[]) => {
     if (!suggestRole) return;
@@ -1177,9 +1393,11 @@ export function ManageRolesScreen({
   // The banner counts what was picked (engagements or roles); the modal always counts roles.
   const selectedRoles = groups.flatMap(g => g.roles).filter(r => roleInSelection(selection, r));
   const selectedCount = selected.size;
+  // What "tag engagements" tags: the picked engagements, or (roles selected) the engagements those roles belong to
+  const taggedEngagements = mode === "role" ? [...new Set(selectedRoles.map(r => r.engagement).filter((e): e is string => !!e))] : [...selected];
 
   const applyTag = (r: TagRolesResult) => {
-    const engagements = tagTarget === "engagements" ? [...selected] : [];
+    const engagements = tagTarget === "engagements" ? taggedEngagements : [];
     const targetRoles = tagRoleIds ? groups.flatMap(g => g.roles).filter(x => tagRoleIds.includes(x.id)) : selectedRoles;
     if (tagTarget === "engagements") setEngTags(prev => ({ ...prev, ...Object.fromEntries(engagements.map(e => [e, r.tag])) }));
     else setTags(prev => ({ ...prev, ...Object.fromEntries(targetRoles.map(x => [x.id, r.tag])) }));
@@ -1215,12 +1433,17 @@ export function ManageRolesScreen({
   };
 
   return (
+    <ScheduleContext.Provider value={{ open: scheduleOpen, toggle: id => setScheduleOpen(prev => { const n = new Set(prev); if (!n.delete(id)) n.add(id); return n; }),
+      hours: scheduleHours,
+      edit: c => { setScheduleEdits(prev => ({ ...prev, [`${c.roleId}:${c.scheduleId}`]: { ...prev[`${c.roleId}:${c.scheduleId}`], [c.weekIndex]: c.hours } })); onScheduleChange?.(c); } }}>
     <BookedUnbookContext.Provider value={onUnbook ? (r => r.booked && onUnbook({ roleId: r.id, name: r.booked.name })) : undefined}>
     <SuggestContext.Provider value={suggestCtx}>
+    <DeltaMissingContext.Provider value={deltaMissing}>
     <HoursEditsContext.Provider value={hoursEdits}>
     <FreshRowContext.Provider value={freshRow}>
+    <OverbookingOpenContext.Provider value={openOverbooking}>
     <RowMenuContext.Provider value={rowActions === "roles" ? openRowMenu : null}>
-    <style>{ROW_ANIM_CSS}</style>
+    <style>{ROW_ANIM_CSS}{HOVER_CSS}{FOCUS_CSS}</style>
     <div style={{ display: "flex", height: "var(--ips-vh, 100vh)", overflow: "hidden", background: "var(--palette-neutral-2)" }}>
       {navbar ?? <Navbar activeId={navbarActiveId} onSelect={onNavigate} />}
 
@@ -1234,11 +1457,11 @@ export function ManageRolesScreen({
                 <Alert
                   type="bulk-banner"
                   layout="inline"
-                  message={`${selectedCount} selected`}
+                  message={`${selectedCount} ${mode === "role" ? (selectedCount === 1 ? "role" : "roles") : (selectedCount === 1 ? "engagement" : "engagements")} selected`}
                   onDismiss={clearSelection}
                   rightContent={(mode === "role" ? ROLE_ACTIONS : ENGAGEMENT_ACTIONS.filter(a => tagRolesButton || a.id !== "tag-roles")).map(a => (
                     <Tooltip key={a.id} content={a.label} placement="up-center" maxWidth={240}>
-                      <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" || (a.id === "tag" && mode === "role") ? () => openTagging("roles") : a.id === "tag" ? () => openTagging("engagements") : undefined}>
+                      <Button kind="iconGhost" size="regular" onClick={a.id === "tag-roles" || (a.id === "tag" && mode === "role") ? () => openTagging("roles") : a.id === "tag" || a.id === "tag-engagements" ? () => openTagging("engagements") : undefined}>
                         <Icon name={a.id} size={16} />
                         <span style={srOnly}>{a.label}</span>
                       </Button>
@@ -1276,7 +1499,7 @@ export function ManageRolesScreen({
             <div style={{ ...labelCss, margin: header ? "12px 0 16px" : "0 0 16px", flexShrink: 0 }}>{counter}</div>
 
             {groups.map((g, i) => (
-              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engTags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} onAvailabilityChange={trackHours} />
+              <RoleGroup key={g.name + i} name={g.name} roles={g.roles} showExtraColumns={g.roles.some(r => r.extraColumns)} rowActions={rowActions} selection={selection} selectable={selectable} tags={tags} engagementTags={engTags} availability={availability ?? selectable} weeks={weeks} availabilityWidth={availabilityWidth} onAvailabilityWidth={setAvailabilityWidth} onAvailabilityChange={trackHours} roleRows={roleRows} onOpenRole={onOpenRole} onOpenEngagement={onOpenEngagement} onEngagementChange={(id, e) => setEngOverrides(o => ({ ...o, [id]: e }))} />
             ))}
 
             <div style={{ flex: 1, minHeight: 24 }} />
@@ -1301,7 +1524,7 @@ export function ManageRolesScreen({
         />
       </div>
 
-      <ManageTagsModal open={tagging} prefill={tagPrefill} unit={tagTarget === "engagements" ? "engagement" : "role"} count={tagTarget === "engagements" ? selected.size : tagRoleIds ? tagRoleIds.length : selectedRoles.length} onClose={() => { setTagging(false); setTagRoleIds(null); }} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
+      <ManageTagsModal open={tagging} prefill={tagPrefill} unit={tagTarget === "engagements" ? "engagement" : "role"} count={tagTarget === "engagements" ? taggedEngagements.length : tagRoleIds ? tagRoleIds.length : selectedRoles.length} items={tagTarget === "engagements" ? taggedEngagements.map(e => ({ label: e })) : (tagRoleIds ? groups.flatMap(g => g.roles).filter(x => tagRoleIds.includes(x.id)) : selectedRoles).map(r => ({ label: r.title, subLabel: r.engagement }))} onClose={() => { setTagging(false); setTagRoleIds(null); }} onUpdate={applyTag} tagOptions={tagOptions} peopleOptions={peopleOptions} defaultNotify={defaultNotify} />
       <SuggestSidePanel
         open={!!suggestRole}
         onClose={() => setSuggestRole(null)}
@@ -1317,6 +1540,8 @@ export function ManageRolesScreen({
         onDone={storeSuggested}
       />
 
+      <OverbookingSidePanel open={!!overData} onClose={() => setOverKey(null)} data={overData} />
+
       {/* Row menu: drawn in body (fixed) so the tables' scroll panes can't clip it */}
       {menu && createPortal(
         <>
@@ -1329,9 +1554,12 @@ export function ManageRolesScreen({
       )}
     </div>
     </RowMenuContext.Provider>
+    </OverbookingOpenContext.Provider>
     </FreshRowContext.Provider>
     </HoursEditsContext.Provider>
+    </DeltaMissingContext.Provider>
     </SuggestContext.Provider>
     </BookedUnbookContext.Provider>
+    </ScheduleContext.Provider>
   );
 }

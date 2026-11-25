@@ -3,6 +3,7 @@ import type { StorybookConfig } from "@storybook/react-vite";
 const config: StorybookConfig = {
   stories: [
     "../src/components/**/*.stories.@(ts|tsx)",
+    "../src/modals/**/*.stories.@(ts|tsx)",
     "../src/prototypes/**/*.stories.@(ts|tsx)",
     "../src/screens/**/*.stories.@(ts|tsx)",
   ],

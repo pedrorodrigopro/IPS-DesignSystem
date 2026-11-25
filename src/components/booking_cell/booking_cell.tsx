@@ -100,6 +100,7 @@ export function BookingCell({
             className={css.inputEl}
             value={inputVal}
             autoFocus
+            onFocus={e => e.target.select()}   // opens with the whole value selected: typing replaces it
             onChange={e => setInputVal(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKey}

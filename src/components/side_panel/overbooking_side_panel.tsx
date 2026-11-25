@@ -34,6 +34,8 @@ export type OverbookingRange = {
   id:          string;
   dateRange:   string;     // e.g. "20 Apr - 26 Apr 2026"
   subtitle:    string;     // e.g. "8 hours over per day"
+  /** Overbooking range the week falls in (defined by the account): colours the warning icon like the calendar bar. Default "warning" */
+  level?:      "warning" | "error";
   items:       OverbookingItem[];
   onShow?:     () => void;
 };
@@ -43,6 +45,8 @@ export type OverbookingSidePanelData = {
   bookingsFrom?: string;   // filter value, default "All"
   sortValue?:    string;   // sort value, default "Latest"
   ranges:        OverbookingRange[];
+  /** Potential overbookings (the suggested workforce member's calendar colliding with the role's availability rules): the subtitle reads "Potential overbookings" and the count "N potential overbooking ranges" */
+  potential?:    boolean;
   onClose?:      () => void;
 };
 
@@ -100,7 +104,7 @@ function OverbookingTile({ range }: { range: OverbookingRange }) {
         </Button>
 
         {/* Warning icon */}
-        <Icon name="warning" size={16} style={{ color: "var(--palette-orange-1)", flexShrink: 0 }} />
+        <Icon name="warning" size={16} style={{ color: range.level === "error" ? "var(--palette-red-0)" : "var(--palette-orange-1)", flexShrink: 0 }} />
 
         {/* Date range — fills remaining space */}
         <span style={{ ...bodyBold, flex: 1 }}>{range.dateRange}</span>
@@ -162,7 +166,7 @@ export function OverbookingSidePanel({
   data = { personName: "Workforce Member", ranges: [] },
 }: OverbookingSidePanelProps) {
   const rangeCount = data.ranges.length;
-  const rangeLabel = `${rangeCount} overbooking range${rangeCount !== 1 ? "s" : ""}`;
+  const rangeLabel = `${rangeCount} ${data.potential ? "potential " : ""}overbooking range${rangeCount !== 1 ? "s" : ""}`;
 
   return (
     <SidePanel open={open} onClose={onClose} width={400}>
@@ -180,7 +184,7 @@ export function OverbookingSidePanel({
                 leftIcon="profile"
               />
               {/* "Overbookings" subtitle indented to align with title (past icon + 8px gap) */}
-              <span style={{ ...labelMuted, paddingLeft: 28 }}>Overbookings</span>
+              <span style={{ ...labelMuted, paddingLeft: 28 }}>{data.potential ? "Potential overbookings" : "Overbookings"}</span>
             </div>
             <Button kind="iconTertiary" size="regular" title="Close" onClick={onClose}>
               <Icon name="cross" size={16} />
