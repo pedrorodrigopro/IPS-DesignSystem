@@ -61,6 +61,14 @@ const SCHEDULE_MARY: BookedScheduleItem[] = [
   { id: "m1", roleName: "Accessibility consultant", engagement: "RF_CLONE_1_[2026 Q4] ProFinda Advisory", category: "blue", hours: [null, null, 24, 24, null, null] },
 ];
 
+const SCHEDULE_SPENCER: BookedScheduleItem[] = [   // 24h on this role + 24h here = 8h over his 40h capacity in week one
+  { id: "s1", roleName: "Delivery lead", engagement: "Brightwell Insurance - Tax Compliance FY27", category: "red", hours: [24, 24, null, null, null, null] },
+];
+const SCHEDULE_FATIMA: BookedScheduleItem[] = [
+  { id: "f1", roleName: "Compliance reviewer", engagement: "RF_CLONE_1_[2026 Q4] ProFinda Advisory", category: "blue", hours: [8, 16, 16, null, null, null] },
+  { id: "f2", roleName: "Internal training", engagement: "ProFinda Academy", category: "purple", hours: [null, 8, null, null, null, null] },
+];
+
 // Engagement roles — every role carries its engagement, so the Engagement cell is merged across them
 const role = (id: string, engagement: string, title: string, extra: Partial<ManageRolesRole> = {}): ManageRolesRole => ({
   id, engagement, title, description: title, vacancies: 1, wfState: "not-filled", businessUnit: "Executive", label: "label", location: "London, UK", ...extra,
@@ -88,7 +96,13 @@ const ROLLED_FORWARD_GROUPS: ManageRolesGroup[] = [
       role("f1", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Javascript developer", { wfState: "confirmed", bookedHours: 40, booked: { name: "Leslie Smith", schedule: SCHEDULE_LESLIE }, suggested: { name: "Leslie Smith", rank: "Manager" }, requestedRank: "Manager", availability: wk(0, "warning", 40, OVER_RED) }),
       role("f2", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Junior Javascript developer", { requestedRank: "Manager", availability: wk(1, undefined, 32) }),
       role("f3", "RF_CLONE_2_[2026 Q3] ProFinda IT", "Accessibility consultant", { suggested: { name: "Mary Lee", rank: "Senior" }, availability: wk(2, "warning", 24, OVER_ORANGE) }),
-      role("f4", "RF_CLONE_2_[2026 Q3] ProFinda IT", "React developer", { wfState: "booked", bookedHours: 80, booked: { name: "Spencer Harmon" }, suggested: { name: "Spencer Harmon", rank: "Principal Consultant" }, requestedRank: "Manager", availability: wk(1) }),
+      role("f4", "RF_CLONE_2_[2026 Q3] ProFinda IT", "React developer", { wfState: "booked", bookedHours: 40,
+        // Two people booked on one role: two pills (the row grows), each with their own hours on the role and their own eye button
+        booked: [
+          { name: "Spencer Harmon", hours: [24, null, null, null, null, null], schedule: SCHEDULE_SPENCER },
+          { name: "Fatima Al-Rashid", hours: [16, null, null, null, null, null], schedule: SCHEDULE_FATIMA },
+        ],
+        suggested: { name: "Spencer Harmon", rank: "Principal Consultant" }, requestedRank: "Manager", availability: wk(0) }),
       role("f5", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Javascript developer", { availability: wk(1) }),
       role("f6", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Junior Javascript developer", { suggested: { name: "Santi Angulo", rank: "Consultant" }, availability: wk(1, undefined, 16) }),
       role("f7", "RF_CLONE_1_[2026 Q4] ProFinda Advisory", "Accessibility consultant", { availability: wk(2, undefined, 36) }),
